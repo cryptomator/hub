@@ -6,7 +6,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.http.HttpServerRequest;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -42,6 +42,7 @@ import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.VaultAccess.Role;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -120,7 +121,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
-	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
+	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") Role role) {
 		var currentUserId = jwt.getSubject();
 		final Stream<Vault> resultStream;
 		if (role == null) {
@@ -659,14 +660,14 @@ public class VaultResource {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars @Nullable String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
 						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
 						   // Legacy properties ("Vault Admin Password"):
-						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
-						   @JsonProperty("salt") @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
+						   @JsonProperty("masterkey") @OnlyBase64Chars @Nullable String masterkey, @JsonProperty("iterations") @Nullable Integer iterations,
+						   @JsonProperty("salt") @OnlyBase64Chars @Nullable String salt,
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars @Nullable String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars @Nullable String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
@@ -678,7 +679,7 @@ public class VaultResource {
 	public record VaultDtoWithRole(
 			@JsonProperty("id") UUID id,
 			@JsonProperty("name") String name,
-			@JsonProperty("description") String description,
+			@JsonProperty("description") @Nullable String description,
 			@JsonProperty("archived") boolean archived,
 			@JsonProperty("creationTime") Instant creationTime,
 			@JsonProperty("role") VaultAccess.Role role

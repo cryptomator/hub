@@ -13,6 +13,7 @@ import jakarta.persistence.MapKey;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class EmergencyRecoveryProcess {
 	private Type type;
 
 	@Column(name = "details")
-	private String details;
+	private @Nullable String details;
 
 	@Column(name = "required_key_shares", nullable = false)
 	private int requiredKeyShares;
@@ -103,11 +104,11 @@ public class EmergencyRecoveryProcess {
 		this.type = type;
 	}
 
-	public String getDetails() {
+	public @Nullable String getDetails() {
 		return details;
 	}
 
-	public void setDetails(String details) {
+	public void setDetails(@Nullable String details) {
 		this.details = details;
 	}
 

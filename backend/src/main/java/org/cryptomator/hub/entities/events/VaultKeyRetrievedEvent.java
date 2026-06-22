@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -18,58 +19,58 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_KEY_RETRIEVE";
 
 	@Column(name = "retrieved_by")
-	private String retrievedBy;
+	private @Nullable String retrievedBy;
 
 	@Column(name = "vault_id")
-	private UUID vaultId;
+	private @Nullable UUID vaultId;
 
 	@Column(name = "result")
 	@Enumerated(EnumType.STRING)
-	private Result result;
+	private @Nullable Result result;
 
 	@Column(name = "ip_address")
-	private String ipAddress;
+	private @Nullable String ipAddress;
 
 	@Column(name = "device_id")
-	private String deviceId;
+	private @Nullable String deviceId;
 
-	public String getRetrievedBy() {
+	public @Nullable String getRetrievedBy() {
 		return retrievedBy;
 	}
 
-	public void setRetrievedBy(String retrievedBy) {
+	public void setRetrievedBy(@Nullable String retrievedBy) {
 		this.retrievedBy = retrievedBy;
 	}
 
-	public UUID getVaultId() {
+	public @Nullable UUID getVaultId() {
 		return vaultId;
 	}
 
-	public void setVaultId(UUID vaultId) {
+	public void setVaultId(@Nullable UUID vaultId) {
 		this.vaultId = vaultId;
 	}
 
-	public Result getResult() {
+	public @Nullable Result getResult() {
 		return result;
 	}
 
-	public void setResult(Result result) {
+	public void setResult(@Nullable Result result) {
 		this.result = result;
 	}
 
-	public String getIpAddress() {
+	public @Nullable String getIpAddress() {
 		return ipAddress;
 	}
 
-	public void setIpAddress(String ipAddress) {
+	public void setIpAddress(@Nullable String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
 
-	public String getDeviceId() {
+	public @Nullable String getDeviceId() {
 		return deviceId;
 	}
 
-	public void setDeviceId(String device) {
+	public void setDeviceId(@Nullable String device) {
 		this.deviceId = device;
 	}
 

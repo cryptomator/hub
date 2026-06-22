@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -19,39 +20,39 @@ public class VaultMemberUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_UPDATE";
 
 	@Column(name = "updated_by")
-	private String updatedBy;
+	private @Nullable String updatedBy;
 
 	@Column(name = "vault_id")
-	private UUID vaultId;
+	private @Nullable UUID vaultId;
 
 	@Column(name = "authority_id")
-	private String authorityId;
+	private @Nullable String authorityId;
 
 	@Column(name = "role", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private VaultAccess.Role role;
 
-	public String getUpdatedBy() {
+	public @Nullable String getUpdatedBy() {
 		return updatedBy;
 	}
 
-	public void setUpdatedBy(String updatedBy) {
+	public void setUpdatedBy(@Nullable String updatedBy) {
 		this.updatedBy = updatedBy;
 	}
 
-	public UUID getVaultId() {
+	public @Nullable UUID getVaultId() {
 		return vaultId;
 	}
 
-	public void setVaultId(UUID vaultId) {
+	public void setVaultId(@Nullable UUID vaultId) {
 		this.vaultId = vaultId;
 	}
 
-	public String getAuthorityId() {
+	public @Nullable String getAuthorityId() {
 		return authorityId;
 	}
 
-	public void setAuthorityId(String authorityId) {
+	public void setAuthorityId(@Nullable String authorityId) {
 		this.authorityId = authorityId;
 	}
 

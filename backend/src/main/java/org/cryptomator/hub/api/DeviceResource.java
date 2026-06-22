@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -254,8 +254,8 @@ public class DeviceResource {
 							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime,
-							@JsonProperty("lastIpAddress") String lastIpAddress,
-							@JsonProperty("lastAccessTime") Instant lastAccessTime,
+							@JsonProperty("lastIpAddress") @Nullable String lastIpAddress,
+							@JsonProperty("lastAccessTime") @Nullable Instant lastAccessTime,
 							@JsonProperty("legacyDevice") boolean legacyDevice) {
 
 		public static DeviceDto fromEntity(Device entity) {
@@ -267,7 +267,7 @@ public class DeviceResource {
 		 */
 		@Deprecated(since = "1.3.0", forRemoval = true)
 		public static DeviceDto fromEntity(LegacyDevice entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null /* userPrivateKeys: intentionally null — legacy devices have none; the @NotNull only guards deserialization */, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
 
 		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
@@ -283,7 +283,7 @@ public class DeviceResource {
 		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null /* userPrivateKeys: intentionally null — legacy devices have none; the @NotNull only guards deserialization */, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
 		}
 
 	}

@@ -31,7 +31,7 @@ public class EffectiveWot {
 	@EmbeddedId
 	private Id id;
 
-	@Column(name = "signature_chain")
+	@Column(name = "signature_chain", nullable = false)
 	@Type(StringArrayType.class)
 	private String[] signatureChain;
 

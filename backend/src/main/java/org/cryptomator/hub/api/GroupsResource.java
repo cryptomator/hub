@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -182,14 +183,14 @@ public class GroupsResource {
 
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 
 	}
 
 	public record UpdateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 	}
 }

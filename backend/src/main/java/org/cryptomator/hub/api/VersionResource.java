@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -36,7 +37,7 @@ public class VersionResource {
 		return new VersionDto(hubVersion, keycloakVersion);
 	}
 
-	public record VersionDto(@JsonProperty("hubVersion") String hubVersion, @JsonProperty("keycloakVersion") String keycloakVersion) {
+	public record VersionDto(@JsonProperty("hubVersion") String hubVersion, @JsonProperty("keycloakVersion") @Nullable String keycloakVersion) {
 	}
 
 }

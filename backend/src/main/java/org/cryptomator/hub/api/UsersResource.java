@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -461,18 +461,18 @@ public class UsersResource {
 			@JsonProperty("firstName") @NotNull String firstName,
 			@JsonProperty("lastName") @NotNull String lastName,
 			@JsonProperty("password") @NotNull String password,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
-			@JsonProperty("groupIds") Set<String> groupIds,
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl,
+			@JsonProperty("groupIds") @Nullable Set<String> groupIds,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}
 
 	public record UpdateUserDto(
-			@JsonProperty("email") String email,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName,
-			@JsonProperty("password") String password,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
+			@JsonProperty("email") @Nullable String email,
+			@JsonProperty("firstName") @Nullable String firstName,
+			@JsonProperty("lastName") @Nullable String lastName,
+			@JsonProperty("password") @Nullable String password,
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}

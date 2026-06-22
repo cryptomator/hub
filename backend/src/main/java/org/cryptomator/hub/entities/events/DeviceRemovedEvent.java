@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -15,24 +16,24 @@ public class DeviceRemovedEvent extends AuditEvent {
 	public static final String TYPE = "DEVICE_REMOVE";
 
 	@Column(name = "removed_by")
-	private String removedBy;
+	private @Nullable String removedBy;
 
 	@Column(name = "device_id")
-	private String deviceId;
+	private @Nullable String deviceId;
 
-	public String getRemovedBy() {
+	public @Nullable String getRemovedBy() {
 		return removedBy;
 	}
 
-	public void setRemovedBy(String removedBy) {
+	public void setRemovedBy(@Nullable String removedBy) {
 		this.removedBy = removedBy;
 	}
 
-	public String getDeviceId() {
+	public @Nullable String getDeviceId() {
 		return deviceId;
 	}
 
-	public void setDeviceId(String deviceId) {
+	public void setDeviceId(@Nullable String deviceId) {
 		this.deviceId = deviceId;
 	}
 
