@@ -8,6 +8,25 @@
       </list>
     </option>
   </component>
+  <component name="NullableNotNullManager">
+    <option name="myDefaultNullable" value="org.jspecify.annotations.Nullable" />
+    <option name="myDefaultNotNull" value="org.jspecify.annotations.NonNull" />
+    <option name="myOrdered" value="false" />
+    <option name="myNullables">
+      <value>
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="org.jspecify.annotations.Nullable" />
+        </list>
+      </value>
+    </option>
+    <option name="myNotNulls">
+      <value>
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="org.jspecify.annotations.NonNull" />
+        </list>
+      </value>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_25" default="true" project-jdk-name="25" project-jdk-type="JavaSDK" />
   <component name="ProjectType">
     <option name="id" value="jpab" />

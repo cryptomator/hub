@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidJWE;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -17,25 +17,25 @@ import java.util.Set;
 public final class UserDto extends AuthorityDto {
 
 	private final String email;
-	private final String firstName;
-	private final String lastName;
-	private final String language;
+	private final @Nullable String firstName;
+	private final @Nullable String lastName;
+	private final @Nullable String language;
 	private final boolean enabled;
 	private final Set<DeviceResource.DeviceDto> devices;
-	private final String ecdhPublicKey;
-	private final String ecdsaPublicKey;
-	private final String privateKeys;
-	private final String setupCode;
+	private final @Nullable String ecdhPublicKey;
+	private final @Nullable String ecdsaPublicKey;
+	private final @Nullable String privateKeys;
+	private final @Nullable String setupCode;
 
 	@JsonCreator
 	public UserDto(
 			@JsonProperty("id") @NotNull String id,
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("pictureUrl") @Nullable String pictureUrl,
 			@JsonProperty("email") @NotNull String email,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName,
-			@JsonProperty("language") String language,
+			@JsonProperty("firstName") @Nullable String firstName,
+			@JsonProperty("lastName") @Nullable String lastName,
+			@JsonProperty("language") @Nullable String language,
 			@JsonProperty("enabled") boolean enabled,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
@@ -62,17 +62,17 @@ public final class UserDto extends AuthorityDto {
 	public UserDto(
 			String id,
 			String name,
-			String pictureUrl,
+			@Nullable String pictureUrl,
 			String email,
-			String firstName,
-			String lastName,
-			String language,
+			@Nullable String firstName,
+			@Nullable String lastName,
+			@Nullable String language,
 			boolean enabled,
 			Set<DeviceResource.DeviceDto> devices,
-			String ecdhPublicKey,
-			String ecdsaPublicKey,
-			String privateKeys,
-			String setupCode) {
+			@Nullable String ecdhPublicKey,
+			@Nullable String ecdsaPublicKey,
+			@Nullable String privateKeys,
+			@Nullable String setupCode) {
 		this(id, name, pictureUrl, email, firstName, lastName, language, enabled, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
@@ -82,17 +82,17 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	@JsonProperty("firstName")
-	public String getFirstName() {
+	public @Nullable String getFirstName() {
 		return firstName;
 	}
 
 	@JsonProperty("lastName")
-	public String getLastName() {
+	public @Nullable String getLastName() {
 		return lastName;
 	}
 
 	@JsonProperty("language")
-	public String getLanguage() {
+	public @Nullable String getLanguage() {
 		return language;
 	}
 
@@ -107,7 +107,7 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	@JsonProperty("ecdhPublicKey")
-	public String getEcdhPublicKey() {
+	public @Nullable String getEcdhPublicKey() {
 		return ecdhPublicKey;
 	}
 
@@ -118,17 +118,17 @@ public final class UserDto extends AuthorityDto {
 	 */
 	@Deprecated(forRemoval = true)
 	@JsonProperty("publicKey")
-	public String getPublicKey() {
+	public @Nullable String getPublicKey() {
 		return ecdhPublicKey;
 	}
 
 	@JsonProperty("ecdsaPublicKey")
-	public String getEcdsaPublicKey() {
+	public @Nullable String getEcdsaPublicKey() {
 		return ecdsaPublicKey;
 	}
 
 	@JsonProperty("privateKeys")
-	public String getPrivateKeys() {
+	public @Nullable String getPrivateKeys() {
 		return privateKeys;
 	}
 
@@ -139,12 +139,12 @@ public final class UserDto extends AuthorityDto {
 	 */
 	@Deprecated(forRemoval = true)
 	@JsonProperty("privateKey")
-	public String getPrivateKey() {
+	public @Nullable String getPrivateKey() {
 		return privateKeys;
 	}
 
 	@JsonProperty("setupCode")
-	public String getSetupCode() {
+	public @Nullable String getSetupCode() {
 		return setupCode;
 	}
 

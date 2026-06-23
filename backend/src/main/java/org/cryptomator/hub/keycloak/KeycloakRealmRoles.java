@@ -11,13 +11,15 @@ import java.util.EnumMap;
 @ApplicationScoped
 public class KeycloakRealmRoles {
 
-	@Inject
-	Keycloak keycloak;
-
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String keycloakRealm;
-
+	private final Keycloak keycloak;
+	private final String keycloakRealm;
 	private final EnumMap<RealmRole, RoleRepresentation> cachedRoles = new EnumMap<>(RealmRole.class);
+
+	@Inject
+	KeycloakRealmRoles(Keycloak keycloak, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+		this.keycloak = keycloak;
+		this.keycloakRealm = keycloakRealm;
+	}
 
 	public RoleRepresentation getRealmRole(RealmRole realmRole) {
 		return cachedRoles.computeIfAbsent(realmRole, this::fetchRealmRole);

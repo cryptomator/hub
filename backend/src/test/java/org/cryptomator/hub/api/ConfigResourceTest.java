@@ -1,18 +1,10 @@
 package org.cryptomator.hub.api;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 public class ConfigResourceTest {
-
-	ConfigResource configResource;
-
-	@BeforeEach
-	void init() {
-		this.configResource = new ConfigResource();
-	}
 
 	@ParameterizedTest
 	@CsvSource({"foobar,foo,baz,bazbar",
@@ -22,7 +14,7 @@ public class ConfigResourceTest {
 			"'',baz,bar,''"
 	})
 	void testReplacePrefix(String str, String prefix, String replacement, String expected) {
-		String out = configResource.replacePrefix(str, prefix, replacement);
+		String out = ConfigResource.replacePrefix(str, prefix, replacement);
 
 		Assertions.assertEquals(expected, out);
 	}
@@ -35,7 +27,7 @@ public class ConfigResourceTest {
 			"/,''"
 	})
 	void testTrimTrailingSlash(String in, String expected) {
-		String out = configResource.trimTrailingSlash(in);
+		String out = ConfigResource.trimTrailingSlash(in);
 
 		Assertions.assertEquals(expected, out);
 	}

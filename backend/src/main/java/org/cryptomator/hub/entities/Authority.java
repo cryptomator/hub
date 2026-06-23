@@ -10,6 +10,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class Authority {
 	private String name;
 
 	@Column(name = "picture_url")
-	private String pictureUrl;
+	private @Nullable String pictureUrl;
 
 	public String getId() {
 		return id;
@@ -55,11 +56,11 @@ public class Authority {
 		this.name = name;
 	}
 
-	public String getPictureUrl() {
+	public @Nullable String getPictureUrl() {
 		return pictureUrl;
 	}
 
-	public void setPictureUrl(String pictureUrl) {
+	public void setPictureUrl(@Nullable String pictureUrl) {
 		this.pictureUrl = pictureUrl;
 	}
 

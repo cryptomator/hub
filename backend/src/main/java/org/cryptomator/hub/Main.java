@@ -12,8 +12,12 @@ public class Main implements QuarkusApplication {
 
 	private static final Logger LOG = Logger.getLogger(Main.class);
 
+	private final LicenseHolder license;
+
 	@Inject
-	LicenseHolder license;
+	Main(LicenseHolder license) {
+		this.license = license;
+	}
 
 	@Override
 	public int run(String... args) throws Exception {

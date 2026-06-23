@@ -46,26 +46,25 @@ public class KeycloakAuthorityPuller {
 
 	private static final Logger LOG = Logger.getLogger(KeycloakAuthorityPuller.class);
 
-	@Inject
-	Keycloak keycloak;
-	@Inject
-	User.Repository userRepo;
-	@Inject
-	Group.Repository groupRepo;
-	@Inject
-	KeycloakAuthorityProvider remoteUserProvider;
-	@Inject
-	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
-	@Inject
-	KeycloakRealmRoles realmRoles;
+	private final Keycloak keycloak;
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final KeycloakAuthorityProvider remoteUserProvider;
+	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	private final KeycloakRealmRoles realmRoles;
 
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String keycloakRealm;
-
+	// visible for testing
 	RealmResource realm;
 
-	@PostConstruct
-	public void setup() {
+	@Inject
+	KeycloakAuthorityPuller(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+		this.keycloak = keycloak;
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.remoteUserProvider = remoteUserProvider;
+		this.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+		this.realmRoles = realmRoles;
+
 		this.realm = keycloak.realm(keycloakRealm);
 	}
 

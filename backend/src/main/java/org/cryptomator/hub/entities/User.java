@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,31 +52,31 @@ import java.util.stream.Stream;
 public class User extends Authority {
 
 	@Column(name = "email")
-	private String email;
+	private @Nullable String email;
 
 	@Column(name = "firstname")
-	private String firstName;
+	private @Nullable String firstName;
 
 	@Column(name = "lastname")
-	private String lastName;
+	private @Nullable String lastName;
 
 	@Column(name = "language")
-	private String language;
+	private @Nullable String language;
 
 	@Column(name = "enabled", nullable = false)
 	private boolean enabled = true;
 
 	@Column(name = "ecdh_publickey")
-	private String ecdhPublicKey;
+	private @Nullable String ecdhPublicKey;
 
 	@Column(name = "ecdsa_publickey")
-	private String ecdsaPublicKey;
+	private @Nullable String ecdsaPublicKey;
 
 	@Column(name = "privatekeys")
-	private String privateKeys;
+	private @Nullable String privateKeys;
 
 	@Column(name = "setupcode")
-	private String setupCode;
+	private @Nullable String setupCode;
 
 	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
 	public UserMetrics metrics;
@@ -100,35 +101,35 @@ public class User extends Authority {
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<LegacyDevice> legacyDevices = new HashSet<>();
 
-	public String getEmail() {
+	public @Nullable String getEmail() {
 		return email;
 	}
 
-	public void setEmail(String email) {
+	public void setEmail(@Nullable String email) {
 		this.email = email;
 	}
 
-	public String getFirstName() {
+	public @Nullable String getFirstName() {
 		return firstName;
 	}
 
-	public void setFirstName(String firstName) {
+	public void setFirstName(@Nullable String firstName) {
 		this.firstName = firstName;
 	}
 
-	public String getLastName() {
+	public @Nullable String getLastName() {
 		return lastName;
 	}
 
-	public void setLastName(String lastName) {
+	public void setLastName(@Nullable String lastName) {
 		this.lastName = lastName;
 	}
 
-	public String getLanguage() {
+	public @Nullable String getLanguage() {
 		return language;
 	}
 
-	public void setLanguage(String language) {
+	public void setLanguage(@Nullable String language) {
 		this.language = language;
 	}
 
@@ -140,35 +141,35 @@ public class User extends Authority {
 		this.enabled = enabled;
 	}
 
-	public String getEcdhPublicKey() {
+	public @Nullable String getEcdhPublicKey() {
 		return ecdhPublicKey;
 	}
 
-	public void setEcdhPublicKey(String ecdhPublicKey) {
+	public void setEcdhPublicKey(@Nullable String ecdhPublicKey) {
 		this.ecdhPublicKey = ecdhPublicKey;
 	}
 
-	public String getEcdsaPublicKey() {
+	public @Nullable String getEcdsaPublicKey() {
 		return ecdsaPublicKey;
 	}
 
-	public void setEcdsaPublicKey(String ecdsaPublicKey) {
+	public void setEcdsaPublicKey(@Nullable String ecdsaPublicKey) {
 		this.ecdsaPublicKey = ecdsaPublicKey;
 	}
 
-	public String getPrivateKeys() {
+	public @Nullable String getPrivateKeys() {
 		return privateKeys;
 	}
 
-	public void setPrivateKeys(String privateKeys) {
+	public void setPrivateKeys(@Nullable String privateKeys) {
 		this.privateKeys = privateKeys;
 	}
 
-	public String getSetupCode() {
+	public @Nullable String getSetupCode() {
 		return setupCode;
 	}
 
-	public void setSetupCode(String setupCode) {
+	public void setSetupCode(@Nullable String setupCode) {
 		this.setupCode = setupCode;
 	}
 

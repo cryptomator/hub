@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 	private String councilMemberId;
 
 	@Column(name = "ip_address")
-	private String ipAddress;
+	private @Nullable String ipAddress;
 
 	public UUID getProcessId() {
 		return processId;
@@ -40,11 +41,11 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 		this.councilMemberId = councilMemberId;
 	}
 
-	public String getIpAddress() {
+	public @Nullable String getIpAddress() {
 		return ipAddress;
 	}
 
-	public void setIpAddress(String ipAddress) {
+	public void setIpAddress(@Nullable String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
 

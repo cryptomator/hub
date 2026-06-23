@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.transaction.Transactional;
 import org.hibernate.annotations.Immutable;
+import org.jspecify.annotations.Nullable;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -91,25 +92,25 @@ public class Vault {
 	private String name;
 
 	@Column(name = "salt")
-	private String salt;
+	private @Nullable String salt;
 
 	@Column(name = "iterations")
-	private Integer iterations;
+	private @Nullable Integer iterations;
 
 	@Column(name = "masterkey")
-	private String masterkey;
+	private @Nullable String masterkey;
 
 	@Column(name = "auth_pubkey")
-	private String authenticationPublicKey;
+	private @Nullable String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	private String authenticationPrivateKey;
+	private @Nullable String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
 
 	@Column(name = "description")
-	private String description;
+	private @Nullable String description;
 
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
@@ -175,43 +176,43 @@ public class Vault {
 		this.name = name;
 	}
 
-	public String getSalt() {
+	public @Nullable String getSalt() {
 		return salt;
 	}
 
-	public void setSalt(String salt) {
+	public void setSalt(@Nullable String salt) {
 		this.salt = salt;
 	}
 
-	public Integer getIterations() {
+	public @Nullable Integer getIterations() {
 		return iterations;
 	}
 
-	public void setIterations(Integer iterations) {
+	public void setIterations(@Nullable Integer iterations) {
 		this.iterations = iterations;
 	}
 
-	public String getMasterkey() {
+	public @Nullable String getMasterkey() {
 		return masterkey;
 	}
 
-	public void setMasterkey(String masterkey) {
+	public void setMasterkey(@Nullable String masterkey) {
 		this.masterkey = masterkey;
 	}
 
-	public void setAuthenticationPublicKey(String authenticationPublicKey) {
+	public void setAuthenticationPublicKey(@Nullable String authenticationPublicKey) {
 		this.authenticationPublicKey = authenticationPublicKey;
 	}
 
-	public String getAuthenticationPrivateKey() {
+	public @Nullable String getAuthenticationPrivateKey() {
 		return authenticationPrivateKey;
 	}
 
-	public String getAuthenticationPublicKey() {
+	public @Nullable String getAuthenticationPublicKey() {
 		return authenticationPublicKey;
 	}
 
-	public void setAuthenticationPrivateKey(String authenticationPrivateKey) {
+	public void setAuthenticationPrivateKey(@Nullable String authenticationPrivateKey) {
 		this.authenticationPrivateKey = authenticationPrivateKey;
 	}
 
@@ -223,11 +224,11 @@ public class Vault {
 		this.creationTime = creationTime;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 

@@ -30,20 +30,21 @@ import java.util.stream.Collectors;
 @VaultRole
 public class VaultRoleFilter implements ContainerRequestFilter {
 
-	@Inject
-	JsonWebToken jwt;
-
-	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-
-	@Inject
-	EmergencyRecoveryProcess.Repository recoveryRepo;
-
-	@Inject
-	Vault.Repository vaultRepo;
+	private final JsonWebToken jwt;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	private final EmergencyRecoveryProcess.Repository recoveryRepo;
+	private final Vault.Repository vaultRepo;
 
 	@Context
 	ResourceInfo resourceInfo;
+
+	@Inject
+	VaultRoleFilter(JsonWebToken jwt, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, EmergencyRecoveryProcess.Repository recoveryRepo, Vault.Repository vaultRepo) {
+		this.jwt = jwt;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+		this.recoveryRepo = recoveryRepo;
+		this.vaultRepo = vaultRepo;
+	}
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws NotFoundException, ForbiddenException, NotAuthorizedException {

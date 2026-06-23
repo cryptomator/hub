@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -32,14 +33,18 @@ import java.util.List;
 @Path("/groups")
 public class GroupsResource {
 
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final VaultAccess.Repository vaultAccessRepo;
+	private final KeycloakAuthorityPuller keycloakAuthorityPuller;
+
 	@Inject
-	User.Repository userRepo;
-	@Inject
-	Group.Repository groupRepo;
-	@Inject
-	VaultAccess.Repository vaultAccessRepo;
-	@Inject
-	KeycloakAuthorityPuller keycloakAuthorityPuller;
+	GroupsResource(User.Repository userRepo, Group.Repository groupRepo, VaultAccess.Repository vaultAccessRepo, KeycloakAuthorityPuller keycloakAuthorityPuller) {
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.vaultAccessRepo = vaultAccessRepo;
+		this.keycloakAuthorityPuller = keycloakAuthorityPuller;
+	}
 
 	@GET
 	@Path("/")
@@ -172,14 +177,14 @@ public class GroupsResource {
 
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 
 	}
 
 	public record UpdateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 	}
 }

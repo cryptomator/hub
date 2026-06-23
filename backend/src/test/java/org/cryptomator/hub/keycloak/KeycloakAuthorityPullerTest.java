@@ -22,6 +22,7 @@ import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -53,10 +54,12 @@ import static org.mockito.ArgumentMatchers.any;
 
 class KeycloakAuthorityPullerTest {
 
+	private final Keycloak keycloak = Mockito.mock(Keycloak.class);
 	private final KeycloakAuthorityProvider remoteUserProvider = Mockito.mock(KeycloakAuthorityProvider.class);
 	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
 	private final Group.Repository groupRepo = Mockito.mock(Group.Repository.class);
 	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo = Mockito.mock(EffectiveGroupMembership.Repository.class);
+	private final KeycloakRealmRoles realmRoles = Mockito.mock(KeycloakRealmRoles.class);
 
 	private final List<User> persistedUsers = new ArrayList<>();
 	private final List<Group> persistedGroups = new ArrayList<>();
@@ -65,11 +68,7 @@ class KeycloakAuthorityPullerTest {
 
 	@BeforeEach
 	void setUp() {
-		remoteUserPuller = new KeycloakAuthorityPuller();
-		remoteUserPuller.remoteUserProvider = remoteUserProvider;
-		remoteUserPuller.userRepo = userRepo;
-		remoteUserPuller.groupRepo = groupRepo;
-		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+		remoteUserPuller = new KeycloakAuthorityPuller(keycloak, userRepo, groupRepo, remoteUserProvider, effectiveGroupMembershipRepo, realmRoles, "cryptomator");
 		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
 			Iterable<User> iterable = invocation.getArgument(0);
@@ -372,12 +371,10 @@ class KeycloakAuthorityPullerTest {
 		private final RealmResource realm = Mockito.mock(RealmResource.class);
 		private final UsersResource usersResource = Mockito.mock(UsersResource.class);
 		private final GroupsResource groupsResource = Mockito.mock(GroupsResource.class);
-		private final KeycloakRealmRoles realmRoles = Mockito.mock(KeycloakRealmRoles.class);
 
 		@BeforeEach
 		void setUp() {
 			remoteUserPuller.realm = realm;
-			remoteUserPuller.realmRoles = realmRoles;
 			Mockito.lenient().when(realm.users()).thenReturn(usersResource);
 			Mockito.lenient().when(realm.groups()).thenReturn(groupsResource);
 		}

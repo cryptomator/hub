@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -38,8 +39,12 @@ public class LicenseVerifierProducer {
 			-----END CERTIFICATE-----
 			""";
 
-	@ConfigProperty(name = "hub.license.chain.required-cn")
-	String licenseChainRequiredCn;
+	private final String licenseChainRequiredCn;
+
+	@Inject
+	LicenseVerifierProducer(@ConfigProperty(name = "hub.license.chain.required-cn") String licenseChainRequiredCn) {
+		this.licenseChainRequiredCn = licenseChainRequiredCn;
+	}
 
 	@Produces
 	@ApplicationScoped

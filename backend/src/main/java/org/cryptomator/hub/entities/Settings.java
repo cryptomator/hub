@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,7 +30,7 @@ public class Settings {
 	private String hubId;
 
 	@Column(name = "license_key")
-	private String licenseKey;
+	private @Nullable String licenseKey;
 
 	@Column(name = "wot_max_depth", nullable = false)
 	private int wotMaxDepth;
@@ -73,11 +74,11 @@ public class Settings {
 		this.hubId = hubId;
 	}
 
-	public String getLicenseKey() {
+	public @Nullable String getLicenseKey() {
 		return licenseKey;
 	}
 
-	public void setLicenseKey(String licenseKey) {
+	public void setLicenseKey(@Nullable String licenseKey) {
 		this.licenseKey = licenseKey;
 	}
 

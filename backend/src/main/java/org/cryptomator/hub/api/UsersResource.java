@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -53,30 +53,32 @@ import java.util.stream.Collectors;
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
 
-	@Inject
-	AccessToken.Repository accessTokenRepo;
-	@Inject
-	EventLogger eventLogger;
-	@Inject
-	User.Repository userRepo;
-	@Inject
-	Device.Repository deviceRepo;
-	@Inject
-	Vault.Repository vaultRepo;
-	@Inject
-	EmergencyRecoveryProcess.Repository emergencyRecovery;
-	@Inject
-	WotEntry.Repository wotRepo;
-	@Inject
-	EffectiveWot.Repository effectiveWotRepo;
-	@Inject
-	AuditEvent.Repository auditEventRepo;
+	private final AccessToken.Repository accessTokenRepo;
+	private final EventLogger eventLogger;
+	private final User.Repository userRepo;
+	private final Device.Repository deviceRepo;
+	private final Vault.Repository vaultRepo;
+	private final EmergencyRecoveryProcess.Repository emergencyRecovery;
+	private final WotEntry.Repository wotRepo;
+	private final EffectiveWot.Repository effectiveWotRepo;
+	private final AuditEvent.Repository auditEventRepo;
+	private final JsonWebToken jwt;
+	private final KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@Inject
-	JsonWebToken jwt;
-
-	@Inject
-	KeycloakAuthorityPuller keycloakAuthorityPuller;
+	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, JsonWebToken jwt, KeycloakAuthorityPuller keycloakAuthorityPuller) {
+		this.accessTokenRepo = accessTokenRepo;
+		this.eventLogger = eventLogger;
+		this.userRepo = userRepo;
+		this.deviceRepo = deviceRepo;
+		this.vaultRepo = vaultRepo;
+		this.emergencyRecovery = emergencyRecovery;
+		this.wotRepo = wotRepo;
+		this.effectiveWotRepo = effectiveWotRepo;
+		this.auditEventRepo = auditEventRepo;
+		this.jwt = jwt;
+		this.keycloakAuthorityPuller = keycloakAuthorityPuller;
+	}
 
 	@PUT
 	@Path("/me")
@@ -448,18 +450,18 @@ public class UsersResource {
 			@JsonProperty("firstName") @NotNull String firstName,
 			@JsonProperty("lastName") @NotNull String lastName,
 			@JsonProperty("password") @NotNull String password,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
-			@JsonProperty("groupIds") Set<String> groupIds,
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl,
+			@JsonProperty("groupIds") @Nullable Set<String> groupIds,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}
 
 	public record UpdateUserDto(
-			@JsonProperty("email") String email,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName,
-			@JsonProperty("password") String password,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
+			@JsonProperty("email") @Nullable String email,
+			@JsonProperty("firstName") @Nullable String firstName,
+			@JsonProperty("lastName") @Nullable String lastName,
+			@JsonProperty("password") @Nullable String password,
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}
