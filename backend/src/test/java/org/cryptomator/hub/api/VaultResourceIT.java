@@ -6,6 +6,7 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
@@ -14,6 +15,7 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
@@ -65,6 +68,7 @@ import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
@@ -83,6 +87,8 @@ public class VaultResourceIT {
 	Group.Repository groupRepo;
 	@Inject
 	User.Repository userRepo;
+	@InjectSpy
+	Device.Repository deviceRepo;
 	@Inject
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	@Inject
@@ -224,19 +230,57 @@ public class VaultResourceIT {
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID stores it in audit log")
 		void testUnlock4() {
-			given().header("HUB-DEVICE-ID", "123456789123456789")
+			given().header("HUB-DEVICE-ID", "device3")
 					.header("X-Forwarded-For", "1.2.3.4")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 
+			var timestampCaptor = ArgumentCaptor.forClass(Instant.class);
 			Mockito.verify(eventLogger).logVaultKeyRetrieved(
-					"user1",
-					UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"),
-					VaultKeyRetrievedEvent.Result.SUCCESS,
-					"1.2.3.4",
-					"123456789123456789"
+					timestampCaptor.capture(),
+					eq("user1"),
+					eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")),
+					eq(VaultKeyRetrievedEvent.Result.SUCCESS),
+					eq("1.2.3.4"),
+					eq("device3")
 			);
+			Mockito.verify(deviceRepo).updateLastAccess(
+					eq("device3"),
+					eq(timestampCaptor.getValue()),
+					eq("1.2.3.4")
+			);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token without IP and device ID creates audit log")
+		void testUnlock5() {
+			given().when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body(is("jwe.jwe.jwe.vault1.user1"));
+
+			var timestampCaptor = ArgumentCaptor.forClass(Instant.class);
+			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					timestampCaptor.capture(),
+					eq("user1"),
+					eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")),
+					eq(VaultKeyRetrievedEvent.Result.SUCCESS),
+					anyString(),
+					isNull()
+			);
+			Mockito.verify(deviceRepo, never()).updateLastAccess(any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and wrong device ID fails with 400")
+		void testUnlock6() {
+			given().header("HUB-DEVICE-ID", "d3v1c33")
+					.header("X-Forwarded-For", "5.6.7.8")
+					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+
+			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(any(), any(), any(), any(), any(), any());
+			Mockito.verify(deviceRepo, never()).updateLastAccess(any(), any(), any());
 		}
 
 		@Test
@@ -261,7 +305,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 200 for archived vaults with evenIfArchived set to true")
-		void testUnlockArchived3() throws SQLException {
+		void testUnlockArchived3() {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
 
@@ -456,6 +500,8 @@ public class VaultResourceIT {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault666.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(403);
+
+			Mockito.verify(deviceRepo, never()).updateLastAccess(any(), any(), any());
 		}
 
 		@Test

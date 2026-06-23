@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -12,6 +11,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
+import java.util.Map;
 
 @Entity
 @Immutable
@@ -31,7 +31,7 @@ public class EffectiveWot {
 	@EmbeddedId
 	private Id id;
 
-	@Column(name = "signature_chain")
+	@Column(name = "signature_chain", nullable = false)
 	@Type(StringArrayType.class)
 	private String[] signatureChain;
 
@@ -60,11 +60,11 @@ public class EffectiveWot {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<EffectiveWot, Id> {
 		public PanacheQuery<EffectiveWot> findTrusted(String trustingUserId) {
-			return find("#EffectiveWot.findTrustedUsers", Parameters.with("trustingUserId", trustingUserId));
+			return find("#EffectiveWot.findTrustedUsers", Map.of("trustingUserId", trustingUserId));
 		}
 
 		public PanacheQuery<EffectiveWot> findTrusted(String trustingUserId, String trustedUserId) {
-			return find("#EffectiveWot.findTrustedUser", Parameters.with("trustingUserId", trustingUserId).and("trustedUserId", trustedUserId));
+			return find("#EffectiveWot.findTrustedUser", Map.of("trustingUserId", trustingUserId, "trustedUserId", trustedUserId));
 		}
 	}
 }

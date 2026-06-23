@@ -6,7 +6,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.Device.Type;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -18,47 +19,47 @@ public class DeviceRegisteredEvent extends AuditEvent {
 	public static final String TYPE = "DEVICE_REGISTER";
 
 	@Column(name = "registered_by")
-	private String registeredBy;
+	private @Nullable String registeredBy;
 
 	@Column(name = "device_id")
-	private String deviceId;
+	private @Nullable String deviceId;
 
 	@Column(name = "device_name")
-	private String deviceName;
+	private @Nullable String deviceName;
 
 	@Column(name = "device_type")
 	@Enumerated(EnumType.STRING)
-	private Device.Type deviceType;
+	private @Nullable Type deviceType;
 
-	public String getRegisteredBy() {
+	public @Nullable String getRegisteredBy() {
 		return registeredBy;
 	}
 
-	public void setRegisteredBy(String registeredBy) {
+	public void setRegisteredBy(@Nullable String registeredBy) {
 		this.registeredBy = registeredBy;
 	}
 
-	public String getDeviceId() {
+	public @Nullable String getDeviceId() {
 		return deviceId;
 	}
 
-	public void setDeviceId(String deviceId) {
+	public void setDeviceId(@Nullable String deviceId) {
 		this.deviceId = deviceId;
 	}
 
-	public String getDeviceName() {
+	public @Nullable String getDeviceName() {
 		return deviceName;
 	}
 
-	public void setDeviceName(String deviceName) {
+	public void setDeviceName(@Nullable String deviceName) {
 		this.deviceName = deviceName;
 	}
 
-	public Device.Type getDeviceType() {
+	public @Nullable Type getDeviceType() {
 		return deviceType;
 	}
 
-	public void setDeviceType(Device.Type deviceType) {
+	public void setDeviceType(@Nullable Type deviceType) {
 		this.deviceType = deviceType;
 	}
 

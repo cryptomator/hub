@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -14,6 +13,7 @@ import jakarta.persistence.MapKey;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class EmergencyRecoveryProcess {
 	private Type type;
 
 	@Column(name = "details")
-	private String details;
+	private @Nullable String details;
 
 	@Column(name = "required_key_shares", nullable = false)
 	private int requiredKeyShares;
@@ -104,11 +104,11 @@ public class EmergencyRecoveryProcess {
 		this.type = type;
 	}
 
-	public String getDetails() {
+	public @Nullable String getDetails() {
 		return details;
 	}
 
-	public void setDetails(String details) {
+	public void setDetails(@Nullable String details) {
 		this.details = details;
 	}
 
@@ -153,15 +153,15 @@ public class EmergencyRecoveryProcess {
 	public static class Repository implements PanacheRepositoryBase<EmergencyRecoveryProcess, UUID> {
 
 		public Stream<EmergencyRecoveryProcess> findByVaultId(UUID vaultId) {
-			return find("#EmergencyRecoveryProcess.findByVaultId", Parameters.with("vaultId", vaultId)).stream();
+			return find("#EmergencyRecoveryProcess.findByVaultId", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
-			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+			return find("#EmergencyRecoveryProcess.byCouncilMember", Map.of("councilMemberId", councilMemberId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMemberOrProcessMember(String councilMemberId) {
-			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Map.of("councilMemberId", councilMemberId)).stream();
 		}
 
 		public void deleteKeySharesForCouncilMember(String councilMemberId) {

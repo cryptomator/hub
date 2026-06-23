@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -16,35 +17,35 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_ACCESS_GRANT";
 
 	@Column(name = "granted_by")
-	private String grantedBy;
+	private @Nullable String grantedBy;
 
 	@Column(name = "vault_id")
-	private UUID vaultId;
+	private @Nullable UUID vaultId;
 
 	@Column(name = "authority_id")
-	private String authorityId;
+	private @Nullable String authorityId;
 
-	public String getGrantedBy() {
+	public @Nullable String getGrantedBy() {
 		return grantedBy;
 	}
 
-	public void setGrantedBy(String grantedBy) {
+	public void setGrantedBy(@Nullable String grantedBy) {
 		this.grantedBy = grantedBy;
 	}
 
-	public UUID getVaultId() {
+	public @Nullable UUID getVaultId() {
 		return vaultId;
 	}
 
-	public void setVaultId(UUID vaultId) {
+	public void setVaultId(@Nullable UUID vaultId) {
 		this.vaultId = vaultId;
 	}
 
-	public String getAuthorityId() {
+	public @Nullable String getAuthorityId() {
 		return authorityId;
 	}
 
-	public void setAuthorityId(String authorityId) {
+	public void setAuthorityId(@Nullable String authorityId) {
 		this.authorityId = authorityId;
 	}
 

@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -14,15 +13,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -51,35 +52,31 @@ import java.util.stream.Stream;
 public class User extends Authority {
 
 	@Column(name = "email")
-	private String email;
+	private @Nullable String email;
 
 	@Column(name = "firstname")
-	private String firstName;
+	private @Nullable String firstName;
 
 	@Column(name = "lastname")
-	private String lastName;
+	private @Nullable String lastName;
 
 	@Column(name = "language")
-	private String language;
-
-	@Column(name = "realm_roles")
-	@Type(StringArrayType.class)
-	private String[] realmRoles = new String[0];
+	private @Nullable String language;
 
 	@Column(name = "enabled", nullable = false)
 	private boolean enabled = true;
 
 	@Column(name = "ecdh_publickey")
-	private String ecdhPublicKey;
+	private @Nullable String ecdhPublicKey;
 
 	@Column(name = "ecdsa_publickey")
-	private String ecdsaPublicKey;
+	private @Nullable String ecdsaPublicKey;
 
 	@Column(name = "privatekeys")
-	private String privateKeys;
+	private @Nullable String privateKeys;
 
 	@Column(name = "setupcode")
-	private String setupCode;
+	private @Nullable String setupCode;
 
 	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
 	public UserMetrics metrics;
@@ -104,44 +101,36 @@ public class User extends Authority {
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<LegacyDevice> legacyDevices = new HashSet<>();
 
-	public String getEmail() {
+	public @Nullable String getEmail() {
 		return email;
 	}
 
-	public void setEmail(String email) {
+	public void setEmail(@Nullable String email) {
 		this.email = email;
 	}
 
-	public String getFirstName() {
+	public @Nullable String getFirstName() {
 		return firstName;
 	}
 
-	public void setFirstName(String firstName) {
+	public void setFirstName(@Nullable String firstName) {
 		this.firstName = firstName;
 	}
 
-	public String getLastName() {
+	public @Nullable String getLastName() {
 		return lastName;
 	}
 
-	public void setLastName(String lastName) {
+	public void setLastName(@Nullable String lastName) {
 		this.lastName = lastName;
 	}
 
-	public String getLanguage() {
+	public @Nullable String getLanguage() {
 		return language;
 	}
 
-	public void setLanguage(String language) {
+	public void setLanguage(@Nullable String language) {
 		this.language = language;
-	}
-
-	public String[] getRealmRoles() {
-		return realmRoles;
-	}
-
-	public void setRealmRoles(String[] realmRoles) {
-		this.realmRoles = realmRoles;
 	}
 
 	public boolean isEnabled() {
@@ -152,35 +141,35 @@ public class User extends Authority {
 		this.enabled = enabled;
 	}
 
-	public String getEcdhPublicKey() {
+	public @Nullable String getEcdhPublicKey() {
 		return ecdhPublicKey;
 	}
 
-	public void setEcdhPublicKey(String ecdhPublicKey) {
+	public void setEcdhPublicKey(@Nullable String ecdhPublicKey) {
 		this.ecdhPublicKey = ecdhPublicKey;
 	}
 
-	public String getEcdsaPublicKey() {
+	public @Nullable String getEcdsaPublicKey() {
 		return ecdsaPublicKey;
 	}
 
-	public void setEcdsaPublicKey(String ecdsaPublicKey) {
+	public void setEcdsaPublicKey(@Nullable String ecdsaPublicKey) {
 		this.ecdsaPublicKey = ecdsaPublicKey;
 	}
 
-	public String getPrivateKeys() {
+	public @Nullable String getPrivateKeys() {
 		return privateKeys;
 	}
 
-	public void setPrivateKeys(String privateKeys) {
+	public void setPrivateKeys(@Nullable String privateKeys) {
 		this.privateKeys = privateKeys;
 	}
 
-	public String getSetupCode() {
+	public @Nullable String getSetupCode() {
 		return setupCode;
 	}
 
-	public void setSetupCode(String setupCode) {
+	public void setSetupCode(@Nullable String setupCode) {
 		this.setupCode = setupCode;
 	}
 
@@ -254,7 +243,7 @@ public class User extends Authority {
 					LEFT JOIN FETCH u.devices d
 					LEFT JOIN FETCH u.legacyDevices ld
 					WHERE u.id = :id
-					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+					""", Map.of("id", id)).singleResultOptional().orElse(null);
 			if (user == null) {
 				return null;
 			}
@@ -271,23 +260,22 @@ public class User extends Authority {
 			return user;
 		}
 
-		public Stream<User> findByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("id IN :ids", Parameters.with("ids", batch));
-				return Stream.concat(result, partial.stream());
-			});
+		public Stream<User> streamByIds(Collection<String> ids) {
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("id IN :ids", Map.of("ids", batch)).stream());
 		}
 
 		public long deleteByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Map.of("ids", batch)));
 		}
 
 		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
-			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+			return find("#User.requiringAccessGrant", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public long countEffectiveGroupUsers(String groupdId) {
-			return count("#User.countEffectiveGroupUsers", Parameters.with("groupId", groupdId));
+			return count("#User.countEffectiveGroupUsers", Map.of("groupId", groupdId));
 		}
 
 		public Stream<User> getEffectiveGroupUsers(String groupdId) {
@@ -296,7 +284,7 @@ public class User extends Authority {
 
 		public Set<User> getEffectiveGroupUsers(Collection<String> groupIds) {
 			return Batch.of(200).run(groupIds, new HashSet<>(), (batch, result) -> {
-				var partial = find("#User.getEffectiveGroupUsers", Parameters.with("groupIds", batch)).project(User.class);
+				var partial = find("#User.getEffectiveGroupUsers", Map.of("groupIds", batch)).project(User.class);
 				result.addAll(partial.list());
 				return result;
 			});

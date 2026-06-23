@@ -1,5 +1,5 @@
 import { base64 } from '@scure/base';
-import AxiosStatic, { AxiosError, AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
@@ -34,9 +34,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-export function isAxiosError(error: unknown): error is AxiosError {
-  return AxiosStatic.isAxiosError(error);
-}
 
 // #region DTOs
 
@@ -48,7 +45,7 @@ export type VaultDto = {
   archived: boolean;
   requiredEmergencyKeyShares: number;
   emergencyKeyShares: Record<string, string>; // <memberId, encryptedKeyShare>
-  
+
   // Legacy properties ("Vault Admin Password"):
   masterkey?: string;
   iterations?: number;
@@ -90,7 +87,6 @@ export type UserDto = {
   email?: string;
   firstName?: string;
   lastName?: string;
-  realmRoles: RealmRole[];
   enabled: boolean;
   language?: string;
   devices: DeviceDto[];
@@ -111,6 +107,7 @@ export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
+  realmRoles: RealmRole[];
 };
 
 /**
@@ -145,11 +142,13 @@ export type TrustDto = {
   signatureChain: string[]
 };
 
-export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password: string;
 };
 
-export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password?: string;
 };
 
@@ -485,12 +484,14 @@ class GroupService {
   }
 
   public async createGroup(dto: CreateGroupDto, addFallbackPictures: boolean = true): Promise<GroupDto> {
-    const group = await axiosAuth.post<GroupDto>('/groups/', dto).then(response => response.data);
+    const group = await axiosAuth.post<GroupDto>('/groups/', dto).then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 409));
     return addFallbackPictures ? fillInMissingPicture(group) : group;
   }
 
   public async updateGroup(groupId: string, dto: UpdateGroupDto, addFallbackPictures: boolean = true): Promise<GroupDto> {
-    const group = await axiosAuth.put<GroupDto>(`/groups/${groupId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    const group = await axiosAuth.put<GroupDto>(`/groups/${groupId}`, dto).then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
     return addFallbackPictures ? fillInMissingPicture(group) : group;
   }
 
@@ -521,11 +522,10 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false, withLastAccess: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
+  public async me(withDevices: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
     const user = await axiosAuth.get<UserDto>('/users/me', {
       params: {
-        withDevices: withDevices,
-        withLastAccess: withLastAccess
+        withDevices: withDevices
       }
     }).then(response => response.data);
     return addFallbackPictures ? fillInMissingPicture(user) : user;
@@ -539,7 +539,7 @@ class UserService {
   public async removeUser(userId: string): Promise<void> {
     return axiosAuth.delete(`/users/${userId}`)
       .then(() => { })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
   }
 
   public async resetMe(): Promise<void> {
@@ -552,7 +552,8 @@ class UserService {
   }
 
   public async createUser(dto: CreateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
-    const user = await axiosAuth.post<UserDto>('/users/', dto).then(response => response.data);
+    const user = await axiosAuth.post<UserDto>('/users/', dto).then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 409));
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
@@ -569,11 +570,13 @@ class UserService {
   }
 
   public async setUserEnabled(userId: string, enabled: boolean): Promise<void> {
-    await axiosAuth.put(`/users/${userId}/enabled`, String(enabled), { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put(`/users/${userId}/enabled`, String(enabled), { headers: { 'Content-Type': 'text/plain' } })
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
   }
 
   public async updateUser(userId: string, dto: UpdateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
-    const user = await axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    const user = await axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404, 409));
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
@@ -753,17 +756,23 @@ function convertExpectedToBackendError(status: number): BackendError {
   }
 }
 
-/**
- * Rethrows the error object or, if 'error' is an response with an expected http status code, it is converted to an BackendError and then rethrown.
- * @param error A thrown object
- * @param expectedStatusCodes The expected http status codes of the backend call
- */
 export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status);
-  } else {
-    throw error;
   }
+  throw error;
+}
+
+export function asError(error: unknown): Error {
+  if (AxiosStatic.isAxiosError(error) && error.response != null) {
+    if (error.response.status === 404) {
+      return new NotFoundError();
+    }
+  }
+  if (error instanceof Error) {
+    return error;
+  }
+  return new Error('Unknown Error');
 }
 
 export class BackendError extends Error { }

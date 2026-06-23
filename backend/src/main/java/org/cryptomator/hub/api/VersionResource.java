@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -14,11 +15,14 @@ import org.keycloak.admin.client.Keycloak;
 @Path("/version")
 public class VersionResource {
 
-	@ConfigProperty(name = "quarkus.application.version")
-	String hubVersion;
+	private final String hubVersion;
+	private final Keycloak keycloak;
 
 	@Inject
-	Keycloak keycloak;
+	VersionResource(@ConfigProperty(name = "quarkus.application.version") String hubVersion, Keycloak keycloak) {
+		this.hubVersion = hubVersion;
+		this.keycloak = keycloak;
+	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -33,7 +37,7 @@ public class VersionResource {
 		return new VersionDto(hubVersion, keycloakVersion);
 	}
 
-	public record VersionDto(@JsonProperty("hubVersion") String hubVersion, @JsonProperty("keycloakVersion") String keycloakVersion) {
+	public record VersionDto(@JsonProperty("hubVersion") String hubVersion, @JsonProperty("keycloakVersion") @Nullable String keycloakVersion) {
 	}
 
 }

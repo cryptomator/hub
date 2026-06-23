@@ -2,7 +2,10 @@ package org.cryptomator.hub.keycloak;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -18,14 +21,19 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakAuthorityProvider {
 
+	private static final Logger LOG = Logger.getLogger(KeycloakAuthorityProvider.class);
+
 	//visible for testing
 	static final int MAX_COUNT_PER_REQUEST = 5_000;
 
-	@Inject
-	Keycloak keycloak;
+	private final Keycloak keycloak;
+	private final String keycloakRealm;
 
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String keycloakRealm;
+	@Inject
+	KeycloakAuthorityProvider(Keycloak keycloak, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+		this.keycloak = keycloak;
+		this.keycloakRealm = keycloakRealm;
+	}
 
 	public List<KeycloakUserDto> users() {
 		return users(keycloak.realm(keycloakRealm));
@@ -36,13 +44,18 @@ public class KeycloakAuthorityProvider {
 		List<KeycloakUserDto> users = new ArrayList<>();
 		List<KeycloakUserDto> currentRequestedUsers;
 
-		do {
-			currentRequestedUsers = realm.users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().map(this::mapToUser).toList();
-			users.addAll(currentRequestedUsers);
-		} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
+		try {
+			do {
+				currentRequestedUsers = realm.users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().map(KeycloakAuthorityProvider::mapToUser).toList();
+				users.addAll(currentRequestedUsers);
+			} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
 
-		var cliUser = cryptomatorCliUser(realm);
-		cliUser.ifPresent(users::add);
+			var cliUser = cryptomatorCliUser(realm);
+			cliUser.ifPresent(users::add);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to read users from Keycloak (offset {0}).", users.size());
+			throw e;
+		}
 
 		return users;
 	}
@@ -59,7 +72,7 @@ public class KeycloakAuthorityProvider {
 		return Optional.of(mapToUser(clientUser));
 	}
 
-	private KeycloakUserDto mapToUser(UserRepresentation userRepresentation) {
+	static KeycloakUserDto mapToUser(UserRepresentation userRepresentation) {
 		var pictureUrl = parsePictureUrl(userRepresentation.getAttributes());
 		return new KeycloakUserDto(userRepresentation.getId(),
 				userRepresentation.getUsername(),
@@ -67,11 +80,10 @@ public class KeycloakAuthorityProvider {
 				userRepresentation.getFirstName(),
 				userRepresentation.getLastName(),
 				pictureUrl,
-				userRepresentation.isEnabled(),
-				RealmRole.fromKcNames(userRepresentation.getRealmRoles()));
+				userRepresentation.isEnabled());
 	}
 
-	private String parsePictureUrl(Map<String, List<String>> attributes) {
+	static String parsePictureUrl(Map<String, List<String>> attributes) {
 		if (attributes != null && attributes.containsKey("picture")) {
 			var pictures = attributes.get("picture");
 			return pictures.stream().findFirst().orElse(null);
@@ -86,12 +98,17 @@ public class KeycloakAuthorityProvider {
 
 	//visible for testing
 	List<KeycloakGroupDto> groups(RealmResource realm) {
-		return deepCollectGroups(realm).stream().map(group -> {
-			var pictureUrl = parsePictureUrl(group.getAttributes());
-			// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
-			var members = deepCollectMembers(realm, group.getId());
-			return new KeycloakGroupDto(group.getId(), group.getName(), pictureUrl, members);
-		}).toList();
+		try {
+			return deepCollectGroups(realm).stream().map(group -> {
+				var pictureUrl = parsePictureUrl(group.getAttributes());
+				// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
+				var members = deepCollectMembers(realm, group.getId());
+				return new KeycloakGroupDto(group.getId(), group.getName(), pictureUrl, members);
+			}).toList();
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to read groups from Keycloak.");
+			throw e;
+		}
 	}
 
 	private List<GroupRepresentation> deepCollectGroups(RealmResource realm) {
@@ -114,12 +131,17 @@ public class KeycloakAuthorityProvider {
 		List<UserRepresentation> members = new ArrayList<>();
 		List<UserRepresentation> currentRequestedMemebers;
 
-		do {
-			currentRequestedMemebers = group.members(members.size(), MAX_COUNT_PER_REQUEST);
-			members.addAll(currentRequestedMemebers);
-		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
+		try {
+			do {
+				currentRequestedMemebers = group.members(members.size(), MAX_COUNT_PER_REQUEST);
+				members.addAll(currentRequestedMemebers);
+			} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to read members of group {0} from Keycloak (offset {1}).", groupId, members.size());
+			throw e;
+		}
 
-		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
+		return members.stream().map(KeycloakAuthorityProvider::mapToUser).collect(Collectors.toSet());
 	}
 
 	public List<UserRepresentation> usersInRole(RealmRole role) {
@@ -133,10 +155,15 @@ public class KeycloakAuthorityProvider {
 		List<UserRepresentation> users = new ArrayList<>();
 		List<UserRepresentation> currentBatch;
 
-		do {
-			currentBatch = roles.get(roleName).getUserMembers(true, users.size(), MAX_COUNT_PER_REQUEST);
-			users.addAll(currentBatch);
-		} while (currentBatch.size() == MAX_COUNT_PER_REQUEST);
+		try {
+			do {
+				currentBatch = roles.get(roleName).getUserMembers(true, users.size(), MAX_COUNT_PER_REQUEST);
+				users.addAll(currentBatch);
+			} while (currentBatch.size() == MAX_COUNT_PER_REQUEST);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to read users in role {0} from Keycloak (offset {1}).", roleName, users.size());
+			throw e;
+		}
 
 		return users;
 	}

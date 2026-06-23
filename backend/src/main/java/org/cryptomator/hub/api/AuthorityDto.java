@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.jspecify.annotations.Nullable;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
@@ -23,9 +24,9 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 	public final String name;
 
 	@JsonProperty("pictureUrl")
-	public final String pictureUrl;
+	public final @Nullable String pictureUrl;
 
-	protected AuthorityDto(String id, Type type, String name, String pictureUrl) {
+	protected AuthorityDto(String id, Type type, String name, @Nullable String pictureUrl) {
 		this.id = id;
 		this.type = type;
 		this.name = name;

@@ -5,9 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.security.identity.SecurityIdentity;
 import io.vertx.core.http.HttpServerRequest;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -37,12 +36,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.VaultAccess.Role;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -78,51 +79,44 @@ import java.util.stream.Stream;
 @Path("/vaults")
 public class VaultResource {
 
-	@Inject
-	EventLogger eventLogger;
-
-	@Inject
-	AccessToken.Repository accessTokenRepo;
-
-	@Inject
-	Group.Repository groupRepo;
-
-	@Inject
-	User.Repository userRepo;
-
-	@Inject
-	Authority.Repository authorityRepo;
-
-	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-
+	private final EventLogger eventLogger;
+	private final AccessToken.Repository accessTokenRepo;
+	private final Device.Repository deviceRepo;
+	private final Group.Repository groupRepo;
+	private final User.Repository userRepo;
+	private final Authority.Repository authorityRepo;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
-	@Inject
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	LegacyAccessToken.Repository legacyAccessTokenRepo;
-
-	@Inject
-	Vault.Repository vaultRepo;
-
-	@Inject
-	VaultAccess.Repository vaultAccessRepo;
-
-	@Inject
-	JsonWebToken jwt;
-
-	@Inject
-	SecurityIdentity identity;
-
-	@Inject
-	LicenseHolder license;
-
-	@Inject
-	VaultUnlockMetrics vaultUnlockMetrics;
+	private final LegacyAccessToken.Repository legacyAccessTokenRepo;
+	private final Vault.Repository vaultRepo;
+	private final VaultAccess.Repository vaultAccessRepo;
+	private final JsonWebToken jwt;
+	private final LicenseHolder license;
+	private final VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Context
 	HttpServerRequest request;
+
+	@Inject
+	@SuppressWarnings("deprecation")
+	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics) {
+		this.eventLogger = eventLogger;
+		this.accessTokenRepo = accessTokenRepo;
+		this.deviceRepo = deviceRepo;
+		this.groupRepo = groupRepo;
+		this.userRepo = userRepo;
+		this.authorityRepo = authorityRepo;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+		this.legacyAccessTokenRepo = legacyAccessTokenRepo;
+		this.vaultRepo = vaultRepo;
+		this.vaultAccessRepo = vaultAccessRepo;
+		this.jwt = jwt;
+		this.license = license;
+		this.vaultUnlockMetrics = vaultUnlockMetrics;
+	}
 
 	@GET
 	@Path("/accessible")
@@ -130,7 +124,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
-	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
+	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") Role role) {
 		var currentUserId = jwt.getSubject();
 		final Stream<Vault> resultStream;
 		if (role == null) {
@@ -235,7 +229,7 @@ public class VaultResource {
 		// resolve group members and simulate new seat count:
 		var effectiveUsers = new HashSet<User>();
 		effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(memberRoles.keySet()));
-		effectiveUsers.addAll(userRepo.findByIds(memberRoles.keySet()).toList());
+		effectiveUsers.addAll(userRepo.streamByIds(memberRoles.keySet()).toList());
 		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
 		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
 		if (newSeatOccupyingUsers.size() > license.getEntitlements().seats()) {
@@ -387,7 +381,7 @@ public class VaultResource {
 		var ipAddress = request.remoteAddress().hostAddress();
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			var response = Response.ok(access.getJwe());
 			var iosLicense = license.getEntitlements().iosLicense();
 			var androidLicense = license.getEntitlements().androidLicense();
@@ -399,8 +393,8 @@ public class VaultResource {
 				response = response.header("Hub-Android-License", androidLicense);
 			}
 			return response.build();
-		} catch (NoResultException e) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+		} catch (NoResultException _) {
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -437,11 +431,25 @@ public class VaultResource {
 			vaultUnlockMetrics.recordFailure();
 			throw new ActionRequiredException("User account not initialized.");
 		}
+
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
+		if (deviceId != null) {
+			//for backwards compatibility, we can only validate the deviceId if the header is set
+			try {
+				deviceRepo.findByIdAndUser(deviceId, user.getId());
+			} catch (NoResultException e) {
+				throw new BadRequestException("User has no such device as specified in Header");
+			}
+		}
+
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			var timestamp = Instant.now();
+			eventLogger.logVaultKeyRetrieved(timestamp, jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			if (deviceId != null) {
+				deviceRepo.updateLastAccess(deviceId, timestamp, ipAddress);
+			}
 			vaultUnlockMetrics.recordSuccess();
 			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
 			var iosLicense = license.getEntitlements().iosLicense();
@@ -455,7 +463,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} else {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
@@ -533,7 +541,7 @@ public class VaultResource {
 					.collect(Collectors.toSet());
 			var effectiveUsers = new HashSet<User>();
 			effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(authorityIds));
-			effectiveUsers.addAll(userRepo.findByIds(authorityIds).toList());
+			effectiveUsers.addAll(userRepo.streamByIds(authorityIds).toList());
 			var projectedSeatUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList());
 			projectedSeatUsers.addAll(effectiveUsers.stream().map(User::getId).toList());
 			if (projectedSeatUsers.size() > license.getEntitlements().seats()) {
@@ -669,14 +677,14 @@ public class VaultResource {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars @Nullable String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
 						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
 						   // Legacy properties ("Vault Admin Password"):
-						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
-						   @JsonProperty("salt") @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
+						   @JsonProperty("masterkey") @OnlyBase64Chars @Nullable String masterkey, @JsonProperty("iterations") @Nullable Integer iterations,
+						   @JsonProperty("salt") @OnlyBase64Chars @Nullable String salt,
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars @Nullable String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars @Nullable String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
@@ -688,7 +696,7 @@ public class VaultResource {
 	public record VaultDtoWithRole(
 			@JsonProperty("id") UUID id,
 			@JsonProperty("name") String name,
-			@JsonProperty("description") String description,
+			@JsonProperty("description") @Nullable String description,
 			@JsonProperty("archived") boolean archived,
 			@JsonProperty("creationTime") Instant creationTime,
 			@JsonProperty("role") VaultAccess.Role role

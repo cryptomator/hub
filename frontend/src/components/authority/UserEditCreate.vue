@@ -219,7 +219,7 @@
                     </button>
                   </div>
                 </div>
-                <p v-if="submitError" class="mt-2 text-sm text-red-600">{{ submitError }}</p>
+                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600">{{ onSubmitError.message }}</p>
               </div>
             </div>
           </form>
@@ -235,7 +235,7 @@ import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlas
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { generateFallbackPictureUrl, isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
+import backend, { asError, ConflictError, generateFallbackPictureUrl, isSelectableRealmRole, RealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -249,7 +249,7 @@ const props = defineProps<{
   mode: 'EDIT',
 }>();
 
-type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'realmRoles' | 'pictureUrl'>;
+type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'pictureUrl'> & { realmRoles: RealmRole[] };
 const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: ['user'], pictureUrl: undefined });
 const data = reactive<EditableUserData>(initialData.value);
 
@@ -295,7 +295,7 @@ const roleOptions: Record<SelectableRealmRole, string> = {
 
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
-const submitError = ref<string>();
+const onSubmitError = ref<Error>();
 
 const password = ref('');
 const passwordConfirm = ref('');
@@ -315,10 +315,11 @@ onMounted(async () => {
   if (props.mode === 'EDIT') {
     previewJdenticon.value = generateFallbackPictureUrl('USER', props.id);
     try {
-      initialData.value = await backend.users.getUser(props.id, false);
+      const fetchedUser = await backend.users.getUser(props.id, false);
+      initialData.value = { ...fetchedUser };
     } catch (error) {
       console.error('Failed to fetch user data:', error);
-      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+      onFetchError.value = asError(error);
     } finally {
       loading.value = false;
     }
@@ -395,7 +396,7 @@ async function onSubmit() {
   }
 
   processing.value = true;
-  submitError.value = undefined;
+  onSubmitError.value = undefined;
 
   data.firstName = data.firstName?.trim();
   data.lastName = data.lastName?.trim();
@@ -413,12 +414,10 @@ async function onSubmit() {
     }
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
-    if (!isAxiosError(error)) {
-      submitError.value = error instanceof Error ? error.message : 'An error occurred';
-    } else if (error.response?.status === 409 && error.response.data === 'EMAIL_EXISTS') {
-      errors.value.email = t('userEditCreate.error.emailAlreadyExists');
-    } else if (error.response?.status === 409) {
-      errors.value.username = t('userEditCreate.error.userAlreadyExists');
+    if (error instanceof ConflictError) {
+      onSubmitError.value = new Error(t('userEditCreate.error.alreadyExists'));
+    } else {
+      onSubmitError.value = new Error(t('userEditCreate.error.saveFailed'));
     }
   } finally {
     processing.value = false;

@@ -39,39 +39,38 @@ public class LicenseHolder {
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 
-	@Inject
-	@ConfigProperty(name = "hub.managed-instance", defaultValue = "false")
-	Boolean managedInstance;
-
-	@Inject
-	@ConfigProperty(name = "hub.initial-id")
-	Optional<String> initialId;
-
-	@Inject
-	@ConfigProperty(name = "hub.initial-license")
-	Optional<String> initialLicenseToken;
-
-	@Inject
-	@ConfigProperty(name = "hub.managed-api-username")
-	Optional<String> managedApiUsername;
-
-	@Inject
-	@ConfigProperty(name = "hub.managed-api-password")
-	Optional<String> managedApiPassword;
-
-	@Inject
-	LicenseValidator licenseValidator;
-
-	@Inject
-	RandomSleeper randomSleeper;
-
-	@Inject
-	Settings.Repository settingsRepo;
-
-	@RestClient
-	LicenseApi licenseApi;
+	private final Boolean managedInstance;
+	private final Optional<String> initialId;
+	private final Optional<String> initialLicenseToken;
+	private final Optional<String> managedApiUsername;
+	private final Optional<String> managedApiPassword;
+	private final LicenseValidator licenseValidator;
+	private final RandomSleeper randomSleeper;
+	private final Settings.Repository settingsRepo;
+	private final LicenseApi licenseApi;
 
 	private DecodedJWT license;
+
+	@Inject
+	LicenseHolder(@ConfigProperty(name = "hub.managed-instance", defaultValue = "false") Boolean managedInstance,
+				  @ConfigProperty(name = "hub.initial-id") Optional<String> initialId,
+				  @ConfigProperty(name = "hub.initial-license") Optional<String> initialLicenseToken,
+				  @ConfigProperty(name = "hub.managed-api-username") Optional<String> managedApiUsername,
+				  @ConfigProperty(name = "hub.managed-api-password") Optional<String> managedApiPassword,
+				  LicenseValidator licenseValidator,
+				  RandomSleeper randomSleeper,
+				  Settings.Repository settingsRepo,
+				  @RestClient LicenseApi licenseApi) {
+		this.managedInstance = managedInstance;
+		this.initialId = initialId;
+		this.initialLicenseToken = initialLicenseToken;
+		this.managedApiUsername = managedApiUsername;
+		this.managedApiPassword = managedApiPassword;
+		this.licenseValidator = licenseValidator;
+		this.randomSleeper = randomSleeper;
+		this.settingsRepo = settingsRepo;
+		this.licenseApi = licenseApi;
+	}
 
 	@PostConstruct
 	void init() {
@@ -227,7 +226,7 @@ public class LicenseHolder {
 		} catch (LicenseRefreshFailedException e) {
 			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrl, e.statusCode);
 			throw new IOException("Failed to refresh license token.", e);
-		} catch (InterruptedException e) {
+		} catch (InterruptedException _) {
 			Thread.currentThread().interrupt();
 			throw new InterruptedIOException("License refresh was interrupted");
 		}

@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -18,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.transaction.Transactional;
 import org.hibernate.annotations.Immutable;
+import org.jspecify.annotations.Nullable;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -91,25 +92,25 @@ public class Vault {
 	private String name;
 
 	@Column(name = "salt")
-	private String salt;
+	private @Nullable String salt;
 
 	@Column(name = "iterations")
-	private Integer iterations;
+	private @Nullable Integer iterations;
 
 	@Column(name = "masterkey")
-	private String masterkey;
+	private @Nullable String masterkey;
 
 	@Column(name = "auth_pubkey")
-	private String authenticationPublicKey;
+	private @Nullable String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	private String authenticationPrivateKey;
+	private @Nullable String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
 
 	@Column(name = "description")
-	private String description;
+	private @Nullable String description;
 
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
@@ -140,7 +141,7 @@ public class Vault {
 			} else {
 				return Optional.empty();
 			}
-		} catch (InvalidKeySpecException e) {
+		} catch (InvalidKeySpecException _) {
 			return Optional.empty();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
@@ -175,43 +176,43 @@ public class Vault {
 		this.name = name;
 	}
 
-	public String getSalt() {
+	public @Nullable String getSalt() {
 		return salt;
 	}
 
-	public void setSalt(String salt) {
+	public void setSalt(@Nullable String salt) {
 		this.salt = salt;
 	}
 
-	public Integer getIterations() {
+	public @Nullable Integer getIterations() {
 		return iterations;
 	}
 
-	public void setIterations(Integer iterations) {
+	public void setIterations(@Nullable Integer iterations) {
 		this.iterations = iterations;
 	}
 
-	public String getMasterkey() {
+	public @Nullable String getMasterkey() {
 		return masterkey;
 	}
 
-	public void setMasterkey(String masterkey) {
+	public void setMasterkey(@Nullable String masterkey) {
 		this.masterkey = masterkey;
 	}
 
-	public void setAuthenticationPublicKey(String authenticationPublicKey) {
+	public void setAuthenticationPublicKey(@Nullable String authenticationPublicKey) {
 		this.authenticationPublicKey = authenticationPublicKey;
 	}
 
-	public String getAuthenticationPrivateKey() {
+	public @Nullable String getAuthenticationPrivateKey() {
 		return authenticationPrivateKey;
 	}
 
-	public String getAuthenticationPublicKey() {
+	public @Nullable String getAuthenticationPublicKey() {
 		return authenticationPublicKey;
 	}
 
-	public void setAuthenticationPrivateKey(String authenticationPrivateKey) {
+	public void setAuthenticationPrivateKey(@Nullable String authenticationPrivateKey) {
 		this.authenticationPrivateKey = authenticationPrivateKey;
 	}
 
@@ -223,11 +224,11 @@ public class Vault {
 		this.creationTime = creationTime;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
@@ -298,22 +299,21 @@ public class Vault {
 	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
 
 		public Stream<Vault> findAccessibleByUser(String userId) {
-			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+			return find("#Vault.accessibleByUser", Map.of("userId", userId)).stream();
 		}
 
 		public Stream<Vault> findRecoverable(String userId) {
-			return find("#Vault.recoverableByUser", Parameters.with("councilMemberId", userId)).stream();
+			return find("#Vault.recoverableByUser", Map.of("councilMemberId", userId)).stream();
 		}
 
 		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+			return find("#Vault.accessibleByUserAndRole", Map.of("userId", userId, "role", role)).stream();
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {
-				Stream<Vault> partialResult = find("#Vault.allInList", Parameters.with("ids", batch)).stream();
-				return Stream.concat(result, partialResult);
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Vault.allInList", Map.of("ids", batch)).stream());
 		}
 
 		@Transactional(Transactional.TxType.REQUIRED)

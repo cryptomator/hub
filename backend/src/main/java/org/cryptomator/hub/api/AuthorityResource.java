@@ -21,8 +21,12 @@ import java.util.List;
 @Produces(MediaType.TEXT_PLAIN)
 public class AuthorityResource {
 
+	private final Authority.Repository authorityRepo;
+
 	@Inject
-	Authority.Repository authorityRepo;
+	AuthorityResource(Authority.Repository authorityRepo) {
+		this.authorityRepo = authorityRepo;
+	}
 
 	@GET
 	@Path("/search")

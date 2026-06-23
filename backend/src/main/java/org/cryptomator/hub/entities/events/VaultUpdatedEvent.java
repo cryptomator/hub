@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -16,49 +17,49 @@ public class VaultUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_UPDATE";
 
 	@Column(name = "updated_by")
-	private String updatedBy;
+	private @Nullable String updatedBy;
 
 	@Column(name = "vault_id")
-	private UUID vaultId;
+	private @Nullable UUID vaultId;
 
 	@Column(name = "vault_name")
-	private String vaultName;
+	private @Nullable String vaultName;
 
 	@Column(name = "vault_description")
-	private String vaultDescription;
+	private @Nullable String vaultDescription;
 
 	@Column(name = "vault_archived")
 	private boolean vaultArchived;
 
-	public String getUpdatedBy() {
+	public @Nullable String getUpdatedBy() {
 		return updatedBy;
 	}
 
-	public void setUpdatedBy(String updatedBy) {
+	public void setUpdatedBy(@Nullable String updatedBy) {
 		this.updatedBy = updatedBy;
 	}
 
-	public UUID getVaultId() {
+	public @Nullable UUID getVaultId() {
 		return vaultId;
 	}
 
-	public void setVaultId(UUID vaultId) {
+	public void setVaultId(@Nullable UUID vaultId) {
 		this.vaultId = vaultId;
 	}
 
-	public String getVaultName() {
+	public @Nullable String getVaultName() {
 		return vaultName;
 	}
 
-	public void setVaultName(String vaultName) {
+	public void setVaultName(@Nullable String vaultName) {
 		this.vaultName = vaultName;
 	}
 
-	public String getVaultDescription() {
+	public @Nullable String getVaultDescription() {
 		return vaultDescription;
 	}
 
-	public void setVaultDescription(String vaultDescription) {
+	public void setVaultDescription(@Nullable String vaultDescription) {
 		this.vaultDescription = vaultDescription;
 	}
 

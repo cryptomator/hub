@@ -15,7 +15,7 @@
                 <div class="flex flex-col p-1 mt-4">
                   <SearchInputGroup :action-title="t('common.add')" :place-holder="t('user.addGroups.searchLabel')" :on-search="searchGroup" @action="addGroup" />
                   <p v-if="onAddGroupError" class="mt-1 text-sm text-red-900 text-right">
-                    {{ t('common.unexpectedError', [onAddGroupError.message]) }}
+                    {{ t('user.addGroups.error.failed') }}
                   </p>
                 </div>
 
@@ -139,12 +139,13 @@ async function onSubmit() {
     open.value = false;
   } catch (error) {
     console.error('Adding user to groups failed:', error);
-    onAddGroupError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onAddGroupError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
 
 function show() {
   newGroups.value = [];
+  onAddGroupError.value = null;
   open.value = true;
 }
 

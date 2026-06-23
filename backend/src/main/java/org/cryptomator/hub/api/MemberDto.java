@@ -4,19 +4,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.jspecify.annotations.Nullable;
 
 public final class MemberDto extends AuthorityDto {
 
 	@JsonProperty("ecdhPublicKey")
-	public final String ecdhPublicKey;
+	public final @Nullable String ecdhPublicKey;
 	@JsonProperty("ecdsaPublicKey")
-	public final String ecdsaPublicKey;
+	public final @Nullable String ecdsaPublicKey;
 	@JsonProperty("vaultRole")
 	public final VaultAccess.Role role;
 	@JsonProperty("memberSize")
-	public final Integer memberSize;
+	public final @Nullable Integer memberSize;
 
-	MemberDto(@JsonProperty("id") String id, @JsonProperty("type") Type type, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("ecdhPublicKey") String ecdhPublicKey, @JsonProperty("ecdsaPublicKey") String ecdsaPublicKey, @JsonProperty("vaultRole") VaultAccess.Role role, @JsonProperty("memberSize") Integer memberSize) {
+	MemberDto(@JsonProperty("id") String id, @JsonProperty("type") Type type, @JsonProperty("name") String name, @JsonProperty("pictureUrl") @Nullable String pictureUrl, @JsonProperty("ecdhPublicKey") @Nullable String ecdhPublicKey, @JsonProperty("ecdsaPublicKey") @Nullable String ecdsaPublicKey, @JsonProperty("vaultRole") VaultAccess.Role role, @JsonProperty("memberSize") @Nullable Integer memberSize) {
 		super(id, type, name, pictureUrl);
 		this.ecdhPublicKey = ecdhPublicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
