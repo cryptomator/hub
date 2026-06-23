@@ -71,7 +71,8 @@ INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
 VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
 	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
-	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1
+	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'), -- access via group1
+	('user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'jwe.jwe.jwe.vaultAAA.user1'); -- direct access to archived vault
 
 -- DEPRECATED:
 INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")

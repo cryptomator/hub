@@ -239,7 +239,7 @@ public class VaultResource {
 		// resolve group members and simulate new seat count:
 		var effectiveUsers = new HashSet<User>();
 		effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(memberRoles.keySet()));
-		effectiveUsers.addAll(userRepo.findByIds(memberRoles.keySet()).toList());
+		effectiveUsers.addAll(userRepo.streamByIds(memberRoles.keySet()).toList());
 		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
 		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
 		if (newSeatOccupyingUsers.size() > license.getEntitlements().seats()) {
@@ -403,7 +403,7 @@ public class VaultResource {
 				response = response.header("Hub-Android-License", androidLicense);
 			}
 			return response.build();
-		} catch (NoResultException e) {
+		} catch (NoResultException _) {
 			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
@@ -551,7 +551,7 @@ public class VaultResource {
 					.collect(Collectors.toSet());
 			var effectiveUsers = new HashSet<User>();
 			effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(authorityIds));
-			effectiveUsers.addAll(userRepo.findByIds(authorityIds).toList());
+			effectiveUsers.addAll(userRepo.streamByIds(authorityIds).toList());
 			var projectedSeatUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList());
 			projectedSeatUsers.addAll(effectiveUsers.stream().map(User::getId).toList());
 			if (projectedSeatUsers.size() > license.getEntitlements().seats()) {

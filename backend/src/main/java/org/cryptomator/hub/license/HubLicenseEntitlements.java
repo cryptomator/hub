@@ -26,7 +26,7 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 	public Instant auditLogRetentionThreshold() {
 		try {
 			return Instant.now().minus(auditLogRetentionDays(), ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
-		} catch (ArithmeticException e) {
+		} catch (ArithmeticException _) {
 			return Instant.MIN;
 		}
 	}

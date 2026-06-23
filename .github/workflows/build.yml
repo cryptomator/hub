@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_VERSION: 22
-  JAVA_VERSION: 21
+  JAVA_VERSION: 25
 
 defaults:
   run:

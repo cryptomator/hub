@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -18,10 +17,12 @@ import org.hibernate.annotations.Immutable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -241,7 +242,7 @@ public class User extends Authority {
 					LEFT JOIN FETCH u.devices d
 					LEFT JOIN FETCH u.legacyDevices ld
 					WHERE u.id = :id
-					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+					""", Map.of("id", id)).singleResultOptional().orElse(null);
 			if (user == null) {
 				return null;
 			}
@@ -258,23 +259,22 @@ public class User extends Authority {
 			return user;
 		}
 
-		public Stream<User> findByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("id IN :ids", Parameters.with("ids", batch));
-				return Stream.concat(result, partial.stream());
-			});
+		public Stream<User> streamByIds(Collection<String> ids) {
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("id IN :ids", Map.of("ids", batch)).stream());
 		}
 
 		public long deleteByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Map.of("ids", batch)));
 		}
 
 		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
-			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+			return find("#User.requiringAccessGrant", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public long countEffectiveGroupUsers(String groupdId) {
-			return count("#User.countEffectiveGroupUsers", Parameters.with("groupId", groupdId));
+			return count("#User.countEffectiveGroupUsers", Map.of("groupId", groupdId));
 		}
 
 		public Stream<User> getEffectiveGroupUsers(String groupdId) {
@@ -283,7 +283,7 @@ public class User extends Authority {
 
 		public Set<User> getEffectiveGroupUsers(Collection<String> groupIds) {
 			return Batch.of(200).run(groupIds, new HashSet<>(), (batch, result) -> {
-				var partial = find("#User.getEffectiveGroupUsers", Parameters.with("groupIds", batch)).project(User.class);
+				var partial = find("#User.getEffectiveGroupUsers", Map.of("groupIds", batch)).project(User.class);
 				result.addAll(partial.list());
 				return result;
 			});

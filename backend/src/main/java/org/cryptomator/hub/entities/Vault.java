@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -35,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -140,7 +140,7 @@ public class Vault {
 			} else {
 				return Optional.empty();
 			}
-		} catch (InvalidKeySpecException e) {
+		} catch (InvalidKeySpecException _) {
 			return Optional.empty();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
@@ -298,22 +298,21 @@ public class Vault {
 	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
 
 		public Stream<Vault> findAccessibleByUser(String userId) {
-			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+			return find("#Vault.accessibleByUser", Map.of("userId", userId)).stream();
 		}
 
 		public Stream<Vault> findRecoverable(String userId) {
-			return find("#Vault.recoverableByUser", Parameters.with("councilMemberId", userId)).stream();
+			return find("#Vault.recoverableByUser", Map.of("councilMemberId", userId)).stream();
 		}
 
 		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+			return find("#Vault.accessibleByUserAndRole", Map.of("userId", userId, "role", role)).stream();
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {
-				Stream<Vault> partialResult = find("#Vault.allInList", Parameters.with("ids", batch)).stream();
-				return Stream.concat(result, partialResult);
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Vault.allInList", Map.of("ids", batch)).stream());
 		}
 
 		@Transactional(Transactional.TxType.REQUIRED)

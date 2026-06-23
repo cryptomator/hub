@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +16,9 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -180,14 +181,13 @@ public class Device {
 	public static class Repository implements PanacheRepositoryBase<Device, String> {
 
 		public Device findByIdAndUser(String deviceId, String userId) throws NoResultException {
-			return find("#Device.findByIdAndOwner", Parameters.with("deviceId", deviceId).and("userId", userId)).singleResult();
+			return find("#Device.findByIdAndOwner", Map.of("deviceId", deviceId, "userId", userId)).singleResult();
 		}
 
 		public Stream<Device> findAllInList(List<String> ids) {
-			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("#Device.allInList", Parameters.with("ids", batch));
-				return Stream.concat(result, partial.stream());
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Device.allInList", Map.of("ids", batch)).stream());
 		}
 
 		public void updateLastAccess(String deviceId, Instant timestamp, String ipAddress) {
@@ -195,7 +195,7 @@ public class Device {
 		}
 
 		public void deleteByOwner(String userId) {
-			delete("#Device.deleteByOwner", Parameters.with("userId", userId));
+			delete("#Device.deleteByOwner", Map.of("userId", userId));
 		}
 	}
 }

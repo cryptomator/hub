@@ -25,7 +25,7 @@ public class Batch {
 
 	// TODO: add jspecify annotations
 	public <T> void run(Collection<T> collection, Consumer<List<T>> job) {
-		run(collection, null, (batch, ignored) -> {
+		run(collection, null, (batch, _) -> {
 			job.accept(batch);
 			return null;
 		});

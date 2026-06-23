@@ -530,7 +530,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
 			Mockito.when(groupRepo.findById("g")).thenReturn(null);
-			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			var result = remoteUserPuller.syncGroup("g");
 
@@ -561,13 +561,13 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(firstPage);
 			Mockito.when(groupResource.members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(lastMember));
 			Mockito.when(groupRepo.findById("g")).thenReturn(null);
-			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			remoteUserPuller.syncGroup("g");
 
 			Mockito.verify(groupResource).members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
 			var captor = ArgumentCaptor.forClass(List.class);
-			Mockito.verify(userRepo).findByIds(captor.capture());
+			Mockito.verify(userRepo).streamByIds(captor.capture());
 			Assertions.assertEquals(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST + 1, captor.getValue().size());
 		}
 
@@ -726,7 +726,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
 			Mockito.when(groupRepo.findById("newGroup")).thenReturn(null);
-			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			var result = remoteUserPuller.createGroup("New Group", null);
 

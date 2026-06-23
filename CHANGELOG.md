@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.6.3
-- Update Quarkus to 3.27.3.1 LTS
+- Updated to Java 25
+- Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)

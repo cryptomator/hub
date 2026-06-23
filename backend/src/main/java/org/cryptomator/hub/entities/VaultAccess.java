@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -15,6 +14,7 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -127,19 +127,19 @@ public class VaultAccess {
 	public static class Repository implements PanacheRepositoryBase<VaultAccess, Id> {
 
 		public Stream<VaultAccess> forVault(UUID vaultId) {
-			return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
+			return find("#VaultAccess.forVault", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public long countByAuthority(String authorityId) {
-			return count("#VaultAccess.countByAuthority", Parameters.with("authorityId", authorityId));
+			return count("#VaultAccess.countByAuthority", Map.of("authorityId", authorityId));
 		}
 
 		public Stream<VaultAccess> findByAuthority(String authorityId) {
-			return find("#VaultAccess.findByAuthority", Parameters.with("authorityId", authorityId)).stream();
+			return find("#VaultAccess.findByAuthority", Map.of("authorityId", authorityId)).stream();
 		}
 
 		public long delete(UUID vaultId, Iterable<String> authorityIds) {
-			return delete("#VaultAccess.deleteSpecific", Parameters.with("vaultId", vaultId).and("authorityIds", authorityIds));
+			return delete("#VaultAccess.deleteSpecific", Map.of("vaultId", vaultId, "authorityIds", authorityIds));
 		}
 	}
 }

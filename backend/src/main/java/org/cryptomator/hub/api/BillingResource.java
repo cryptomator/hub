@@ -61,7 +61,7 @@ public class BillingResource {
 		try {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();
-		} catch (JWTVerificationException e) {
+		} catch (JWTVerificationException _) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
 	}
