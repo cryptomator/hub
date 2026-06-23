@@ -14,9 +14,9 @@
         <jwt.version>4.5.1</jwt.version>
         <jspecify.version>1.0.0</jspecify.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
-        <dependency-plugin.version>3.10.0</dependency-plugin.version>
-        <surefire-plugin.version>3.5.5</surefire-plugin.version>
-        <failsafe-plugin.version>3.5.5</failsafe-plugin.version>
+        <dependency-plugin.version>3.11.0</dependency-plugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <failsafe-plugin.version>3.5.6</failsafe-plugin.version>
         <junit-tree-reporter.version>1.5.1</junit-tree-reporter.version>
     </properties>
 
