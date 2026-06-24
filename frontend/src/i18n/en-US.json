@@ -433,8 +433,6 @@
   "nav.users": "Users",
   "nav.mobileMenu": "Open main menu",
   "nav.closeMenu": "Close menu",
-  "nav.sidebar.collapse": "Collapse sidebar",
-  "nav.sidebar.expand": "Expand sidebar",
   "nav.sidebar.title": "Navigation",
 
   "recoveryKeyDialog.title": "Recovery Key",

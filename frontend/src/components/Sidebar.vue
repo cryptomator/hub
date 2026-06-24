@@ -8,17 +8,9 @@
 
       <div class="fixed inset-0 flex">
         <TransitionChild as="template" enter="transition ease-in-out duration-300 transform" enter-from="-translate-x-full" enter-to="translate-x-0" leave="transition ease-in-out duration-300 transform" leave-from="translate-x-0" leave-to="-translate-x-full">
-          <DialogPanel class="relative mr-16 flex w-full max-w-xs flex-1 bg-tertiary2">
+          <DialogPanel class="relative flex w-full max-w-xs flex-1 bg-tertiary2">
             <DialogTitle class="sr-only">{{ t('nav.sidebar.title') }}</DialogTitle>
-            <TransitionChild as="template" enter="ease-in-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in-out duration-300" leave-from="opacity-100" leave-to="opacity-0">
-              <div class="absolute top-0 left-full flex w-16 justify-center pt-5">
-                <button type="button" class="-m-2.5 p-2.5" @click="emit('close')">
-                  <span class="sr-only">{{ t('nav.closeMenu') }}</span>
-                  <XMarkIcon class="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-              </div>
-            </TransitionChild>
-            <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" :collapsed="false" @navigate="emit('close')" />
+            <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" :show-close="true" @navigate="emit('close')" @close="emit('close')" />
           </DialogPanel>
         </TransitionChild>
       </div>
@@ -26,18 +18,14 @@
   </TransitionRoot>
 
   <!-- Static sidebar for desktop -->
-  <div class="group relative hidden bg-tertiary2 transition-[width] duration-200 md:flex md:flex-col" :class="collapsed ? 'md:w-16' : 'md:w-64'">
-    <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" :collapsed="collapsed" />
-    <button type="button" class="absolute top-1/2 -right-3 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-tertiary2 text-gray-300 opacity-0 shadow-sm transition-opacity hover:text-white focus:opacity-100 focus:outline-hidden group-hover:opacity-100 group-focus-within:opacity-100" :title="collapsed ? t('nav.sidebar.expand') : t('nav.sidebar.collapse')" @click="toggleCollapsed">
-      <ChevronDoubleRightIcon v-if="collapsed" class="h-3.5 w-3.5" aria-hidden="true" />
-      <ChevronDoubleLeftIcon v-else class="h-3.5 w-3.5" aria-hidden="true" />
-    </button>
+  <div class="hidden bg-tertiary2 md:flex md:w-64 md:flex-col">
+    <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { ArrowRightStartOnRectangleIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { ArrowRightStartOnRectangleIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -54,27 +42,6 @@ defineProps<{
 const emit = defineEmits<{
   close: []
 }>();
-
-const COLLAPSE_KEY = 'hub.sidebar.collapsed';
-
-function loadCollapsed(): boolean {
-  try {
-    return localStorage.getItem(COLLAPSE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-const collapsed = ref(loadCollapsed());
-
-function toggleCollapsed() {
-  collapsed.value = !collapsed.value;
-  try {
-    localStorage.setItem(COLLAPSE_KEY, String(collapsed.value));
-  } catch {
-    // storage may be unavailable (private mode / blocked)
-  }
-}
 
 const mainNav = ref<NavigationItem[]>([
   { icon: LockClosedIcon, name: 'nav.vaults', to: '/app/vaults' }

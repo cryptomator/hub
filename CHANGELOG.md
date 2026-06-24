@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Replace the top navigation bar with a collapsible sidebar
+- Replace the top navigation bar with a sidebar
 - Updated Keycloak to 26.6.3
 - Update Quarkus to 3.27.3.1 LTS
 - Improved browser locale detection (#371)
