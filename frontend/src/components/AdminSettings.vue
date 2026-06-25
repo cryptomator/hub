@@ -248,6 +248,7 @@ import ContentBanner from './ContentBanner.vue';
 const { t, d } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   token?: string
+  session?: string
 }>();
 
 const cfg = ref<ConfigDto>(config.get());
@@ -261,8 +262,14 @@ const hasLegacyDevices = ref<boolean>(false);
 
 onMounted(async () => {
   keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console/`;
-  if (props.token) {
-    await setToken(props.token);
+  try {
+    if (props.session) {
+      await backend.license.refresh(props.session);
+    } else if (props.token) {
+      await backend.billing.setToken(props.token);
+    }
+  } catch (error) {
+    console.error('Setting token or refreshing license failed.', error);
   }
   await fetchData();
 });
@@ -329,8 +336,8 @@ const manageSubscriptionUrl = computed(() => {
   if (!billing.value) {
     return '';
   }
-  const returnUrl = `${absFrontendBaseURL}admin`;
-  return `${cfg.value.billingUrl}#oldLicense=${encodeURIComponent(billing.value.licenseKey)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+  const returnUrl = `${absFrontendBaseURL}admin/settings`;
+  return `${cfg.value.billingUrl}?hub_id=${encodeURIComponent(billing.value.hubId)}&return_url=${encodeURIComponent(returnUrl)}&token_transfer=session`;
 });
 
 async function refreshLicense() {
@@ -340,14 +347,6 @@ async function refreshLicense() {
     cfg.value = await config.reload();
   } catch (error) {
     console.error('Refreshing license info failed.', error);
-  }
-}
-
-async function setToken(token: string) {
-  try {
-    await backend.billing.setToken(token);
-  } catch (error) {
-    console.error('Setting token failed.', error);
   }
 }
 
