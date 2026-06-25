@@ -33,6 +33,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.UUID;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -83,7 +84,7 @@ public class LicenseHolder {
 			LOG.debug("License was issued more than 5 minutes ago. Attempting a refresh to ensure we have the latest license information from the license server.");
 			try {
 				refreshLicense();
-			} catch (IOException e) {
+			} catch (LicenseRefreshFailedException e) {
 				LOG.error("Failed to refresh license during startup.", e);
 			}
 		}
@@ -210,7 +211,7 @@ public class LicenseHolder {
 		try {
 			randomSleeper.sleep(0, 59, ChronoUnit.MINUTES); // add random sleep to reduce infrastructure load
 			refreshLicense();
-		} catch (IOException e) {
+		} catch (LicenseRefreshFailedException e) {
 			LOG.error("Scheduled license refresh failed.", e);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -218,23 +219,23 @@ public class LicenseHolder {
 		}
 	}
 
-	public void refreshLicense() throws IOException {
+	public void refreshLicense(UUID session) throws LicenseRefreshFailedException, WebApplicationException {
+		var refreshedLicense = licenseApi.getLicense(session);
+		validateAndSet(refreshedLicense);
+	}
+
+	public void refreshLicense() throws LicenseRefreshFailedException {
 		var refreshUrl = getLicenseRefreshUri();
-		final String refreshedLicense;
-		try {
-			refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
-		} catch (LicenseRefreshFailedException e) {
-			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrl, e.statusCode);
-			throw new IOException("Failed to refresh license token.", e);
-		} catch (InterruptedException _) {
-			Thread.currentThread().interrupt();
-			throw new InterruptedIOException("License refresh was interrupted");
-		}
+		var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+		validateAndSet(refreshedLicense);
+	}
+
+	private void validateAndSet(String refreshedLicense) throws LicenseRefreshFailedException {
 		try {
 			set(refreshedLicense);
 		} catch (JWTVerificationException e) {
 			LOG.errorv(e, "Failed to refresh license token. Refreshed token is invalid: {0}", refreshedLicense);
-			throw new IOException("Invalid new license token.", e);
+			throw new LicenseRefreshFailedException("Invalid new license token.", e);
 		}
 	}
 
@@ -251,8 +252,14 @@ public class LicenseHolder {
 	}
 
 	//visible for testing
-	String requestLicenseRefresh(URI refreshUrl, String licenseToken) throws InterruptedException, IOException, LicenseRefreshFailedException {
+	String requestLicenseRefresh(URI refreshUrl, String licenseToken) throws LicenseRefreshFailedException {
 		var solution = solveChallenge();
+		// TODO: do we eventually want to migrate away from refreshUrl and use hard-coded api? using it in other places already anyway.
+//		try {
+//			return licenseApi.refreshLicense(licenseToken, solution.toCaptcha());
+//		} catch (WebApplicationException e) {
+//			throw new LicenseRefreshFailedException(e.getResponse().getStatus());
+//		}
 		try (var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()) {
 			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8)
 					+ "&captcha=" + URLEncoder.encode(solution.toCaptcha(), StandardCharsets.UTF_8);
@@ -266,8 +273,13 @@ public class LicenseHolder {
 			if (response.statusCode() == 200 && !response.body().isEmpty()) {
 				return response.body();
 			} else {
-				throw new LicenseRefreshFailedException(response.statusCode(), body);
+				throw new LicenseRefreshFailedException("License endpoint responded with status code " + response.statusCode());
 			}
+		} catch (IOException e) {
+			throw new LicenseRefreshFailedException("I/O error", e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new LicenseRefreshFailedException("License refresh was interrupted", e);
 		}
 	}
 
@@ -306,13 +318,18 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
-	static class LicenseRefreshFailedException extends RuntimeException {
-		final int statusCode;
-		final String body;
+	public static class LicenseRefreshFailedException extends Exception {
 
-		LicenseRefreshFailedException(int statusCode, String body) {
-			this.statusCode = statusCode;
-			this.body = body;
+		LicenseRefreshFailedException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		LicenseRefreshFailedException(String message) {
+			super(message);
+		}
+
+		LicenseRefreshFailedException(Throwable cause) {
+			super(cause);
 		}
 	}
 

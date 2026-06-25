@@ -3,6 +3,7 @@ package org.cryptomator.hub.keycloak;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -11,17 +12,21 @@ import org.keycloak.admin.client.KeycloakBuilder;
 @ApplicationScoped
 public class KeycloakClientProducer {
 
-	@ConfigProperty(name = "hub.keycloak.system-client-id")
-	String clientId;
+	private final String clientId;
+	private final String clientSecret;
+	private final String url;
+	private final String realm;
 
-	@ConfigProperty(name = "hub.keycloak.system-client-secret")
-	String clientSecret;
-
-	@ConfigProperty(name = "hub.keycloak.local-url")
-	String url;
-
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String realm;
+	@Inject
+	KeycloakClientProducer(@ConfigProperty(name = "hub.keycloak.system-client-id") String clientId,
+						   @ConfigProperty(name = "hub.keycloak.system-client-secret") String clientSecret,
+						   @ConfigProperty(name = "hub.keycloak.local-url") String url,
+						   @ConfigProperty(name = "hub.keycloak.realm") String realm) {
+		this.clientId = clientId;
+		this.clientSecret = clientSecret;
+		this.url = url;
+		this.realm = realm;
+	}
 
 	@Produces
 	@ApplicationScoped

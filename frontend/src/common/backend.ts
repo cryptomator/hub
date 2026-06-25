@@ -656,8 +656,13 @@ class LicenseService {
     });
   }
 
-  public async refresh(): Promise<void> {
-    return axiosAuth.post('/license/refresh');
+  public async refresh(session?: string): Promise<void> {
+    if (session) {
+      const params = new URLSearchParams({ session: session });
+      return axiosAuth.post('/license/refresh', params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    } else {
+      return axiosAuth.post('/license/refresh');
+    }
   }
 
 }
