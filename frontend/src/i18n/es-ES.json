@@ -208,6 +208,7 @@
   "vaultDetails.actions.displayRecoveryKey": "Mostrar clave de recuperación",
   "vaultDetails.actions.archiveVault": "Archivar bóveda",
   "vaultDetails.actions.claimOwnership": "Reclamar propiedad",
+  "vaultDetails.error.reactivateFailed": "Su licencia de Cryptomator Hub ha excedido el número de asientos disponibles. Reactivar esta bóveda excedería el límite. Por favor, informe a un administrador de Hub para actualizar la licencia.",
   "vaultList.title": "Bóvedas",
   "vaultList.addVault": "Añadir",
   "vaultList.filter": "Filtro"
