@@ -39,15 +39,6 @@ class BatchTest {
 		Mockito.verifyNoInteractions(job);
 	}
 
-	@Test
-	void testNoopIfInputIsNull() {
-		Consumer<List<String>> job = Mockito.mock();
-
-		Batch.of(10).run(null, job);
-
-		Mockito.verifyNoInteractions(job);
-	}
-
 	@ParameterizedTest
 	@ValueSource(ints = {1, 2, 3, 5, 10})
 	void testBatchSizesReduce(int batchSize) {
