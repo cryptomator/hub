@@ -324,18 +324,14 @@ public class UsersResource {
 				dto.firstName(),
 				dto.lastName(),
 				dto.password(),
-				dto.pictureUrl(),
-				dto.groupIds()
+				dto.pictureUrl()
 		);
 
 		if (!dto.realmRoles().isEmpty()) {
 			keycloakAuthorityPuller.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
 		}
 
-		User user = userRepo.findById(userRepresentation.getId());
-		if (user == null) { // user was created in Keycloak but not found in database after sync
-			throw new IllegalStateException();
-		}
+		User user = userRepo.findByIdOptional(userRepresentation.getId()).orElseThrow(IllegalStateException::new); // user was created in Keycloak but not found in database after sync
 
 		return Response.status(Response.Status.CREATED)
 				.entity(UserDto.justPublicInfo(user))
@@ -451,7 +447,6 @@ public class UsersResource {
 			@JsonProperty("lastName") @NotNull String lastName,
 			@JsonProperty("password") @NotNull String password,
 			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl,
-			@JsonProperty("groupIds") @Nullable Set<String> groupIds,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}

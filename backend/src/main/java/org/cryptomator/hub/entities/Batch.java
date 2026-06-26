@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -23,7 +25,6 @@ public class Batch {
 		return new Batch(size);
 	}
 
-	// TODO: add jspecify annotations
 	public <T> void run(Collection<T> collection, Consumer<List<T>> job) {
 		run(collection, null, (batch, _) -> {
 			job.accept(batch);
@@ -31,9 +32,8 @@ public class Batch {
 		});
 	}
 
-	// TODO: add jspecify annotations
-	public <T, R> R run(Collection<T> collection, R initialValue, BiFunction<List<T>, R, R> job) {
-		if (collection == null || collection.isEmpty()) {
+	public <T, R extends @Nullable Object> R run(Collection<T> collection, R initialValue, BiFunction<List<T>, R, R> job) {
+		if (collection.isEmpty()) {
 			return initialValue;
 		}
 		List<T> list = collection instanceof List<T> l ? l : List.copyOf(collection);
