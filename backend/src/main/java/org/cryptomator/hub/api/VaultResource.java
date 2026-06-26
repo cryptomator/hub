@@ -103,19 +103,15 @@ public class VaultResource {
 	private final JsonWebToken jwt;
 	private final LicenseHolder license;
 	private final VaultUnlockMetrics vaultUnlockMetrics;
-
-	@Inject
-	VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster;
-
-	@Inject
-	Event<VaultMembersJoined> vaultMembersJoinedEvent;
+	private final VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster;
+	private final Event<VaultMembersJoined> vaultMembersJoinedEvent;
 
 	@Context
 	HttpServerRequest request;
 
 	@Inject
 	@SuppressWarnings("deprecation")
-	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics) {
+	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics, VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster, Event<VaultMembersJoined> vaultMembersJoinedEvent) {
 		this.eventLogger = eventLogger;
 		this.accessTokenRepo = accessTokenRepo;
 		this.deviceRepo = deviceRepo;
@@ -129,6 +125,8 @@ public class VaultResource {
 		this.jwt = jwt;
 		this.license = license;
 		this.vaultUnlockMetrics = vaultUnlockMetrics;
+		this.vaultMembersJoinedBroadcaster = vaultMembersJoinedBroadcaster;
+		this.vaultMembersJoinedEvent = vaultMembersJoinedEvent;
 	}
 
 	@GET
