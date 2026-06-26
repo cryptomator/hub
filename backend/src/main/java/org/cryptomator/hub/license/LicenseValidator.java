@@ -13,9 +13,12 @@ public class LicenseValidator {
 
 	private static final String[] REQUIRED_CLAIMS = {"jti", "sub", "iat", "exp", "seats"}; // TODO: eventually phase out "seats" claim in favor of "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 
+	private final JWTVerifier verifier;
+
 	@Inject
-	@Named("licenseVerifier")
-	JWTVerifier verifier;
+	LicenseValidator(@Named("licenseVerifier") JWTVerifier verifier) {
+		this.verifier = verifier;
+	}
 
 	/**
 	 * Validates the token signature and whether it matches the Hub ID. It does NOT check the expiration date, though.

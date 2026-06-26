@@ -19,12 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.6.2
-- Update Quarkus to 3.27.3.1 LTS
+- Replace the top navigation bar with a sidebar
+- Updated Keycloak to 26.6.3
+- Updated to Java 25
+- Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)
 - Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
+- New Flyway base migration B28 (https://github.com/cryptomator/hub/pull/467)
 
 ### Security
 
@@ -35,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
 - Creating user with sole role `create-vault` was unable to login due to missing role `user`
-- Fix disabling users via user and group management
+- Fixed "Last Access" field (user detail page or admin device listing) was last date of any unlock attempt (https://github.com/cryptomator/hub/pull/466)
 
 ## [1.4.7](https://github.com/cryptomator/hub/compare/1.4.6...1.4.7)
 

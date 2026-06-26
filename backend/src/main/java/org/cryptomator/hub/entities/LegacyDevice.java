@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +15,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -95,7 +95,7 @@ public class LegacyDevice {
 	public static class Repository implements PanacheRepositoryBase<LegacyDevice, String> {
 
 		public Stream<LegacyDevice> findAllInList(List<String> ids) {
-			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
+			return find("#LegacyDevice.allInList", Map.of("ids", ids)).stream();
 		}
 
 		public boolean existsAny() {
@@ -103,7 +103,7 @@ public class LegacyDevice {
 		}
 
 		public void deleteByOwner(String userId) {
-			delete("#LegacyDevice.deleteByOwner", Parameters.with("userId", userId));
+			delete("#LegacyDevice.deleteByOwner", Map.of("userId", userId));
 		}
 	}
 }

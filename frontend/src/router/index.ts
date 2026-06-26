@@ -155,7 +155,9 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'settings',
             component: AdminSettings,
-            props: (route) => ({ token: route.query.token }),
+            props: (route) => {
+              return { token: route.query.token, session: route.query.session };
+            },
             meta: { skipSetup: true }
           },
           {

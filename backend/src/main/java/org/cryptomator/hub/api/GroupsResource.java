@@ -1,17 +1,16 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -23,26 +22,29 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
-import java.net.URI;
 import java.util.List;
 
 @Path("/groups")
 public class GroupsResource {
 
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final VaultAccess.Repository vaultAccessRepo;
+	private final KeycloakAuthorityPuller keycloakAuthorityPuller;
+
 	@Inject
-	User.Repository userRepo;
-	@Inject
-	Group.Repository groupRepo;
-	@Inject
-	VaultAccess.Repository vaultAccessRepo;
-	@Inject
-	KeycloakAdminService keycloakAdminService;
+	GroupsResource(User.Repository userRepo, Group.Repository groupRepo, VaultAccess.Repository vaultAccessRepo, KeycloakAuthorityPuller keycloakAuthorityPuller) {
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.vaultAccessRepo = vaultAccessRepo;
+		this.keycloakAuthorityPuller = keycloakAuthorityPuller;
+	}
 
 	@GET
 	@Path("/")
@@ -77,7 +79,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "user added to group")
 	@APIResponse(responseCode = "404", description = "group or user not found")
 	public Response addMember(@PathParam("groupId") @ValidId String groupId, @PathParam("userId") @ValidId String userId) {
-		keycloakAdminService.addUserToGroup(groupId, userId);
+		keycloakAuthorityPuller.addUserToGroup(groupId, userId);
 		return Response.noContent().build();
 	}
 
@@ -89,7 +91,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "user removed from group")
 	@APIResponse(responseCode = "404", description = "group or user not found")
 	public Response removeMember(@PathParam("groupId") @ValidId String groupId, @PathParam("userId") @ValidId String userId) {
-		keycloakAdminService.removeUserFromGroup(groupId, userId);
+		keycloakAuthorityPuller.removeUserFromGroup(groupId, userId);
 		return Response.noContent().build();
 	}
 
@@ -104,20 +106,16 @@ public class GroupsResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "group name already exists")
 	public Response createGroup(@Valid @NotNull CreateGroupDto dto) {
-		try {
-			var groupRepresentation = keycloakAdminService.createGroup(dto.name(), dto.pictureUrl());
+		var groupRepresentation = keycloakAuthorityPuller.createGroup(dto.name(), dto.pictureUrl());
 
-			Group group = groupRepo.findById(groupRepresentation.getId());
-			if (group == null) {
-				throw new InternalServerErrorException("Group was created in Keycloak but not found in database after sync");
-			}
-
-			return Response.created(URI.create("./" + group.getId()))
-					.entity(GroupDto.fromEntity(group))
-					.build();
-		} catch (ClientErrorException e) {
-			return Response.status(Response.Status.CONFLICT).build();
+		Group group = groupRepo.findById(groupRepresentation.getId());
+		if (group == null) { // group was created in Keycloak but not found in database after sync
+			throw new IllegalStateException();
 		}
+
+		return Response.status(Response.Status.CREATED)
+				.entity(GroupDto.fromEntity(group))
+				.build();
 	}
 
 	@GET
@@ -132,7 +130,7 @@ public class GroupsResource {
 	public GroupDto.WithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
 		Group group = groupRepo.findByIdWithEagerDetails(groupId);
 		if (group == null) {
-			throw new NotFoundException("Group not found: " + groupId);
+			throw new NotFoundException();
 		}
 
 		List<AuthorityDto> members = group.getMembers().stream().map(AuthorityDto::fromEntity).toList();
@@ -153,12 +151,13 @@ public class GroupsResource {
 	@Operation(summary = "update a group in Keycloak")
 	@APIResponse(responseCode = "200", description = "group updated")
 	@APIResponse(responseCode = "404", description = "group not found")
+	@APIResponse(responseCode = "409", description = "group name already exists")
 	public GroupDto updateGroup(@PathParam("groupId") @ValidId String groupId, @Valid @NotNull UpdateGroupDto dto) {
-		keycloakAdminService.updateGroup(groupId, dto.name(), dto.pictureUrl());
+		keycloakAuthorityPuller.updateGroup(groupId, dto.name(), dto.pictureUrl());
 
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
-			throw new NotFoundException("Group not found after update: " + groupId);
+			throw new NotFoundException();
 		}
 
 		return GroupDto.fromEntity(group);
@@ -172,20 +171,20 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "group deleted")
 	@APIResponse(responseCode = "404", description = "group not found")
 	public Response deleteGroup(@PathParam("groupId") @ValidId String groupId) {
-		keycloakAdminService.deleteGroup(groupId);
+		keycloakAuthorityPuller.deleteGroup(groupId);
 		return Response.noContent().build();
 	}
 
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 
 	}
 
 	public record UpdateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) @Nullable String pictureUrl
 	) {
 	}
 }

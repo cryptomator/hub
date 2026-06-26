@@ -27,14 +27,16 @@ import java.util.stream.Collectors;
 @Path("/settings")
 public class SettingsResource {
 
-	@Inject
-	EventLogger eventLogger;
+	private final EventLogger eventLogger;
+	private final Settings.Repository settingsRepo;
+	private final JsonWebToken jwt;
 
 	@Inject
-	Settings.Repository settingsRepo;
-
-	@Inject
-	JsonWebToken jwt;
+	SettingsResource(EventLogger eventLogger, Settings.Repository settingsRepo, JsonWebToken jwt) {
+		this.eventLogger = eventLogger;
+		this.settingsRepo = settingsRepo;
+		this.jwt = jwt;
+	}
 
 	@GET
 	@RolesAllowed("user")

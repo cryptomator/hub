@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -54,27 +54,31 @@ public class DeviceResource {
 
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
-	@Inject
-	EventLogger eventLogger;
-	@Inject
-	User.Repository userRepo;
-	@Inject
-	Device.Repository deviceRepo;
+	private final EventLogger eventLogger;
+	private final User.Repository userRepo;
+	private final Device.Repository deviceRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	@Inject
-	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	private final LegacyAccessToken.Repository legacyAccessTokenRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	@Inject
-	LegacyDevice.Repository legacyDeviceRepo;
+	private final LegacyDevice.Repository legacyDeviceRepo;
+	private final JsonWebToken jwt;
 
 	@Inject
-	JsonWebToken jwt;
+	@SuppressWarnings("deprecation")
+	DeviceResource(EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, LegacyDevice.Repository legacyDeviceRepo, JsonWebToken jwt) {
+		this.eventLogger = eventLogger;
+		this.userRepo = userRepo;
+		this.deviceRepo = deviceRepo;
+		this.legacyAccessTokenRepo = legacyAccessTokenRepo;
+		this.legacyDeviceRepo = legacyDeviceRepo;
+		this.jwt = jwt;
+	}
 
 	@GET
 	@Path("/")
@@ -130,7 +134,7 @@ public class DeviceResource {
 		Device device;
 		try {
 			device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
-		} catch (NoResultException e) {
+		} catch (NoResultException _) {
 			device = new Device();
 			device.setId(deviceId);
 			device.setOwner(userRepo.findById(jwt.getSubject()));
@@ -148,7 +152,7 @@ public class DeviceResource {
 
 		try {
 			deviceRepo.persistAndFlush(device);
-			eventLogger.logDeviceRegisted(jwt.getSubject(), deviceId, device.getName(), device.getType());
+			eventLogger.logDeviceRegistered(jwt.getSubject(), deviceId, device.getName(), device.getType());
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -250,12 +254,12 @@ public class DeviceResource {
 							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime,
-							@JsonProperty("lastIpAddress") String lastIpAddress,
-							@JsonProperty("lastAccessTime") Instant lastAccessTime,
+							@JsonProperty("lastIpAddress") @Nullable String lastIpAddress,
+							@JsonProperty("lastAccessTime") @Nullable Instant lastAccessTime,
 							@JsonProperty("legacyDevice") boolean legacyDevice) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getLastIpAddress(), entity.getLastAccessTime(), false);
 		}
 
 		/**
@@ -263,13 +267,7 @@ public class DeviceResource {
 		 */
 		@Deprecated(since = "1.3.0", forRemoval = true)
 		public static DeviceDto fromEntity(LegacyDevice entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
-		}
-
-		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
-			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
-			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, false);
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null /* userPrivateKeys: intentionally null — legacy devices have none; the @NotNull only guards deserialization */, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
 
 		/**
@@ -279,7 +277,7 @@ public class DeviceResource {
 		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null /* userPrivateKeys: intentionally null — legacy devices have none; the @NotNull only guards deserialization */, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
 		}
 
 	}

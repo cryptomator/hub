@@ -18,35 +18,33 @@ import java.time.temporal.ChronoUnit;
 @Path("/config")
 public class ConfigResource {
 
-	@Inject
-	@ConfigProperty(name = "hub.keycloak.public-url", defaultValue = "")
-	String keycloakPublicUrl;
+	private final String keycloakPublicUrl;
+	private final String keycloakRealm;
+	private final String keycloakClientIdHub;
+	private final String keycloakClientIdCryptomator;
+	private final String internalRealmUrl;
+	private final String billingUrl;
+	private final OidcConfigurationMetadata oidcConfData;
+	private final LicenseHolder license;
 
 	@Inject
-	@ConfigProperty(name = "hub.keycloak.realm", defaultValue = "")
-	String keycloakRealm;
-
-	@Inject
-	@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "")
-	String keycloakClientIdHub;
-
-	@Inject
-	@ConfigProperty(name = "hub.keycloak.oidc.cryptomator-client-id", defaultValue = "")
-	String keycloakClientIdCryptomator;
-
-	@Inject
-	@ConfigProperty(name = "quarkus.oidc.auth-server-url")
-	String internalRealmUrl;
-
-	@Inject
-	@ConfigProperty(name = "hub.billing-url", defaultValue = "")
-	String billingUrl;
-
-	@Inject
-	OidcConfigurationMetadata oidcConfData;
-
-	@Inject
-	LicenseHolder license;
+	ConfigResource(@ConfigProperty(name = "hub.keycloak.public-url", defaultValue = "") String keycloakPublicUrl,
+				   @ConfigProperty(name = "hub.keycloak.realm", defaultValue = "") String keycloakRealm,
+				   @ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "") String keycloakClientIdHub,
+				   @ConfigProperty(name = "hub.keycloak.oidc.cryptomator-client-id", defaultValue = "") String keycloakClientIdCryptomator,
+				   @ConfigProperty(name = "quarkus.oidc.auth-server-url") String internalRealmUrl,
+				   @ConfigProperty(name = "hub.billing-url", defaultValue = "") String billingUrl,
+				   OidcConfigurationMetadata oidcConfData,
+				   LicenseHolder license) {
+		this.keycloakPublicUrl = keycloakPublicUrl;
+		this.keycloakRealm = keycloakRealm;
+		this.keycloakClientIdHub = keycloakClientIdHub;
+		this.keycloakClientIdCryptomator = keycloakClientIdCryptomator;
+		this.internalRealmUrl = internalRealmUrl;
+		this.billingUrl = billingUrl;
+		this.oidcConfData = oidcConfData;
+		this.license = license;
+	}
 
 	@PermitAll
 	@GET
@@ -61,7 +59,7 @@ public class ConfigResource {
 	}
 
 	//visible for testing
-	String replacePrefix(String str, String prefix, String replacement) {
+	static String replacePrefix(String str, String prefix, String replacement) {
 		int index = str.indexOf(prefix);
 		if (index == 0) {
 			return replacement + str.substring(prefix.length());
@@ -71,7 +69,7 @@ public class ConfigResource {
 	}
 
 	//visible for testing
-	String trimTrailingSlash(String str) {
+	static String trimTrailingSlash(String str) {
 		if (str.endsWith("/")) {
 			return str.substring(0, str.length() - 1);
 		} else {

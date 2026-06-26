@@ -7,6 +7,7 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -25,10 +26,10 @@ public class RecoveredEmergencyKeyShares {
 	private String unrecoveredKeyShare;
 
 	@Column(name = "recovered_key_share")
-	private String recoveredKeyShare;
+	private @Nullable String recoveredKeyShare;
 
 	@Column(name = "signed_process_info")
-	private String signedProcessInfo;
+	private @Nullable String signedProcessInfo;
 
 	public Id getId() {
 		return id;
@@ -54,19 +55,19 @@ public class RecoveredEmergencyKeyShares {
 		this.unrecoveredKeyShare = unrecoveredKeyShare;
 	}
 
-	public String getRecoveredKeyShare() {
+	public @Nullable String getRecoveredKeyShare() {
 		return recoveredKeyShare;
 	}
 
-	public void setRecoveredKeyShare(String recoveredKeyShare) {
+	public void setRecoveredKeyShare(@Nullable String recoveredKeyShare) {
 		this.recoveredKeyShare = recoveredKeyShare;
 	}
 
-	public String getSignedProcessInfo() {
+	public @Nullable String getSignedProcessInfo() {
 		return signedProcessInfo;
 	}
 
-	public void setSignedProcessInfo(String signedProcessInfo) {
+	public void setSignedProcessInfo(@Nullable String signedProcessInfo) {
 		this.signedProcessInfo = signedProcessInfo;
 	}
 

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -15,46 +16,46 @@ public class SignedWotIdEvent extends AuditEvent {
 	public static final String TYPE = "SIGN_WOT_ID";
 
 	@Column(name = "user_id")
-	private String userId;
+	private @Nullable String userId;
 
 	@Column(name = "signer_id")
-	private String signerId;
+	private @Nullable String signerId;
 
 	@Column(name = "signer_key")
-	private String signerKey;
+	private @Nullable String signerKey;
 
 	@Column(name = "signature")
-	private String signature;
+	private @Nullable String signature;
 
-	public String getUserId() {
+	public @Nullable String getUserId() {
 		return userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(@Nullable String userId) {
 		this.userId = userId;
 	}
 
-	public String getSignerId() {
+	public @Nullable String getSignerId() {
 		return signerId;
 	}
 
-	public void setSignerId(String signerId) {
+	public void setSignerId(@Nullable String signerId) {
 		this.signerId = signerId;
 	}
 
-	public String getSignerKey() {
+	public @Nullable String getSignerKey() {
 		return signerKey;
 	}
 
-	public void setSignerKey(String signerKey) {
+	public void setSignerKey(@Nullable String signerKey) {
 		this.signerKey = signerKey;
 	}
 
-	public String getSignature() {
+	public @Nullable String getSignature() {
 		return signature;
 	}
 
-	public void setSignature(String signature) {
+	public void setSignature(@Nullable String signature) {
 		this.signature = signature;
 	}
 

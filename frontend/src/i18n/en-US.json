@@ -223,14 +223,17 @@
   "deleteGroupDialog.title": "Delete Group",
   "deleteGroupDialog.description": "Are you sure you want to permanently delete this group? It will be removed from all associated vaults. This action cannot be undone.",
   "deleteGroupDialog.confirm": "Yes, delete group",
+  "deleteGroupDialog.error.failed": "Failed to delete group.",
 
   "disableUserDialog.title": "Disable User",
   "disableUserDialog.description": "This user will no longer be able to log in and will be excluded from the seat count. You can re-enable the user at any time.",
   "disableUserDialog.confirm": "Disable User",
+  "disableUserDialog.error.failed": "Failed to update user.",
 
   "deleteUserDialog.title": "Delete User Account",
   "deleteUserDialog.description": "Are you sure you want to permanently delete this user? All associated vaults and devices will be removed. This action cannot be undone.",
   "deleteUserDialog.confirm": "Yes, delete user",
+  "deleteUserDialog.error.failed": "Failed to delete user.",
 
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
@@ -369,11 +372,12 @@
   "group.addMembers.title": "Add Members",
   "group.addMembers.searchLabel": "Search by username or full name",
   "group.addMembers.selectedUser": "User(s) selected",
-
+  "group.addMembers.error.failed": "Failed to add member to group.",
 
   "group.member.remove.title" : "Remove User from Group",
   "group.member.remove.description": "Are you sure you want to remove this user from the group?",
   "group.member.remove.confirm": "Yes, remove from group",
+  "group.member.remove.error.failed": "Failed to remove from group.",
 
   "groupEditCreate.title.create" : "Create New Group",
   "groupEditCreate.title.edit" : "Group Edit",
@@ -390,7 +394,8 @@
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
   "groupEditCreate.selectRolesPlaceholder": "Select role(s)",
-  "groupEditCreate.error.groupNameAlreadyExists": "A group with this name already exists.",
+  "groupEditCreate.error.alreadyExists": "This group already exists.",
+  "groupEditCreate.error.saveFailed": "Failed to save group.",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
@@ -460,6 +465,8 @@
   "nav.groups": "Groups",
   "nav.users": "Users",
   "nav.mobileMenu": "Open main menu",
+  "nav.closeMenu": "Close menu",
+  "nav.sidebar.title": "Navigation",
 
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
@@ -500,10 +507,12 @@
   "user.detail.name": "Name",
   "user.detail.roles": "Roles",
   "user.detail.username": "Username",
+  "user.detail.error.enableFailed": "Failed to update user.",
 
   "user.addGroups.title": "Add Groups",
   "user.addGroups.searchLabel": "Search by group name",
   "user.addGroups.selectedGroups": "Group(s) selected",
+  "user.addGroups.error.failed": "Failed to add to group.",
 
   "userEditCreate.title.create": "Create New User",
   "userEditCreate.title.edit": "Edit User",
@@ -533,8 +542,8 @@
   "userEditCreate.invalidImageUrl": "Invalid image URL",
   "userEditCreate.validation.required": "This field is required",
   "userEditCreate.validation.passwordMismatch": "Passwords don't match",
-  "userEditCreate.error.userAlreadyExists": "A user with this username already exists.",
-  "userEditCreate.error.emailAlreadyExists": "A user with this email already exists.",
+  "userEditCreate.error.alreadyExists": "This user already exists.",
+  "userEditCreate.error.saveFailed": "Failed to save user.",
 
   "userList.edit.user.button": "Edit",
   "userList.userName": "Name",
@@ -620,5 +629,6 @@
   "missingEntitlements.description": "This feature is not part of your current license.",
 
   "trial.enterpriseFeature.title": "Enterprise Feature",
-  "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license."
+  "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
+
 }

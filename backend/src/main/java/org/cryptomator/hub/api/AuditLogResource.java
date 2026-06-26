@@ -57,10 +57,14 @@ public class AuditLogResource {
 			VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE,
 			EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE, EmergencyAccessRecoveryAbortedEvent.TYPE);
 
+	private final AuditEvent.Repository auditEventRepo;
+	private final LicenseHolder license;
+
 	@Inject
-	AuditEvent.Repository auditEventRepo;
-	@Inject
-	LicenseHolder license;
+	AuditLogResource(AuditEvent.Repository auditEventRepo, LicenseHolder license) {
+		this.auditEventRepo = auditEventRepo;
+		this.license = license;
+	}
 
 	@GET
 	@RolesAllowed("admin")

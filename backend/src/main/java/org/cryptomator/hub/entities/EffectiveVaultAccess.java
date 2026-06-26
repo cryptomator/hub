@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -137,12 +136,12 @@ public class EffectiveVaultAccess {
 	public static class Repository implements PanacheRepositoryBase<EffectiveVaultAccess, Id> {
 
 		public boolean isUserOccupyingSeat(String userId) {
-			return find("#EffectiveVaultAccess.isUserOccupyingSeat", Parameters.with("userId", userId)).page(0, 1).firstResult() != null;
+			return find("#EffectiveVaultAccess.isUserOccupyingSeat", Map.of("userId", userId)).page(0, 1).firstResult() != null;
 		}
 
 		public long countSeatsOccupiedByUsers(Collection<String> userIds) {
 			return Batch.of(200).run(Set.copyOf(userIds), 0L, (batch, result) -> {
-				long partialCount = count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", batch));
+				long partialCount = count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Map.of("userIds", batch));
 				return result + partialCount;
 			});
 		}
@@ -157,12 +156,12 @@ public class EffectiveVaultAccess {
 		}
 
 		public long countSeatOccupyingUsersOfGroup(String groupId) {
-			return count("#EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", Parameters.with("groupId", groupId));
+			return count("#EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", Map.of("groupId", groupId));
 		}
 
 		public Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
-			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
-					.map(EffectiveVaultAccess::getRole)
+			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Map.of("vaultId", vaultId, "authorityId", authorityId)).stream()
+					.map(eva -> eva.getId().role())
 					.collect(Collectors.toUnmodifiableSet());
 		}
 
@@ -172,7 +171,7 @@ public class EffectiveVaultAccess {
 		 * @see #findMembersWithoutAccessTokens(String)
 		 */
 		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokensForVault(UUID vaultId) {
-			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Parameters.with("vaultId", vaultId)).stream();
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Map.of("vaultId", vaultId)).stream();
 		}
 
 		/**
@@ -187,7 +186,7 @@ public class EffectiveVaultAccess {
 		 * @see #findMembersWithoutAccessTokensForVault(UUID)
 		 */
 		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
-			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Parameters.with("currentUser", currentUserId))
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Map.of("currentUser", currentUserId))
 					.stream()
 					.collect(Collectors.groupingBy(
 							eva -> eva.getId().vaultId(),
@@ -195,7 +194,7 @@ public class EffectiveVaultAccess {
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {
-			return find("#EffectiveVaultAccess.usersSeatedOnOtherVaults", Parameters.with("vaultId", vaultId)).project(String.class).stream();
+			return find("#EffectiveVaultAccess.usersSeatedOnOtherVaults", Map.of("vaultId", vaultId)).project(String.class).stream();
 		}
 	}
 }

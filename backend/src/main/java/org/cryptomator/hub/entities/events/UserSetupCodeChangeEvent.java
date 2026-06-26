@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -15,13 +16,13 @@ public class UserSetupCodeChangeEvent extends AuditEvent {
 	public static final String TYPE = "USER_SETUP_CODE_CHANGE";
 
 	@Column(name = "changed_by")
-	private String changedBy;
+	private @Nullable String changedBy;
 
-	public String getChangedBy() {
+	public @Nullable String getChangedBy() {
 		return changedBy;
 	}
 
-	public void setChangedBy(String changedBy) {
+	public void setChangedBy(@Nullable String changedBy) {
 		this.changedBy = changedBy;
 	}
 

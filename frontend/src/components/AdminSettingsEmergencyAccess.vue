@@ -66,7 +66,9 @@
             <input
               id="requiredKeyShares"
               v-model.number="requiredShares"
-              type="number" min="2" max="255"
+              type="number"
+              min="2"
+              max="255"
               :disabled="!enableEmergencyAccess"
               class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed disabled:bg-gray-200"
               :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"

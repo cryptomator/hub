@@ -27,6 +27,7 @@ ingress:
     secretName: ""
 
 hub:
+  replicas: 1
   imagePullPolicy: IfNotPresent
   image:
     tag: "" # defaults to chart appVersion
@@ -81,6 +82,7 @@ hub:
 
 keycloak:
   enabled: true
+  replicas: 1
   imagePullPolicy: IfNotPresent
   image:
     tag: ""

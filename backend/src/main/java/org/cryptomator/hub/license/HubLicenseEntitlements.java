@@ -3,6 +3,7 @@ package org.cryptomator.hub.license;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -14,9 +15,9 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 									 @JsonProperty("auditLogRetentionDays") long auditLogRetentionDays,
 									 @JsonProperty("emergencyAccessEnabled") boolean emergencyAccessEnabled,
 									 @JsonProperty("keycloakAccessEnabled") boolean keycloakAccessEnabled,
-									 @JsonProperty("iosLicense") String iosLicense,
-									 @JsonProperty("androidLicense") String androidLicense,
-									 @JsonProperty("desktopLicense") String desktopLicense) {
+									 @JsonProperty("iosLicense") @Nullable String iosLicense,
+									 @JsonProperty("androidLicense") @Nullable String androidLicense,
+									 @JsonProperty("desktopLicense") @Nullable String desktopLicense) {
 
 	/**
 	 * Calculates the earliest point of time for audit log entries to still be retained.
@@ -26,7 +27,7 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 	public Instant auditLogRetentionThreshold() {
 		try {
 			return Instant.now().minus(auditLogRetentionDays(), ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
-		} catch (ArithmeticException e) {
+		} catch (ArithmeticException _) {
 			return Instant.MIN;
 		}
 	}
@@ -57,15 +58,15 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
-	public HubLicenseEntitlements withIosLicense(String iosLicense) {
+	public HubLicenseEntitlements withIosLicense(@Nullable String iosLicense) {
 		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
-	public HubLicenseEntitlements withAndroidLicense(String androidLicense) {
+	public HubLicenseEntitlements withAndroidLicense(@Nullable String androidLicense) {
 		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, androidLicense, this.desktopLicense);
 	}
 
-	public HubLicenseEntitlements withDesktopLicense(String desktopLicense) {
+	public HubLicenseEntitlements withDesktopLicense(@Nullable String desktopLicense) {
 		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, desktopLicense);
 	}
 

@@ -8,22 +8,23 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.jdk.version>21</project.jdk.version>
+        <project.jdk.version>25</project.jdk.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.platform.version>3.27.3.1</quarkus.platform.version>
-        <jwt.version>4.5.1</jwt.version>
+        <quarkus.platform.version>3.36.3</quarkus.platform.version>
+        <jwt.version>4.5.2</jwt.version>
+        <jspecify.version>1.0.0</jspecify.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
-        <dependency-plugin.version>3.10.0</dependency-plugin.version>
-        <surefire-plugin.version>3.5.5</surefire-plugin.version>
-        <failsafe-plugin.version>3.5.5</failsafe-plugin.version>
+        <dependency-plugin.version>3.11.0</dependency-plugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <failsafe-plugin.version>3.5.6</failsafe-plugin.version>
         <junit-tree-reporter.version>1.5.1</junit-tree-reporter.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-universe-bom</artifactId>
+                <groupId>io.quarkus.platform</groupId>
+                <artifactId>quarkus-bom</artifactId>
                 <version>${quarkus.platform.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -35,6 +36,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-cache</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -94,12 +99,12 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5-mockito</artifactId>
+            <artifactId>quarkus-junit-mockito</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -129,6 +134,11 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
         </dependency>
     </dependencies>
 
@@ -179,7 +189,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
@@ -211,7 +221,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <reportFormat>plain</reportFormat>
                     <consoleOutputReporter>
                         <disable>false</disable>

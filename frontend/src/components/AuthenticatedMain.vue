@@ -9,15 +9,12 @@
     </div>
   </div>
 
-  <div v-else>
-    <NavigationBar :me="me" />
-
+  <AppShell v-else :me="me">
     <AutomaticAccessGrantAgent />
-
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
       <router-view />
     </div>
-  </div>
+  </AppShell>
 </template>
 
 <script setup lang="ts">
@@ -25,9 +22,9 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../common/backend';
 import userdata from '../common/userdata';
+import AppShell from './AppShell.vue';
 import AutomaticAccessGrantAgent from './AutomaticAccessGrantAgent.vue';
 import FetchError from './FetchError.vue';
-import NavigationBar from './NavigationBar.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -16,35 +17,35 @@ public class VaultMemberRemovedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_REMOVE";
 
 	@Column(name = "removed_by")
-	private String removedBy;
+	private @Nullable String removedBy;
 
 	@Column(name = "vault_id")
-	private UUID vaultId;
+	private @Nullable UUID vaultId;
 
 	@Column(name = "authority_id")
-	private String authorityId;
+	private @Nullable String authorityId;
 
-	public String getRemovedBy() {
+	public @Nullable String getRemovedBy() {
 		return removedBy;
 	}
 
-	public void setRemovedBy(String removedBy) {
+	public void setRemovedBy(@Nullable String removedBy) {
 		this.removedBy = removedBy;
 	}
 
-	public UUID getVaultId() {
+	public @Nullable UUID getVaultId() {
 		return vaultId;
 	}
 
-	public void setVaultId(UUID vaultId) {
+	public void setVaultId(@Nullable UUID vaultId) {
 		this.vaultId = vaultId;
 	}
 
-	public String getAuthorityId() {
+	public @Nullable String getAuthorityId() {
 		return authorityId;
 	}
 
-	public void setAuthorityId(String authorityId) {
+	public void setAuthorityId(@Nullable String authorityId) {
 		this.authorityId = authorityId;
 	}
 
