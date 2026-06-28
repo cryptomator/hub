@@ -35,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
 
 ### Fixed
-- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
 - Creating user with sole role `create-vault` was unable to login due to missing role `user`
 - Fixed "Last Access" field (user detail page or admin device listing) was last date of any unlock attempt (https://github.com/cryptomator/hub/pull/466)
