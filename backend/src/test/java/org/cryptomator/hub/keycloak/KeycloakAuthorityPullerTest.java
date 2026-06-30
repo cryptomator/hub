@@ -393,9 +393,9 @@ class KeycloakAuthorityPullerTest {
 			representation.setUsername("newuser");
 			representation.setEnabled(true);
 			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
-			Mockito.when(userRepo.findById("newId")).thenReturn(null);
+			Mockito.when(userRepo.findByIdOptional("newId")).thenReturn(Optional.empty());
 
-			var result = remoteUserPuller.createUser("newuser", "e", "f", "l", "pw", null, Set.of());
+			var result = remoteUserPuller.createUser("newuser", "e", "f", "l", "pw", null);
 
 			Assertions.assertEquals("newId", result.getId());
 			Mockito.verify(userRepo).persist(any(User.class));
@@ -408,7 +408,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(usersResource.create(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(409);
 
-			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
+			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null));
 			Mockito.verify(userRepo, Mockito.never()).persist(any(User.class));
 		}
 
@@ -419,7 +419,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(usersResource.create(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(500);
 
-			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null));
 		}
 
 		@Test
@@ -487,7 +487,7 @@ class KeycloakAuthorityPullerTest {
 			representation.setEmail("mail");
 			representation.setEnabled(true);
 			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
-			Mockito.when(userRepo.findById("u")).thenReturn(null);
+			Mockito.when(userRepo.findByIdOptional("u")).thenReturn(Optional.empty());
 
 			var result = remoteUserPuller.syncUser("u");
 
@@ -508,7 +508,7 @@ class KeycloakAuthorityPullerTest {
 			representation.setEnabled(true);
 			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
 			var existing = Mockito.mock(User.class);
-			Mockito.when(userRepo.findById("u")).thenReturn(existing);
+			Mockito.when(userRepo.findByIdOptional("u")).thenReturn(Optional.of(existing));
 
 			remoteUserPuller.syncUser("u");
 
@@ -526,7 +526,7 @@ class KeycloakAuthorityPullerTest {
 			representation.setName("gname");
 			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
-			Mockito.when(groupRepo.findById("g")).thenReturn(null);
+			Mockito.when(groupRepo.findByIdOptional("g")).thenReturn(Optional.empty());
 			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			var result = remoteUserPuller.syncGroup("g");
@@ -557,89 +557,15 @@ class KeycloakAuthorityPullerTest {
 			lastMember.setId("uLast");
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(firstPage);
 			Mockito.when(groupResource.members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(lastMember));
-			Mockito.when(groupRepo.findById("g")).thenReturn(null);
+			Mockito.when(groupRepo.findByIdOptional("g")).thenReturn(Optional.empty());
 			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			remoteUserPuller.syncGroup("g");
 
 			Mockito.verify(groupResource).members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
-			var captor = ArgumentCaptor.forClass(List.class);
+			var captor = ArgumentCaptor.forClass(Set.class);
 			Mockito.verify(userRepo).streamByIds(captor.capture());
 			Assertions.assertEquals(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST + 1, captor.getValue().size());
-		}
-
-		@Test
-		@DisplayName("createUser tolerates a failed group join and still creates the user")
-		void testCreateUserToleratesGroupJoinFailure() {
-			var response = Mockito.mock(Response.class);
-			Mockito.when(usersResource.create(any())).thenReturn(response);
-			Mockito.when(response.getStatus()).thenReturn(201);
-			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
-			var userResource = Mockito.mock(UserResource.class);
-			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
-			Mockito.doThrow(new InternalServerErrorException("kc down")).when(userResource).joinGroup("g1");
-			var representation = new UserRepresentation();
-			representation.setId("newId");
-			representation.setUsername("u");
-			representation.setEnabled(true);
-			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
-			Mockito.when(userRepo.findById("newId")).thenReturn(null);
-
-			var result = remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1"));
-
-			Assertions.assertEquals("newId", result.getId());
-			Mockito.verify(userResource).joinGroup("g1");
-			Mockito.verify(userRepo).persist(any(User.class));
-			Mockito.verify(groupRepo, Mockito.never()).addMember(Mockito.eq("g1"), any());
-			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1"));
-		}
-
-		@Test
-		@DisplayName("createUser writes membership only for the successfully joined groups on partial failure")
-		void testCreateUserPartialGroupJoinFailure() {
-			var response = Mockito.mock(Response.class);
-			Mockito.when(usersResource.create(any())).thenReturn(response);
-			Mockito.when(response.getStatus()).thenReturn(201);
-			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
-			var userResource = Mockito.mock(UserResource.class);
-			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
-			Mockito.doThrow(new InternalServerErrorException("kc down")).when(userResource).joinGroup("g2");
-			var representation = new UserRepresentation();
-			representation.setId("newId");
-			representation.setUsername("u");
-			representation.setEnabled(true);
-			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
-			Mockito.when(userRepo.findById("newId")).thenReturn(null);
-
-			remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1", "g2"));
-
-			Mockito.verify(groupRepo).addMember("g1", "newId");
-			Mockito.verify(groupRepo, Mockito.never()).addMember(Mockito.eq("g2"), any());
-			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1", "g2"));
-		}
-
-		@Test
-		@DisplayName("createUser writes DB group membership for successfully joined groups")
-		void testCreateUserWritesGroupMembership() {
-			var response = Mockito.mock(Response.class);
-			Mockito.when(usersResource.create(any())).thenReturn(response);
-			Mockito.when(response.getStatus()).thenReturn(201);
-			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
-			var userResource = Mockito.mock(UserResource.class);
-			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
-			var representation = new UserRepresentation();
-			representation.setId("newId");
-			representation.setUsername("u");
-			representation.setEnabled(true);
-			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
-			Mockito.when(userRepo.findById("newId")).thenReturn(null);
-
-			remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1"));
-
-			var inOrder = Mockito.inOrder(userRepo, groupRepo, effectiveGroupMembershipRepo);
-			inOrder.verify(userRepo).persist(any(User.class));
-			inOrder.verify(groupRepo).addMember("g1", "newId");
-			inOrder.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1"));
 		}
 
 		@Test
@@ -722,7 +648,7 @@ class KeycloakAuthorityPullerTest {
 			representation.setName("New Group");
 			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
 			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
-			Mockito.when(groupRepo.findById("newGroup")).thenReturn(null);
+			Mockito.when(groupRepo.findByIdOptional("newGroup")).thenReturn(Optional.empty());
 			Mockito.when(userRepo.streamByIds(Mockito.anyList())).thenReturn(Stream.of());
 
 			var result = remoteUserPuller.createGroup("New Group", null);

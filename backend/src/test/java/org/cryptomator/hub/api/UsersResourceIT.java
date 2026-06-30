@@ -407,7 +407,6 @@ class UsersResourceIT {
 					Mockito.eq("New"),
 					Mockito.eq("User"),
 					Mockito.eq("password123"),
-					Mockito.isNull(),
 					Mockito.isNull()
 			)).thenReturn(userRep);
 
@@ -440,7 +439,6 @@ class UsersResourceIT {
 					Mockito.eq("New"),
 					Mockito.eq("User"),
 					Mockito.eq("password123"),
-					Mockito.isNull(),
 					Mockito.isNull()
 			)).thenReturn(userRep);
 
@@ -470,7 +468,6 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
-					Mockito.any(),
 					Mockito.any()
 			)).thenThrow(new AlreadyExistsException());
 
@@ -498,7 +495,6 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
-					Mockito.any(),
 					Mockito.any()
 			)).thenThrow(new IllegalStateException());
 

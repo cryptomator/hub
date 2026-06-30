@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replace the top navigation bar with a sidebar
-- Updated Keycloak to 26.6.3
+- Updated Keycloak to 26.6.4
 - Updated to Java 25
 - Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)
@@ -66,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
 
 ### Fixed
-- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
 - Creating user with sole role `create-vault` was unable to login due to missing role `user`
 - Fixed "Last Access" field (user detail page or admin device listing) was last date of any unlock attempt (https://github.com/cryptomator/hub/pull/466)
