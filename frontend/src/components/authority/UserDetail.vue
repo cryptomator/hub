@@ -37,7 +37,7 @@
                     {{ t('user.detail.enable') }}
                   </div>
                 </MenuItem>
-                <MenuItem v-slot="{ active }">
+                <MenuItem v-if="user.id !== currentUserId" v-slot="{ active }">
                   <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog()">
                     {{ t('common.remove') }}
                   </div>
@@ -89,6 +89,7 @@ import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import backend, { asError, GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
+import userdata from '../../common/userdata';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import FetchError from '../FetchError.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
@@ -156,6 +157,7 @@ const user = ref<UserDtoWithDetails>({
 const loading = ref<boolean>(true);
 const fetchError = ref<Error | null>(null);
 const onEnableUserError = ref<Error>();
+const currentUserId = ref<string>('');
 
 async function handleGroupsSaved(newGroups: GroupDto[]) {
   await fetchUser(); // reload user to get updated vault list
@@ -175,7 +177,10 @@ async function fetchUser() {
   }
 }
 
-onMounted(fetchUser);
+onMounted(async () => {
+  currentUserId.value = (await userdata.me).id;
+  await fetchUser();
+});
 
 function showUserEdit() {
   router.push(`/app/users/${props.id}/edit`);

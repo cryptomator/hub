@@ -701,6 +701,15 @@ class UsersResourceIT {
 					.then().statusCode(403);
 		}
 
+		@Test
+		@DisplayName("DELETE /users/{id} returns 409 when deleting own account")
+		void testDeleteOwnAccountConflict() {
+			when().delete("/users/admin")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).deleteUser(Mockito.anyString());
+		}
+
 	}
 
 }

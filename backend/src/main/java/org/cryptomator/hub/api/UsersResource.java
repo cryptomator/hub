@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -435,7 +436,11 @@ public class UsersResource {
 	@APIResponse(responseCode = "204", description = "user deleted")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
 	@APIResponse(responseCode = "404", description = "user not found")
+	@APIResponse(responseCode = "409", description = "user attempted to delete their own account")
 	public Response deleteUser(@PathParam("id") String userId) {
+		if (Objects.equals(userId, jwt.getSubject())) {
+			throw new ClientErrorException("Users cannot delete their own account", Response.Status.CONFLICT);
+		}
 		keycloakAuthorityPuller.deleteUser(userId);
 		return Response.noContent().build();
 	}
