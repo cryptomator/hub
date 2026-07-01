@@ -25,8 +25,8 @@ jobs:
       artifact-metadata: write # Required for the attestations step
       packages: write # Required for pushing the image to GHCR
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           package_json_file: keycloak/themes/cryptomator/common/resources/package.json
       - name: Check lockfile integrity
@@ -63,7 +63,7 @@ jobs:
           tags: |
             ghcr.io/cryptomator/keycloak:${{ github.event.inputs.tag }}
       - name: Generate artifact attestation
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-name: ghcr.io/cryptomator/keycloak
           subject-digest: ${{ steps.push.outputs.digest }}
