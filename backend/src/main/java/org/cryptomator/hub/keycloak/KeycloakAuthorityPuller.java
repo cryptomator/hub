@@ -208,7 +208,7 @@ public class KeycloakAuthorityPuller {
 		CredentialRepresentation credential = new CredentialRepresentation();
 		credential.setType(CredentialRepresentation.PASSWORD);
 		credential.setValue(password);
-		credential.setTemporary(false);
+		credential.setTemporary(true);
 		user.setCredentials(List.of(credential));
 
 		final String userId;
