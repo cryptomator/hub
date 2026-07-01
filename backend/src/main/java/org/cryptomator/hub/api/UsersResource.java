@@ -423,7 +423,11 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "enable or disable a user")
 	@APIResponse(responseCode = "204", description = "user updated")
+	@APIResponse(responseCode = "409", description = "user attempted to disable their own account")
 	public Response setUserEnabled(@PathParam("id") String userId, boolean enabled) {
+		if (!enabled && Objects.equals(userId, jwt.getSubject())) {
+			throw new ClientErrorException("Users cannot disable their own account", Response.Status.CONFLICT);
+		}
 		keycloakAuthorityPuller.setUserEnabled(userId, enabled);
 		return Response.noContent().build();
 	}
