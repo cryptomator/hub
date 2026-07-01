@@ -671,6 +671,28 @@ class UsersResourceIT {
 		}
 
 		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 409 when disabling own account")
+		void testDisableOwnAccountConflict() {
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/admin/enabled")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).setUserEnabled(Mockito.anyString(), Mockito.anyBoolean());
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 204 when enabling own account")
+		void testEnableOwnAccountSuccess() {
+			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("admin", true);
+
+			given().contentType(ContentType.TEXT).body("true")
+					.when().put("/users/admin/enabled")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAuthorityPuller).setUserEnabled("admin", true);
+		}
+
+		@Test
 		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
 		void testDeleteUserSuccess() {
 			Mockito.doNothing().when(keycloakAuthorityPuller).deleteUser("mockedUserId");
@@ -699,6 +721,15 @@ class UsersResourceIT {
 
 			when().delete("/users/federatedUser")
 					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 409 when deleting own account")
+		void testDeleteOwnAccountConflict() {
+			when().delete("/users/admin")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).deleteUser(Mockito.anyString());
 		}
 
 	}
