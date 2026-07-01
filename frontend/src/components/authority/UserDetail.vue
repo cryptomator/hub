@@ -27,18 +27,18 @@
           <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 translate-y-1 scale-95" enter-to-class="transform opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 translate-y-0 scale-100" leave-to-class="transform opacity-0 translate-y-1 scale-95">
             <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
               <div class="py-1">
-                <MenuItem v-if="user.enabled && user.id !== currentUserId" v-slot="{ active }">
-                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDisableUserDialog()">
+                <MenuItem v-if="user.enabled" v-slot="{ active, disabled }" :disabled="user.id === currentUserId">
+                  <div :class="[ disabled ? 'text-gray-400 cursor-not-allowed' : ['cursor-pointer', active ? 'bg-gray-100 text-red-900' : 'text-red-700'], 'block px-4 py-2 text-sm']" @click="!disabled && showDisableUserDialog()">
                     {{ t('user.detail.disable') }}
                   </div>
                 </MenuItem>
-                <MenuItem v-else-if="!user.enabled" v-slot="{ active }">
+                <MenuItem v-else v-slot="{ active }">
                   <div :class="[ active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="enableUser()">
                     {{ t('user.detail.enable') }}
                   </div>
                 </MenuItem>
-                <MenuItem v-if="user.id !== currentUserId" v-slot="{ active }">
-                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog()">
+                <MenuItem v-slot="{ active, disabled }" :disabled="user.id === currentUserId">
+                  <div :class="[ disabled ? 'text-gray-400 cursor-not-allowed' : ['cursor-pointer', active ? 'bg-gray-100 text-red-900' : 'text-red-700'], 'block px-4 py-2 text-sm']" @click="!disabled && showDeleteUserDialog()">
                     {{ t('common.remove') }}
                   </div>
                 </MenuItem>
