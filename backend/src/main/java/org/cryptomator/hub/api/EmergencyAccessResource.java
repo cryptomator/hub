@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -25,6 +26,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
@@ -48,6 +50,9 @@ public class EmergencyAccessResource {
 	RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo;
 
 	@Inject
+	Vault.Repository vaultRepo;
+
+	@Inject
 	JsonWebToken jwt;
 
 	@Context
@@ -63,9 +68,15 @@ public class EmergencyAccessResource {
 	@Operation(summary = "starts a new recovery process")
 	@APIResponse(responseCode = "204", description = "process created")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
+	@APIResponse(responseCode = "403", description = "current user is not a member of the vault's emergency access council")
 	@Transactional
 	public Response startRecovery(@PathParam("processId") UUID processId, @Valid RecoveryProcessDto dto) {
 		var currentUser = jwt.getSubject();
+		var vault = vaultRepo.findByIdOptional(dto.vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.getEmergencyKeyShares().containsKey(currentUser)) {
+			// only current members of the vault's emergency access council may start a recovery process
+			throw new ForbiddenException("User is not a member of the vault's emergency access council");
+		}
 		if (!dto.recoveredKeyShares.containsKey(currentUser)) {
 			// the council member who starts the process must, by definition, be part of the process
 			throw new BadRequestException("User is not a member of the recovery process");
