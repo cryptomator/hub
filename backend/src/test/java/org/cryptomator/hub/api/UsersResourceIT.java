@@ -134,7 +134,7 @@ class UsersResourceIT {
 			var body = """
 					{
 						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
-						"7E57C0DE-0000-4000-8000-BADBADBADBAD": "noSuchVault"
+						"7E57C0DE-0000-4000-8000-BADBADBADBAD": "jwe.jwe.jwe.noSuchVault.token"
 					},
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -154,6 +154,19 @@ class UsersResourceIT {
 		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
 		void testPostAccessTokens3() {
 			given().contentType(ContentType.JSON).body("")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 400 for syntactically invalid token (not a JWE)")
+		void testPostAccessTokens4() {
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-000100001111": "not-a-jwe"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(400);
 		}

@@ -521,6 +521,22 @@ public class VaultResourceIT {
 		}
 
 		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for syntactically invalid token (not a JWE)")
+		void testGrantAccessInvalidToken() {
+			given().contentType(ContentType.JSON).body(Map.of("user1", "not-a-jwe"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for syntactically invalid user id")
+		void testGrantAccessInvalidUserId() {
+			given().contentType(ContentType.JSON).body(Map.of("bad!id", "jwe.jwe.jwe.vault1.user1"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+		}
+
+		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens returns 200 for user1 and vault archived")
 		void testGrantAccessArchived() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vaultAAA.user1"))

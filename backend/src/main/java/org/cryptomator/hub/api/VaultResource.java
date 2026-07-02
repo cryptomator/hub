@@ -54,6 +54,7 @@ import org.cryptomator.hub.metrics.VaultUnlockMetrics;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
+import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -480,7 +481,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 
 		// check number of available seats
