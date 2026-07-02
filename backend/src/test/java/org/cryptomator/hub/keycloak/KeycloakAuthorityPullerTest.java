@@ -12,6 +12,7 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -404,9 +405,8 @@ class KeycloakAuthorityPullerTest {
 		@Test
 		@DisplayName("createUser throws AlreadyExistsException on 409")
 		void testCreateUserConflict() {
-			var response = Mockito.mock(Response.class);
-			Mockito.when(usersResource.create(any())).thenReturn(response);
-			Mockito.when(response.getStatus()).thenReturn(409);
+			//noinspection resource
+			Mockito.doThrow(new jakarta.ws.rs.WebApplicationException(Response.Status.CONFLICT)).when(usersResource).create(any());
 
 			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null));
 			Mockito.verify(userRepo, Mockito.never()).persist(any(User.class));
@@ -660,9 +660,8 @@ class KeycloakAuthorityPullerTest {
 		@Test
 		@DisplayName("createGroup throws AlreadyExistsException on 409")
 		void testCreateGroupConflict() {
-			var response = Mockito.mock(Response.class);
-			Mockito.when(groupsResource.add(any())).thenReturn(response);
-			Mockito.when(response.getStatus()).thenReturn(409);
+			//noinspection resource
+			Mockito.doThrow(new jakarta.ws.rs.WebApplicationException(Response.Status.CONFLICT)).when(groupsResource).add(any());
 
 			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createGroup("g", null));
 			Mockito.verify(groupRepo, Mockito.never()).persist(any(Group.class));
@@ -815,7 +814,7 @@ class KeycloakAuthorityPullerTest {
 
 	private static class StringArrayConverter extends SimpleArgumentConverter {
 		@Override
-		protected Object convert(Object source, Class<?> targetType) throws ArgumentConversionException {
+		protected Object convert(Object source, @NonNull Class<?> targetType) throws ArgumentConversionException {
 			if (source instanceof String s && String[].class.isAssignableFrom(targetType)) {
 				return s.split(",");
 			} else {

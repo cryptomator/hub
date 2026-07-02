@@ -13,6 +13,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.api.AlreadyExistsException;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -212,7 +214,7 @@ public class KeycloakAuthorityPuller {
 		user.setCredentials(List.of(credential));
 
 		final String userId;
-		try (var response = realm.users().create(user)) {
+		try (var response = captureResponse(() -> realm.users().create(user))) {
 			userId = switch (response.getStatus()) {
 				case 201 -> {
 					var location = response.getHeaderString("Location");
@@ -225,8 +227,7 @@ public class KeycloakAuthorityPuller {
 				}
 			};
 		} catch (ProcessingException e) {
-			LOG.tracev(e, "Failed to create user {0} in Keycloak", username);
-			LOG.warnv("Failed to create user {0} in Keycloak.", username);
+			LOG.warnv(e, "Failed to create user {0} in Keycloak.", username);
 			throw new IllegalStateException(e);
 		}
 
@@ -492,7 +493,7 @@ public class KeycloakAuthorityPuller {
 		}
 
 		final String groupId;
-		try (var response = realm.groups().add(group)) {
+		try (var response = captureResponse(() -> realm.groups().add(group))) {
 			groupId = switch (response.getStatus()) {
 				case 201 -> {
 					var location = response.getHeaderString("Location");
@@ -515,7 +516,7 @@ public class KeycloakAuthorityPuller {
 		return createdGroup;
 	}
 
-	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
+	public GroupRepresentation updateGroup(String groupId, String name, @Nullable String pictureUrl) {
 		try {
 			GroupResource groupResource = realm.groups().group(groupId);
 			GroupRepresentation group = groupResource.toRepresentation();
@@ -600,5 +601,18 @@ public class KeycloakAuthorityPuller {
 		Map<K, V> result = new HashMap<>(first);
 		result.putAll(second);
 		return result;
+	}
+
+	@FunctionalInterface
+	private interface Request {
+		Response make() throws WebApplicationException, ProcessingException;
+	}
+
+	private static Response captureResponse(Request request) throws ProcessingException {
+		try {
+			return request.make();
+		} catch (WebApplicationException e) {
+			return e.getResponse();
+		}
 	}
 }

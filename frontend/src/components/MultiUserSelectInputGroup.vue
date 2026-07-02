@@ -30,7 +30,6 @@
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
-            :disable-action="disableAction"
             :dimmed="!inputVisible"
             @trust-changed="refreshTrusts"
           />
@@ -43,18 +42,23 @@
         <div v-if="inputVisible" class="text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
-      <Combobox @update:model-value="onSelect">
-        <div class="flex-1 relative"> 
-          <ComboboxInput v-if="inputVisible" :id="props.inputId" as="template">
+      <Combobox :disabled="!inputVisible" @update:model-value="onSelect">
+        <div class="flex-1 relative">
+          <ComboboxInput :id="props.inputId" as="template">
             <input
+              :id="props.inputId /* Just to silence SonarQube warnings. Gets overwritten by ComboboxInput's :id */"
               ref="inputEl"
               v-model="query"
               autocomplete="off"
               class="w-full min-w-[60px] h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
               :class="{
-                'caret-transparent': selectedPillIndex !== null,
-                'caret-black': selectedPillIndex === null
+                'caret-transparent': selectedPillIndex !== undefined,
+                'caret-black': selectedPillIndex === undefined,
+                'hidden': !inputVisible
               }"
+              :readonly="!inputVisible"
+              :tabindex="inputVisible ? undefined : -1"
+              :aria-hidden="!inputVisible || undefined"
               :placeholder="props.placeholder || t('common.search.placeholder')"
               @keydown="onKeyDown"
               @blur="onBlur"
@@ -79,13 +83,13 @@
         :key="user.id"
         :class="[
           'cursor-pointer select-none py-2 px-3 flex items-center',
-          (hoveredIndex === index || (hoveredIndex === null && activeIndex === index))
+          (hoveredIndex === index || (hoveredIndex === undefined && activeIndex === index))
             ? 'bg-primary text-white'
             : 'hover:bg-primary'
         ]"
         @click="onSelect(user as T)"
         @mouseenter="hoveredIndex = index"
-        @mouseleave="hoveredIndex = null"
+        @mouseleave="hoveredIndex = undefined"
       >
         <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
         {{ user.name }}
@@ -101,7 +105,7 @@
 
 <script setup lang="ts" generic="T extends AuthorityDto">
 import backend, { AuthorityDto, TrustDto, UserDto } from '../common/backend';
-import { useId, ref, computed, watch, nextTick, onMounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
@@ -114,38 +118,31 @@ const trusts = ref<TrustDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   selectedUsers: T[];
   onSearch: (query: string) => Promise<T[]>;
   inputVisible: boolean;
-  disableAction?: boolean;
   hasError?: boolean;
   errorMessage?: string;
   placeholder?: string;
   inputId?: string;
-}>(), {
-  errorMessage: undefined,
-  placeholder: undefined,
-  inputId: useId()
-});
+}>();
 
 const emit = defineEmits<{
   action: [item: T];
   remove: [item: T];
 }>();
 
-const inputVisible = computed(() => props.inputVisible !== false);
-
 const query = ref('');
 const searchResults = ref<T[]>([]);
 
-const inputEl = ref<HTMLInputElement | null>(null);
+const inputEl = ref<HTMLInputElement>();
 
 async function focus() {
-  selectedPillIndex.value = null;
+  selectedPillIndex.value = undefined;
   await nextTick();
 
-  if (inputVisible.value) inputEl.value?.focus();
+  if (props.inputVisible) inputEl.value?.focus();
 }
 
 defineExpose<MultiUserSelectExpose>({
@@ -153,15 +150,16 @@ defineExpose<MultiUserSelectExpose>({
 });
 
 const focusInput = () => {
-  selectedPillIndex.value = null;
+  if (!props.inputVisible) return;
+  selectedPillIndex.value = undefined;
   nextTick(() => {
     inputEl.value?.focus();
   });
 };
 
 const activeIndex = ref(0);
-const hoveredIndex = ref<number | null>(null);
-const selectedPillIndex = ref<number | null>(null);
+const hoveredIndex = ref<number>();
+const selectedPillIndex = ref<number>();
 
 const filteredUsers = computed(() => {
   return searchResults.value.filter(
@@ -178,7 +176,7 @@ function onPillClick(event: MouseEvent, user: T) {
   if (target.closest('.trust-details')) {
     return;
   }
-  if (inputVisible.value) {
+  if (props.inputVisible) {
     removeUser(user);
   }
 }
@@ -208,25 +206,26 @@ function removeUser(user: T) {
 }
 
 function onBlur() {
-  selectedPillIndex.value = null;
+  selectedPillIndex.value = undefined;
 }
 
 function onKeyDown(e: KeyboardEvent) {
+  if (!props.inputVisible) return;
   const userCount = props.selectedUsers.length;
 
   if (e.key === 'Backspace') {
-    if (query.value === '' && selectedPillIndex.value === null && userCount > 0) {
+    if (query.value === '' && selectedPillIndex.value === undefined && userCount > 0) {
       selectedPillIndex.value = userCount - 1;
       e.preventDefault();
-    } else if (selectedPillIndex.value !== null) {
+    } else if (selectedPillIndex.value !== undefined) {
       const user = props.selectedUsers[selectedPillIndex.value];
       removeUser(user);
-      selectedPillIndex.value = selectedPillIndex.value == 0 ? (props.selectedUsers.length == 1 ? null : 0) : selectedPillIndex.value - 1;
+      selectedPillIndex.value = selectedPillIndex.value == 0 ? (props.selectedUsers.length === 1 ? undefined : 0) : selectedPillIndex.value - 1;
       e.preventDefault();
     }
   } else if (e.key === 'ArrowLeft') {
     if (query.value === '' && userCount > 0) {
-      if (selectedPillIndex.value === null) {
+      if (selectedPillIndex.value === undefined) {
         selectedPillIndex.value = userCount - 1;
       } else if (selectedPillIndex.value > 0) {
         selectedPillIndex.value--;
@@ -234,24 +233,24 @@ function onKeyDown(e: KeyboardEvent) {
       e.preventDefault();
     }
   } else if (e.key === 'ArrowRight') {
-    if (selectedPillIndex.value !== null) {
+    if (selectedPillIndex.value !== undefined) {
       if (selectedPillIndex.value < userCount - 1) {
         selectedPillIndex.value++;
       } else {
-        selectedPillIndex.value = null;
+        selectedPillIndex.value = undefined;
         nextTick(() => inputEl.value?.focus());
       }
       e.preventDefault();
     }
   } else if (e.key === 'ArrowDown') {
     e.preventDefault();
-    hoveredIndex.value = null;
+    hoveredIndex.value = undefined;
     if (filteredUsers.value.length > 0) {
       activeIndex.value = (activeIndex.value + 1) % filteredUsers.value.length;
     }
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    hoveredIndex.value = null;
+    hoveredIndex.value = undefined;
     if (filteredUsers.value.length > 0) {
       activeIndex.value = (activeIndex.value - 1 + filteredUsers.value.length) % filteredUsers.value.length;
     }
@@ -261,7 +260,7 @@ function onKeyDown(e: KeyboardEvent) {
       onSelect(filteredUsers.value[activeIndex.value] as T);
     }
   } else {
-    selectedPillIndex.value = null;
+    selectedPillIndex.value = undefined;
   }
 }
 
