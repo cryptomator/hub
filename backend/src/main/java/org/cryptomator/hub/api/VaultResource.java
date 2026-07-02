@@ -395,7 +395,7 @@ public class VaultResource {
 			return response.build();
 		} catch (NoResultException _) {
 			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
-			throw new ForbiddenException("Access to this device not granted.");
+			return Response.status(Response.Status.FORBIDDEN.getStatusCode(), "Access to this device not granted").build();
 		}
 	}
 
@@ -465,7 +465,7 @@ public class VaultResource {
 		} else {
 			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
-			throw new ForbiddenException("Access to this vault not granted.");
+			return Response.status(Response.Status.FORBIDDEN.getStatusCode(), "Access to this device not granted").build();
 		}
 	}
 
