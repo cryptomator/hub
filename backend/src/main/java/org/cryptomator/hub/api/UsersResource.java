@@ -35,6 +35,7 @@ import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.keycloak.KeycloakAdminService;
 import org.cryptomator.hub.keycloak.RealmRole;
+import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -145,7 +146,7 @@ public class UsersResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
-	public Response updateMyAccessTokens(@NotNull Map<UUID, String> tokens) {
+	public Response updateMyAccessTokens(@NotNull Map<UUID, @ValidJWE String> tokens) {
 		var user = userRepo.findById(jwt.getSubject());
 		for (var entry : tokens.entrySet()) {
 			var vault = vaultRepo.findById(entry.getKey());
