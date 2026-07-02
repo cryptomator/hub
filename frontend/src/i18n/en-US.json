@@ -263,6 +263,8 @@
   "emergencyAccess.badge.insufficientCouncilMembers.message": "Your team policy requires an emergency access council of at least {0} members. This vault does not currently meet this requirement.",
   "emergencyAccess.badge.broken.title": "Broken Emergency Access",
   "emergencyAccess.badge.broken.message": "Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares.",
+  "emergencyAccess.badge.notConfigured.title": "Missing Emergency Access",
+  "emergencyAccess.badge.notConfigured.message": "Emergency Access is not configured for this vault.",
   "emergencyAccess.badge.noRedundancy.title": "No Redundancy",
   "emergencyAccess.badge.noRedundancy.message": "This Emergency Access Council has no redundancy. Consider assigning a council with redundancy.",
 

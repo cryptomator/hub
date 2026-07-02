@@ -94,7 +94,13 @@
             </div>
             <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
               <EmergencyBadge
-                v-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
+                v-if="vault.requiredEmergencyKeyShares == 0"
+                type="warning"
+                :title="t('emergencyAccess.badge.notConfigured.title')"
+                :message="t('emergencyAccess.badge.notConfigured.message')"
+              />
+              <EmergencyBadge
+                v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
                 type="error"
                 :title="t('emergencyAccess.badge.broken.title')"
                 :message="t('emergencyAccess.badge.broken.message')"
