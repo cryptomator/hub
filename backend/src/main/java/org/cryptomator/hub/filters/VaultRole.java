@@ -19,12 +19,17 @@ public @interface VaultRole {
 	String DEFAULT_VAULT_ID_PARAM = "vaultId";
 
 	/**
+	 * Which roles grant access to the annotated resource.
+	 * <p>
+	 * The user accessing the resource must have at least one of the listed vault roles.
+	 * If empty, access is denied unless the check is bypassed by another rule.
+	 *
 	 * @return Roles required to access the annotated resource. Access is granted if _any_ role is present.
 	 */
 	VaultAccess.Role[] value() default {VaultAccess.Role.MEMBER};
 
 	/**
-	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#id vault id}.
+	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#getId() vault id}.
 	 */
 	String vaultIdParam() default DEFAULT_VAULT_ID_PARAM;
 

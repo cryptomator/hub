@@ -19,6 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.util.Map;
@@ -66,6 +69,19 @@ class VaultRoleFilterTest {
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 
 		Assertions.assertThrows(NotAuthorizedException.class, () -> filter.filter(context));
+	}
+
+	@DisplayName("error 403 if @VaultRole({})")
+	@ParameterizedTest(name = "for user with vault role {0}")
+	@EnumSource(VaultAccess.Role.class)
+	void testFilterWithMissingJWT(VaultAccess.Role role) throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowNobody")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-DEADBEEF0001"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user0").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-DEADBEEF0001"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-DEADBEEF0001"), Mockito.eq("user0"))).thenReturn(Set.of(role));
+
+		Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 	}
 
 	@Test
@@ -303,12 +319,16 @@ class VaultRoleFilterTest {
 	 * "real" methods for testing below, as we can not mock Method.class without breaking Mockito
 	 */
 
-	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForEmergencyAccess = true)
+	@VaultRole(value = {}, bypassForEmergencyAccess = true)
 	public void byPassRecoveryCouncilMembers() {
 	}
 
 	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = true)
 	public void byPassForRealmRole() {
+	}
+
+	@VaultRole({})
+	public void allowNobody() {
 	}
 
 	@VaultRole({VaultAccess.Role.MEMBER})

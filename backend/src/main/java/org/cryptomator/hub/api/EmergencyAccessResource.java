@@ -28,6 +28,7 @@ import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
@@ -149,7 +150,10 @@ public class EmergencyAccessResource {
 	public Response complete(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
 		var ip = request.remoteAddress().hostAddress();
-		if (recoverProcessRepo.deleteById(processId)) {
+		var process = recoverProcessRepo.findByIdOptional(processId).orElseThrow(NotFoundException::new);
+		if (!process.getRecoveredKeyShares().containsKey(currentUserId)) {
+			throw new ForbiddenException();
+		} else if (recoverProcessRepo.deleteById(processId)) {
 			eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
 			return Response.noContent().build();
 		} else {
@@ -166,18 +170,20 @@ public class EmergencyAccessResource {
 	@Transactional
 	public Response abort(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
-		var process = recoverProcessRepo.findByIdOptional(processId)
-				.orElseThrow(NotFoundException::new);
-
-		eventLogger.logEmergencyAccessRecoveryAborted(process.getVaultId(), processId, currentUserId, request.remoteAddress().hostAddress());
-
-		recoverProcessRepo.delete(process);
-		return Response.noContent().build();
+		var process = recoverProcessRepo.findByIdOptional(processId).orElseThrow(NotFoundException::new);
+		if (process.getRecoveredKeyShares().containsKey(currentUserId) || vaultRepo.findById(process.getVaultId()).getEmergencyKeyShares().containsKey(currentUserId)) {
+			eventLogger.logEmergencyAccessRecoveryAborted(process.getVaultId(), processId, currentUserId, request.remoteAddress().hostAddress());
+			recoverProcessRepo.delete(process);
+			return Response.noContent().build();
+		} else {
+			throw new ForbiddenException();
+		}
 	}
 
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
+	@VaultRole(value = {}, bypassForEmergencyAccess = true)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "finds an existing recovery process")
 	@APIResponse(responseCode = "200")

@@ -9,11 +9,14 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,6 +35,8 @@ public class EmergencyAccessResourceIT {
 	private static final UUID COUNCIL_VAULT_ID = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
 	// user1 is NOT a member of this vault's emergency access council.
 	private static final UUID OTHER_VAULT_ID = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
+	// existing recovery process for COUNCIL_VAULT started by user1:
+	private static final UUID STARTED_RECOVERY_PROCESS_ID = UUID.fromString("7E57C0DE-0000-4000-8000-000200000001");
 
 	@InjectMock
 	EventLogger eventLogger; // mocked so starting a process does not persist audit events
@@ -84,7 +89,7 @@ public class EmergencyAccessResourceIT {
 		@Test
 		@DisplayName("PUT /emergency-access/{processId} self-enrolling into the council returns 403")
 		void testSelfEnrollIsForbidden() {
-			var processId = UUID.fromString("aaaaaaaa-0000-4000-8000-000000000001");
+			var processId = UUID.fromString("7E57C0DE-0000-4000-8000-000200000002");
 
 			// attacker submits a process listing their own (non-council) user id as recovery participant
 			given().contentType(ContentType.JSON).body(recoveryProcessBody(processId, COUNCIL_VAULT_ID, "user2"))
@@ -93,6 +98,27 @@ public class EmergencyAccessResourceIT {
 
 			// the process must not have been persisted, otherwise the attacker would gain bypassForEmergencyAccess
 			assertThat(processExists(processId), is(false));
+		}
+
+		@Test
+		@DisplayName("GET /emergency-access/{vaultId} returns 403")
+		void testFindByVaultIdIsForbidden() {
+			given().when().get("/emergency-access/{vaultId}", COUNCIL_VAULT_ID)
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /emergency-access/{processId}/abort returns 403")
+		void testAbortIsForbidden() {
+			given().when().delete("/emergency-access/{processId}/abort", STARTED_RECOVERY_PROCESS_ID)
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /emergency-access/{processId}/complete returns 403")
+		void testCompleteIsForbidden() {
+			given().when().delete("/emergency-access/{processId}/complete", STARTED_RECOVERY_PROCESS_ID)
+					.then().statusCode(403);
 		}
 	}
 
@@ -108,7 +134,7 @@ public class EmergencyAccessResourceIT {
 		@DisplayName("PUT /emergency-access/{processId} for a vault the user is council of returns 204")
 		@DBRollbackAfter
 		void testCouncilMemberCanStartRecovery() {
-			var processId = UUID.fromString("aaaaaaa1-0000-4000-8000-000000000002");
+			var processId = UUID.fromString("7E57C0DE-0000-4000-8000-000200000003");
 
 			given().contentType(ContentType.JSON).body(recoveryProcessBody(processId, COUNCIL_VAULT_ID, "user1"))
 					.when().put("/emergency-access/{processId}", processId)
@@ -120,7 +146,7 @@ public class EmergencyAccessResourceIT {
 		@Test
 		@DisplayName("PUT /emergency-access/{processId} for a vault the user is NOT council of returns 403")
 		void testCouncilMembershipIsVaultSpecific() {
-			var processId = UUID.fromString("aaaaaaa2-0000-4000-8000-000000000003");
+			var processId = UUID.fromString("7E57C0DE-0000-4000-8000-000200000003");
 
 			// user1 is council of COUNCIL_VAULT_ID but not of OTHER_VAULT_ID
 			given().contentType(ContentType.JSON).body(recoveryProcessBody(processId, OTHER_VAULT_ID, "user1"))
@@ -129,5 +155,29 @@ public class EmergencyAccessResourceIT {
 
 			assertThat(processExists(processId), is(false));
 		}
+
+		@Test
+		@DisplayName("GET /emergency-access/{vaultId} returns 200")
+		void testFindByVaultId() {
+			given().when().get("/emergency-access/{vaultId}", COUNCIL_VAULT_ID)
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("DELETE /emergency-access/{processId}/abort returns 204")
+		@DBRollbackAfter
+		void testAbort() {
+			given().when().delete("/emergency-access/{processId}/abort", STARTED_RECOVERY_PROCESS_ID)
+					.then().statusCode(204);
+		}
+
+		@Test
+		@DisplayName("DELETE /emergency-access/{processId}/complete returns 204")
+		@DBRollbackAfter
+		void testComplete() {
+			given().when().delete("/emergency-access/{processId}/complete", STARTED_RECOVERY_PROCESS_ID)
+					.then().statusCode(204);
+		}
+
 	}
 }
