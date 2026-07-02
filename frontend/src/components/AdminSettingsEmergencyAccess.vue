@@ -85,7 +85,6 @@
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <div class="relative">
             <MultiUserSelectInputGroup
-              v-if="enableEmergencyAccess"
               input-id="searchKeyholder"
               :selected-users="selectedUsers"
               :on-search="searchCouncilMembers"
@@ -95,13 +94,6 @@
               :placeholder="t('common.search.placeholder')"
               @action="selectUser"
               @remove="removeUser"
-            />
-            <MultiUserSelectInputGroup
-              v-else
-              :selected-users="selectedUsers"
-              :on-search="async () => []"
-              :input-visible="enableEmergencyAccess"
-              :disable-action="true"
             />
             <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.keyholders.help') }}</p>
           </div>
