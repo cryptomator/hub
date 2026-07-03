@@ -171,6 +171,7 @@
   "vaultDetails.actions.updatePermissions.reload": "Znovu načítať",
   "vaultDetails.actions.displayRecoveryKey": "Ukázať kľúč obnovenia",
   "vaultDetails.actions.claimOwnership": "Potvrdiť vlastníctvo",
+  "vaultDetails.error.reactivateFailed": "Vaša licencia Cryptomator Hubu prekročila počet dostupných relácii. Reaktivovanie tohto trezora môže prekročiť limit. Prosím informujte Hub administrátora pre aktualizovanie licencie.",
   "vaultList.title": "Trezory",
   "vaultList.addVault": "Pridať",
   "vaultList.filter": "Filter",
