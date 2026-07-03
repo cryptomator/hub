@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.5.2...HEAD)
+## [Unreleased](https://github.com/cryptomator/hub/compare/1.5.4...HEAD)
 
 ### Fixed
 - Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 26.5.7
 - Update Quarkus to 3.27.3 LTS
 - Improved Helm chart (#456)
+
+## [1.5.0-beta4](https://github.com/cryptomator/hub/compare/1.5.0-beta3...1.5.0-beta4)
+
+### Security
+
+- Fixed [Emergency Access Authorization Bypass](https://github.com/cryptomator/hub/security/advisories/GHSA-99p9-vhhj-2x98)
+- Fixed [Unauthorized Read/Delete of Recovery Process State](https://github.com/cryptomator/hub/security/advisories/GHSA-p94x-9592-5r73)
+- Fixed [Endpoints Accepts Invalid / non-JWE Key Material](https://github.com/cryptomator/hub/security/advisories/GHSA-hq3g-4c59-cgg7)
 
 ## [1.5.0-beta3](https://github.com/cryptomator/hub/compare/1.5.0-beta2...1.5.0-beta3)
 
