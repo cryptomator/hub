@@ -75,29 +75,37 @@
     </div>
     <!-- DROPDOWN -->
     <div
-      v-if="inputVisible && query && filteredUsers.length > 0"
+      v-if="showDropdown"
       class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
     >
-      <div
-        v-for="(user, index) in filteredUsers"
-        :key="user.id"
-        :class="[
-          'cursor-pointer select-none py-2 px-3 flex items-center',
-          (hoveredIndex === index || (hoveredIndex === undefined && activeIndex === index))
-            ? 'bg-primary text-white'
-            : 'hover:bg-primary'
-        ]"
-        @click="onSelect(user as T)"
-        @mouseenter="hoveredIndex = index"
-        @mouseleave="hoveredIndex = undefined"
-      >
-        <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
-        {{ user.name }}
-        <span v-if="user.type === 'GROUP'" class="ml-1 trust-details">
-          <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full focus:outline-hidden focus:ring-primary text-black">
-            {{ user.memberSize }}
+      <template v-if="filteredUsers.length > 0">
+        <div
+          v-for="(user, index) in filteredUsers"
+          :key="user.id"
+          :class="[
+            'cursor-pointer select-none py-2 px-3 flex items-center',
+            (hoveredIndex === index || (hoveredIndex === undefined && activeIndex === index))
+              ? 'bg-primary text-white'
+              : 'hover:bg-primary'
+          ]"
+          @click="onSelect(user as T)"
+          @mouseenter="hoveredIndex = index"
+          @mouseleave="hoveredIndex = undefined"
+        >
+          <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
+          {{ user.name }}
+          <span v-if="user.type === 'GROUP'" class="ml-1 trust-details">
+            <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full focus:outline-hidden focus:ring-primary text-black">
+              {{ user.memberSize }}
+            </span>
           </span>
-        </span>
+        </div>
+      </template>
+      <div v-else-if="searching" class="select-none py-2 px-3 text-gray-500">
+        {{ t('common.search.searching') }}
+      </div>
+      <div v-else class="select-none py-2 px-3 text-gray-500">
+        {{ props.noResultsText || t('common.search.empty') }}
       </div>
     </div>
   </div>
@@ -126,6 +134,7 @@ const props = defineProps<{
   errorMessage?: string;
   placeholder?: string;
   inputId?: string;
+  noResultsText?: string;
 }>();
 
 const emit = defineEmits<{
@@ -135,6 +144,8 @@ const emit = defineEmits<{
 
 const query = ref('');
 const searchResults = ref<T[]>([]);
+const searching = ref(false);
+let searchSeq = 0;
 
 const inputEl = ref<HTMLInputElement>();
 
@@ -167,6 +178,8 @@ const filteredUsers = computed(() => {
   );
 });
 
+const showDropdown = computed(() => props.inputVisible && query.value.trim().length > 0);
+
 async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
 }
@@ -182,10 +195,27 @@ function onPillClick(event: MouseEvent, user: T) {
 }
 
 watch(query, async (newQuery) => {
+  const seq = ++searchSeq;
   if (newQuery.trim() === '') {
     searchResults.value = [];
-  } else {
-    searchResults.value = await props.onSearch(newQuery);
+    searching.value = false;
+    return;
+  }
+  searching.value = true;
+  try {
+    const results = await props.onSearch(newQuery);
+    if (seq === searchSeq) {
+      searchResults.value = results;
+    }
+  } catch (error) {
+    console.error('User search failed.', error);
+    if (seq === searchSeq) {
+      searchResults.value = [];
+    }
+  } finally {
+    if (seq === searchSeq) {
+      searching.value = false;
+    }
   }
 });
 

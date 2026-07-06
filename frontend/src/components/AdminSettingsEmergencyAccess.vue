@@ -92,6 +92,7 @@
               :error-message="t('admin.emergencyAccess.keyholders.minSelected', [requiredShares])"
               :has-error="!!selectedMembersError"
               :placeholder="t('common.search.placeholder')"
+              :no-results-text="t('emergencyAccess.keyholders.noEligible')"
               @action="selectUser"
               @remove="removeUser"
             />
