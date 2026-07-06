@@ -60,11 +60,13 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ d(device.creationTime, 'long') }}
+                <span :title="d(device.creationTime, 'long')">
+                  {{ d(device.creationTime, 'short') }}
+                </span>
               </td>
               <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div v-if="device.lastAccessTime">
-                  {{ d(device.lastAccessTime, 'long') }}
+                <div v-if="device.lastAccessTime" :title="d(device.lastAccessTime, 'long')">
+                  {{ d(device.lastAccessTime, 'short') }}
                 </div>
                 <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
                   {{ device.lastIpAddress }}
