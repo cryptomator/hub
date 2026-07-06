@@ -396,8 +396,11 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user updated")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
-	@APIResponse(responseCode = "409", description = "email already exists")
+	@APIResponse(responseCode = "409", description = "email already exists, or user attempted to revoke their own admin role")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
+		if (Objects.equals(userId, jwt.getSubject()) && !dto.realmRoles().contains(RealmRole.ADMIN)) {
+			throw new ClientErrorException("Users cannot revoke their own admin role", Response.Status.CONFLICT);
+		}
 		keycloakAuthorityPuller.updateUser(
 				userId,
 				dto.email(),

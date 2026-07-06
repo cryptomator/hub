@@ -672,6 +672,48 @@ class UsersResourceIT {
 		}
 
 		@Test
+		@DisplayName("PUT /users/{id} returns 409 when revoking own admin role")
+		void testUpdateOwnAdminRoleConflict() {
+			var body = """
+					{
+						"firstName": "Admin",
+						"lastName": "User",
+						"realmRoles": ["user"]
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/admin")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).updateUser(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).updateUserRoles(Mockito.anyString(), Mockito.any());
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} passes the guard when updating own account while keeping admin role")
+		void testUpdateOwnAccountKeepingAdminRole() {
+			var userRep = new UserRepresentation();
+			userRep.setId("admin");
+			userRep.setUsername("Admin User");
+			Mockito.doReturn(userRep).when(keycloakAuthorityPuller).updateUser(Mockito.eq("admin"), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+
+			var body = """
+					{
+						"firstName": "Admin",
+						"lastName": "User",
+						"realmRoles": ["user", "admin"]
+					}
+					""";
+			// the self-guard is not triggered (admin role retained); the request proceeds past it and only 404s
+			// because there is no "admin" user in the test DB, proving the role update was actually attempted.
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/admin")
+					.then().statusCode(404);
+
+			Mockito.verify(keycloakAuthorityPuller).updateUserRoles("admin", Set.of(RealmRole.USER, RealmRole.ADMIN));
+		}
+
+		@Test
 		@DisplayName("PUT /users/{id}/enabled returns 204 when disabled successfully")
 		void testSetUserEnabledSuccess() {
 			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("user1", false);
