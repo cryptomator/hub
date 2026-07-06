@@ -22,6 +22,7 @@
           <div class="flex items-center gap-2">
             <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
             <div v-if="vault.role === 'OWNER'" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
+            <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
           </div>
           <div v-if="vault.description" class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
         </li>
