@@ -125,12 +125,18 @@ class UserData {
    * Decrypts the user keys using the device key stored in the currently used browser.
    * @returns The user's key pairs
    */
-  public async decryptUserKeysWithBrowser(): Promise<UserKeys> {
-    const browserKeys = await this.browserKeys;
+  public async decryptUserKeysWithBrowser(): Promise<UserKeys>;
+  public async decryptUserKeysWithBrowser(browserKeys: BrowserKeys, browser: DeviceDto): Promise<UserKeys>;
+  public async decryptUserKeysWithBrowser(browserKeys: BrowserKeys | undefined = undefined, browser: DeviceDto | undefined = undefined): Promise<UserKeys> {
+    if (browserKeys === undefined) {
+      browserKeys = await this.browserKeys;
+    }
     if (!browserKeys) {
       throw new Error('Browser keys not found.');
     }
-    const browser = await this.browser;
+    if (browser === undefined) {
+      browser = await this.browser;
+    }
     if (!browser) {
       throw new Error('Device not initialized.');
     }

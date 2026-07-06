@@ -245,14 +245,19 @@ router.beforeEach(async (to) => {
   if (!browserKeys) {
     return { path: '/app/setup' };
   }
+
   const browser = await userdata.browser;
   if (!browser) {
     return { path: '/app/setup' };
   }
-  // Users migrated from older versions may lack their ECDSA key pair
-  // Backfilled when sending them to profile (see userdata.addEcdsaKeyIfMissing)
-  if (!me.ecdsaPublicKey && to.path !== '/app/profile') {
-    return { path: '/app/profile' };
+  // Users created before Hub 1.4.0 may lack ECDSA key pair. Unlocking the user keys with
+  // the (already registered) browser device backfills and persists ECDSA key pair
+  if (!me.ecdsaPublicKey) {
+    try {
+      await userdata.decryptUserKeysWithBrowser(browserKeys, browser);
+    } catch (error) {
+      console.error('Backfilling the missing ECDSA user key failed.', error);
+    }
   }
 });
 
