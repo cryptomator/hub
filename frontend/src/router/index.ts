@@ -249,6 +249,11 @@ router.beforeEach(async (to) => {
   if (!browser) {
     return { path: '/app/setup' };
   }
+  // Users migrated from older versions may lack their ECDSA key pair
+  // Backfilled when sending them to profile (see userdata.addEcdsaKeyIfMissing)
+  if (!me.ecdsaPublicKey && to.path !== '/app/profile') {
+    return { path: '/app/profile' };
+  }
 });
 
 // FOURTH apply user language
