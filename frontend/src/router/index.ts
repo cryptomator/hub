@@ -245,7 +245,6 @@ router.beforeEach(async (to) => {
   if (!browserKeys) {
     return { path: '/app/setup' };
   }
-
   const browser = await userdata.browser;
   if (!browser) {
     return { path: '/app/setup' };

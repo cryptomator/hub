@@ -127,16 +127,12 @@ class UserData {
    */
   public async decryptUserKeysWithBrowser(): Promise<UserKeys>;
   public async decryptUserKeysWithBrowser(browserKeys: BrowserKeys, browser: DeviceDto): Promise<UserKeys>;
-  public async decryptUserKeysWithBrowser(browserKeys: BrowserKeys | undefined = undefined, browser: DeviceDto | undefined = undefined): Promise<UserKeys> {
-    if (browserKeys === undefined) {
-      browserKeys = await this.browserKeys;
-    }
+  public async decryptUserKeysWithBrowser(browserKeys?: BrowserKeys = undefined, browser?: DeviceDto = undefined): Promise<UserKeys> {
+    browserKeys ??= await this.browserKeys;
     if (!browserKeys) {
       throw new Error('Browser keys not found.');
     }
-    if (browser === undefined) {
-      browser = await this.browser;
-    }
+    browser ??= await this.browser;
     if (!browser) {
       throw new Error('Device not initialized.');
     }
