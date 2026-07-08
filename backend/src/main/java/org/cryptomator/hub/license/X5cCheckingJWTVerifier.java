@@ -3,15 +3,14 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 
 import java.security.GeneralSecurityException;
-import java.security.cert.CertPathValidatorException;
-import java.security.interfaces.ECPublicKey;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,14 +66,14 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	}
 
 	private void verifyCNIsPartOfChain(String expectedCN, List<String> x5cChain) throws GeneralSecurityException {
+		var cns = new ArrayList<String>();
 		for (var encodedCert : x5cChain) {
 			var cert = X509Helper.parseCertificate(encodedCert);
-			var actualCn = X509Helper.getCommonName(cert);
-			if (expectedCN.equals(actualCn)) {
-				return;
-			}
+			cns.add(X509Helper.getCommonName(cert));
 		}
-		throw new JWTVerificationException("Expected certificate CN not found in x5c chain.");
+		if (!cns.contains(expectedCN)) {
+			throw new JWTVerificationException("Expected certificate CN (%s) not found in x5c chain (%s).".formatted(expectedCN, String.join(", ", cns)));
+		}
 	}
 
 }
