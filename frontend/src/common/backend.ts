@@ -746,10 +746,10 @@ export default services;
 // #endregion Services
 // #region Error handling
 
-function convertExpectedToBackendError(status: number): BackendError {
+function convertExpectedToBackendError(status: number, errorMessage?: string): BackendError {
   switch (status) {
     case 400:
-      return new BadRequestError();
+      return new BadRequestError(errorMessage);
     case 402:
       return new PaymentRequiredError();
     case 403:
@@ -765,7 +765,7 @@ function convertExpectedToBackendError(status: number): BackendError {
 
 export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
-    throw convertExpectedToBackendError(error.response.status);
+    throw convertExpectedToBackendError(error.response.status, typeof error.response.data === 'string' ? error.response.data : undefined);
   }
   throw error;
 }
@@ -786,8 +786,8 @@ export class BackendError extends Error { }
 
 export class BadRequestError extends BackendError {
 
-  constructor() {
-    super('Bad request');
+  constructor(message?: string) {
+    super(message ?? 'Bad request');
   }
 
 }
