@@ -84,9 +84,14 @@
           <h3 class="text-lg font-medium leading-6 text-gray-900">
             {{ t('admin.licenseInfo.title') }}
           </h3>
-          <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full disabled:opacity-50 disabled:hover:text-gray-400 disabled:cursor-not-allowed" :title="t('common.refresh')" :disabled="!isRegistered" @click="refreshLicense()">
-            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
-          </button>
+          <div class="flex items-center gap-1">
+            <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full" :title="t('admin.licenseInfo.enterLicense')" @click="showEnterLicenseDialog()">
+              <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full disabled:opacity-50 disabled:hover:text-gray-400 disabled:cursor-not-allowed" :title="t('common.refresh')" :disabled="!isRegistered" @click="refreshLicense()">
+              <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.description') }}
@@ -229,13 +234,15 @@
 
       <AdminSettingsEmergencyAccess />
     </div>
+
+    <EnterLicenseDialog v-if="enteringLicense" ref="enterLicenseDialog" @close="enteringLicense = false" @saved="onLicenseEntered()" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL, ConfigDto } from '../common/config';
@@ -244,6 +251,7 @@ import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
 import ContentBanner from './ContentBanner.vue';
+import EnterLicenseDialog from './EnterLicenseDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 const props = defineProps<{
@@ -343,6 +351,23 @@ const manageSubscriptionUrl = computed(() => {
 async function refreshLicense() {
   try {
     await backend.license.refresh();
+    billing.value = await backend.billing.get();
+    cfg.value = await config.reload();
+  } catch (error) {
+    console.error('Refreshing license info failed.', error);
+  }
+}
+
+const enteringLicense = ref(false);
+const enterLicenseDialog = ref<typeof EnterLicenseDialog>();
+
+function showEnterLicenseDialog() {
+  enteringLicense.value = true;
+  nextTick(() => enterLicenseDialog.value?.show());
+}
+
+async function onLicenseEntered() {
+  try {
     billing.value = await backend.billing.get();
     cfg.value = await config.reload();
   } catch (error) {

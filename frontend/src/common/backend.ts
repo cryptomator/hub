@@ -34,7 +34,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-
 // #region DTOs
 
 export type VaultDto = {
@@ -643,7 +642,8 @@ class BillingService {
   }
 
   public async setToken(token: string): Promise<void> {
-    return axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } })
+      .catch((error) => rethrowAndConvertIfExpected(error, 400));
   }
 
 }
@@ -748,6 +748,8 @@ export default services;
 
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
+    case 400:
+      return new BadRequestError();
     case 402:
       return new PaymentRequiredError();
     case 403:
@@ -781,6 +783,14 @@ export function asError(error: unknown): Error {
 }
 
 export class BackendError extends Error { }
+
+export class BadRequestError extends BackendError {
+
+  constructor() {
+    super('Bad request');
+  }
+
+}
 
 export class UnauthorizedError extends BackendError {
 
