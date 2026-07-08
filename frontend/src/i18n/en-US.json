@@ -79,12 +79,12 @@
   "admin.licenseInfo.manageSubscription": "Manage Subscription",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Get License",
-  "admin.licenseInfo.enterLicense": "Enter License Manually",
+  "admin.licenseInfo.enterLicense": "Change License Manually",
 
-  "enterLicenseDialog.title": "Enter License",
+  "enterLicenseDialog.title": "Change License",
   "enterLicenseDialog.description": "Paste your license token below.",
   "enterLicenseDialog.token": "License Token",
-  "enterLicenseDialog.error.invalidToken": "Wrong license format.",
+  "enterLicenseDialog.error.invalidToken": "Bad license format.",
   "enterLicenseDialog.error.rejected": "License rejected: {0}",
 
   "admin.webOfTrust.title": "Web of Trust",
