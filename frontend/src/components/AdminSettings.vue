@@ -86,7 +86,7 @@
           </h3>
           <div class="flex items-center gap-1">
             <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full" :title="t('admin.licenseInfo.enterLicense')" @click="showEnterLicenseDialog()">
-              <WrenchIcon class="h-5 w-5" aria-hidden="true" />
+              <PencilIcon class="h-5 w-5" aria-hidden="true" />
             </button>
             <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full disabled:opacity-50 disabled:hover:text-gray-400 disabled:cursor-not-allowed" :title="t('common.refresh')" :disabled="!isRegistered" @click="refreshLicense()">
               <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
@@ -240,7 +240,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, PencilIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

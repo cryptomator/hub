@@ -79,12 +79,12 @@
   "admin.licenseInfo.manageSubscription": "Manage Subscription",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Get License",
-  "admin.licenseInfo.enterLicense": "Change License Manually",
+  "admin.licenseInfo.enterLicense": "Update License Manually",
 
-  "enterLicenseDialog.title": "Change License",
-  "enterLicenseDialog.description": "Paste your license token below.",
-  "enterLicenseDialog.token": "License Token",
-  "enterLicenseDialog.error.invalidToken": "Bad license format.",
+  "enterLicenseDialog.title": "Update License",
+  "enterLicenseDialog.description": "License keys are normally updated automatically. If Cryptomator Support has provided you with a key, you can enter it here.",
+  "enterLicenseDialog.licenseKey": "License Key",
+  "enterLicenseDialog.error.invalidLicenseKey": "Invalid license key format.",
   "enterLicenseDialog.error.rejected": "License rejected: {0}",
 
   "admin.webOfTrust.title": "Web of Trust",
