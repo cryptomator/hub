@@ -32,6 +32,7 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -84,6 +85,7 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@AvailableDuringSetup
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "update the logged-in user")
@@ -169,6 +171,7 @@ public class UsersResource {
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
+	@AvailableDuringSetup
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Transactional

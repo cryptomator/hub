@@ -13,6 +13,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -60,6 +61,7 @@ public class LicenseResource {
 	@Path("/refresh")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@RolesAllowed("admin")
+	@AvailableDuringSetup
 	@Operation(summary = "Refresh license information", description = "Refreshes the license information from the license server.")
 	@APIResponse(responseCode = "204", description = "License information refreshed")
 	@APIResponse(responseCode = "404", description = "Session not found")

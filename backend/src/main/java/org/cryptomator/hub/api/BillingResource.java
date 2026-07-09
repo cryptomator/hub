@@ -15,6 +15,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -38,6 +39,7 @@ public class BillingResource {
 	@GET
 	@Path("/")
 	@RolesAllowed("admin")
+	@AvailableDuringSetup
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "get the billing information")
@@ -53,6 +55,7 @@ public class BillingResource {
 	@PUT
 	@Path("/token")
 	@RolesAllowed("admin")
+	@AvailableDuringSetup
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "set the token")
 	@APIResponse(responseCode = "204", description = "token set")

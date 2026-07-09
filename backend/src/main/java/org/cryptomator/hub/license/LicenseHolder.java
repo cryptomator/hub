@@ -318,6 +318,17 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
+	/**
+	 * Indicates whether this instance still needs a license to be set up, i.e. all API access is restricted by the {@code LicenseSetupFilter}.
+	 * <p>
+	 * Currently always {@code false}, as {@link #ensureLicenseExists()} guarantees a license during application startup.
+	 *
+	 * @return {@code true} while no license is configured
+	 */
+	public boolean isSetupRequired() {
+		return false;
+	}
+
 	public static class LicenseRefreshFailedException extends Exception {
 
 		LicenseRefreshFailedException(String message, Throwable cause) {
