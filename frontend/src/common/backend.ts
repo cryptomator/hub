@@ -34,7 +34,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-
 // #region DTOs
 
 export type VaultDto = {
@@ -643,7 +642,8 @@ class BillingService {
   }
 
   public async setToken(token: string): Promise<void> {
-    return axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } })
+      .catch((error) => rethrowAndConvertIfExpected(error, 400));
   }
 
 }
@@ -746,8 +746,10 @@ export default services;
 // #endregion Services
 // #region Error handling
 
-function convertExpectedToBackendError(status: number): BackendError {
+function convertExpectedToBackendError(status: number, errorMessage?: string): BackendError {
   switch (status) {
+    case 400:
+      return new BadRequestError(errorMessage);
     case 402:
       return new PaymentRequiredError();
     case 403:
@@ -763,7 +765,7 @@ function convertExpectedToBackendError(status: number): BackendError {
 
 export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
-    throw convertExpectedToBackendError(error.response.status);
+    throw convertExpectedToBackendError(error.response.status, typeof error.response.data === 'string' ? error.response.data : undefined);
   }
   throw error;
 }
@@ -781,6 +783,14 @@ export function asError(error: unknown): Error {
 }
 
 export class BackendError extends Error { }
+
+export class BadRequestError extends BackendError {
+
+  constructor(message?: string) {
+    super(message ?? 'Bad request');
+  }
+
+}
 
 export class UnauthorizedError extends BackendError {
 
