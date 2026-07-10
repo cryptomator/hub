@@ -33,6 +33,7 @@
       <section class="w-full bg-white p-4 sm:p-6 shadow-sm sm:rounded-lg flex flex-col items-center">
         <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
         <h1 class="text-lg leading-6 font-medium text-gray-900 my-3 sm:my-5">{{ t('setupLicense.title') }}</h1>
+        <p v-if="onSessionError" class="mb-3 text-sm text-red-900">{{ t('setupLicense.session.error') }}</p>
 
         <form class="flex flex-col items-center" @submit.prevent="getTrialLicense()">
           <p class="mt-1 text-sm text-gray-500">{{ t('setupLicense.trial.description') }}</p>
@@ -127,6 +128,7 @@ const licenseToken = ref('');
 const altchaPayload = ref('');
 const altchaVerifying = ref(false);
 const onFetchError = ref<Error>();
+const onSessionError = ref<Error>();
 const onTrialError = ref<Error>();
 const onApplyError = ref<Error>();
 
@@ -158,10 +160,17 @@ async function fetchData() {
       return;
     }
     billing.value = await backend.billing.get();
-    state.value = State.GetLicense;
     if (props.session) {
-      await applyLicense(() => backend.license.refresh(props.session));
+      try {
+        await backend.license.refresh(props.session); // license bought or registered in the store, redirected back with a session id
+        await proceed();
+        return;
+      } catch (error) {
+        console.error('Applying license from store session failed.', error);
+        onSessionError.value = error instanceof Error ? error : new Error('Unknown Error');
+      }
     }
+    state.value = State.GetLicense;
   } catch (error) {
     console.error('Retrieving setup information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

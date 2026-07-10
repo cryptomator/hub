@@ -18,7 +18,6 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
