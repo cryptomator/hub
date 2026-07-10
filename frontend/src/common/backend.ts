@@ -34,7 +34,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-
 // #region DTOs
 
 export type VaultDto = {
@@ -654,6 +653,18 @@ class LicenseService {
     return axiosAuth.get('/license/user-info').then(response => {
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
     });
+  }
+
+  public async requestTrial(): Promise<void> {
+    return axiosAuth.post('/license/trial')
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 409));
+  }
+
+  public async installTrial(hubId: string, licenseKey: string): Promise<void> {
+    return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 409));
   }
 
   public async refresh(session?: string): Promise<void> {

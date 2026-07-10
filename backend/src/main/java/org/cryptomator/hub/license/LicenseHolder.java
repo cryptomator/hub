@@ -50,7 +50,8 @@ public class LicenseHolder {
 	private final Settings.Repository settingsRepo;
 	private final LicenseApi licenseApi;
 
-	private DecodedJWT license;
+	private volatile DecodedJWT license;
+	private DecodedJWT unconfiguredLicense;
 
 	@Inject
 	LicenseHolder(@ConfigProperty(name = "hub.managed-instance", defaultValue = "false") Boolean managedInstance,
@@ -75,7 +76,10 @@ public class LicenseHolder {
 
 	@PostConstruct
 	void init() {
-		this.license = this.ensureLicenseExists();
+		this.license = this.loadLicense();
+		if (isSetupRequired()) {
+			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
+		}
 		// refresh upon startup:
 		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
 		var hasNotBeenIssuedRecently = license.getIssuedAtAsInstant().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES));
@@ -91,23 +95,43 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Makes sure a valid (but possibly expired) license exists.
-	 * <p>
-	 * Called during {@link org.cryptomator.hub.Main application startup}.
+	 * Loads the license during application startup: from the database if present, otherwise from the {@code hub.initial-license} config property.
+	 * If neither is available (or validation fails), the app starts in setup mode with an {@link UnconfiguredLicense} — this method never throws.
 	 *
-	 * @throws JWTVerificationException if the license is invalid
+	 * @return a valid (but possibly expired) license or the placeholder license indicating that {@link #isSetupRequired() setup is required}
 	 */
 	@Transactional
-	@WithSpan("LicenseHolder.ensureLicenseExists")
-	DecodedJWT ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
+	@WithSpan("LicenseHolder.loadLicense")
+	DecodedJWT loadLicense() {
 		var settings = settingsRepo.get();
+		this.unconfiguredLicense = UnconfiguredLicense.create(settings.getHubId());
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
-			return validateExistingLicense(settings);
+			try {
+				return validateExistingLicense(settings);
+			} catch (JWTVerificationException e) {
+				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}. Starting in setup mode; an admin needs to provide a valid license via the web interface.", settings.getHubId());
+				return unconfiguredLicense; // keep the stored license key untouched, so it remains available for inspection
+			}
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
-			return validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
+			try {
+				return validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
+			} catch (JWTVerificationException e) {
+				LOG.error("Failed to apply license from property hub.initial-license. Starting in setup mode; an admin needs to provide a valid license via the web interface.", e);
+				return unconfiguredLicense;
+			}
 		} else {
-			return requestAnonTrialLicense(settings);
+			LOG.warn("No license configured. Starting in setup mode; an admin needs to obtain a license via the web interface.");
+			return unconfiguredLicense;
 		}
+	}
+
+	/**
+	 * Indicates whether this instance still runs with the built-in placeholder license, i.e. no real license has been configured yet.
+	 *
+	 * @return {@code true} while no real license is set
+	 */
+	public boolean isSetupRequired() {
+		return license != null && license == unconfiguredLicense;
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
@@ -189,6 +213,51 @@ public class LicenseHolder {
 	}
 
 	/**
+	 * Requests an anonymous trial license from the license server and installs it, replacing the placeholder license.
+	 * <p>
+	 * Only permitted while {@link #isSetupRequired() setup is required}, since the issued trial license comes with a new hub ID that must not replace the ID an existing license is bound to.
+	 *
+	 * @throws TrialLicenseRequestFailedException if the license server could not be reached or did not issue a valid trial license
+	 * @throws IllegalStateException              if a real license is already configured
+	 */
+	@Transactional
+	public void requestTrialLicense() throws TrialLicenseRequestFailedException {
+		if (!isSetupRequired()) {
+			throw new IllegalStateException("A license is already configured");
+		}
+		var settings = settingsRepo.get();
+		try {
+			this.license = requestAnonTrialLicense(settings);
+		} catch (RuntimeException e) { // e.g. WebApplicationException or ProcessingException from the REST client, JWTVerificationException, IllegalArgumentException (unsolvable challenge)
+			throw new TrialLicenseRequestFailedException("Failed to obtain trial license from license server", e);
+		}
+	}
+
+	/**
+	 * Parses, verifies and persists the given token as the license in the database, adopting the given hub ID.
+	 * <p>
+	 * Used to install a trial license that was obtained from the license server by the browser: trial licenses are issued with a freshly minted hub ID,
+	 * so this method is only permitted while {@link #isSetupRequired() setup is required}, protecting the hub ID an already configured license is bound to.
+	 *
+	 * @param token The string representation of the JWT license
+	 * @param hubId The hub ID the license is issued for, replacing this instance's current hub ID
+	 * @throws JWTVerificationException if the license cannot be verified or does not match the given hub ID
+	 * @throws IllegalStateException    if a license is already configured
+	 */
+	@Transactional
+	public void set(String token, String hubId) throws JWTVerificationException {
+		if (!isSetupRequired()) {
+			throw new IllegalStateException("A license is already configured");
+		}
+		var validated = licenseValidator.validate(token, hubId);
+		var settings = settingsRepo.get();
+		settings.setHubId(hubId);
+		settings.setLicenseKey(token);
+		settingsRepo.persistAndFlush(settings);
+		this.license = validated;
+	}
+
+	/**
 	 * Parses, verifies and persists the given token as the license in the database.
 	 *
 	 * @param token The string represenation of the JWT license
@@ -208,6 +277,10 @@ public class LicenseHolder {
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	@RunOnVirtualThread
 	void scheduleLicenseRefresh() {
+		if (isSetupRequired()) {
+			LOG.debug("Skipping license refresh, no license configured yet.");
+			return;
+		}
 		try {
 			randomSleeper.sleep(0, 59, ChronoUnit.MINUTES); // add random sleep to reduce infrastructure load
 			refreshLicense();
@@ -225,6 +298,9 @@ public class LicenseHolder {
 	}
 
 	public void refreshLicense() throws LicenseRefreshFailedException {
+		if (isSetupRequired()) {
+			throw new LicenseRefreshFailedException("No license configured");
+		}
 		var refreshUrl = getLicenseRefreshUri();
 		var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
 		validateAndSet(refreshedLicense);
@@ -318,15 +394,11 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
-	/**
-	 * Indicates whether this instance still needs a license to be set up, i.e. all API access is restricted by the {@code LicenseSetupFilter}.
-	 * <p>
-	 * Currently always {@code false}, as {@link #ensureLicenseExists()} guarantees a license during application startup.
-	 *
-	 * @return {@code true} while no license is configured
-	 */
-	public boolean isSetupRequired() {
-		return false;
+	public static class TrialLicenseRequestFailedException extends Exception {
+
+		TrialLicenseRequestFailedException(String message, Throwable cause) {
+			super(message, cause);
+		}
 	}
 
 	public static class LicenseRefreshFailedException extends Exception {

@@ -26,6 +26,7 @@ public class ConfigResource {
 	private final String keycloakClientIdCryptomator;
 	private final String internalRealmUrl;
 	private final String billingUrl;
+	private final String licenseApiUrl;
 	private final OidcConfigurationMetadata oidcConfData;
 	private final LicenseHolder license;
 
@@ -36,6 +37,7 @@ public class ConfigResource {
 				   @ConfigProperty(name = "hub.keycloak.oidc.cryptomator-client-id", defaultValue = "") String keycloakClientIdCryptomator,
 				   @ConfigProperty(name = "quarkus.oidc.auth-server-url") String internalRealmUrl,
 				   @ConfigProperty(name = "hub.billing-url", defaultValue = "") String billingUrl,
+				   @ConfigProperty(name = "quarkus.rest-client.license-api.url", defaultValue = "") String licenseApiUrl,
 				   OidcConfigurationMetadata oidcConfData,
 				   LicenseHolder license) {
 		this.keycloakPublicUrl = keycloakPublicUrl;
@@ -44,6 +46,7 @@ public class ConfigResource {
 		this.keycloakClientIdCryptomator = keycloakClientIdCryptomator;
 		this.internalRealmUrl = internalRealmUrl;
 		this.billingUrl = billingUrl;
+		this.licenseApiUrl = licenseApiUrl;
 		this.oidcConfData = oidcConfData;
 		this.license = license;
 	}
@@ -57,7 +60,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4, license.getEntitlements(), billingUrl);
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4, license.getEntitlements(), billingUrl, licenseApiUrl, license.isSetupRequired());
 	}
 
 	//visible for testing
@@ -85,7 +88,9 @@ public class ConfigResource {
 							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
 							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel,
 							@JsonProperty("entitlements") HubLicenseEntitlements entitlements,
-							@JsonProperty("billingUrl") String billingUrl) {
+							@JsonProperty("billingUrl") String billingUrl,
+							@JsonProperty("licenseApiUrl") String licenseApiUrl,
+							@JsonProperty("licenseSetupRequired") boolean licenseSetupRequired) {
 	}
 
 }

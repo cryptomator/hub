@@ -1,15 +1,15 @@
 package org.cryptomator.hub.api;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
-import io.quarkus.oidc.OidcConfigurationMetadata;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.oidc.OidcConfigurationMetadata;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.license.UnconfiguredLicense;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,9 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.time.Instant;
-import java.util.Date;
 
 import static io.restassured.RestAssured.when;
 
@@ -40,18 +37,9 @@ class SetupModeIT {
 
 	@BeforeEach
 	void setup() {
-		var licenseToken = Mockito.mock(DecodedJWT.class);
-		var seatsClaim = Mockito.mock(com.auth0.jwt.interfaces.Claim.class);
 		Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
-		Mockito.doReturn(licenseToken).when(licenseHolder).get();
+		Mockito.doReturn(UnconfiguredLicense.create("42")).when(licenseHolder).get();
 		Mockito.doReturn(HubLicenseEntitlements.create()).when(licenseHolder).getEntitlements();
-		Mockito.doReturn("42").when(licenseToken).getId();
-		Mockito.doReturn("unconfigured@localhost").when(licenseToken).getSubject();
-		Mockito.doReturn(seatsClaim).when(licenseToken).getClaim("seats");
-		Mockito.doReturn(0).when(seatsClaim).asInt();
-		Mockito.doReturn(Date.from(Instant.EPOCH)).when(licenseToken).getIssuedAt();
-		Mockito.doReturn(Date.from(Instant.parse("3000-01-01T00:00:00Z"))).when(licenseToken).getExpiresAt();
-		Mockito.doReturn("token").when(licenseToken).getToken();
 		Mockito.doReturn("http://localhost:8180/auth").when(oidcConfigurationMetadata).getAuthorizationUri();
 		Mockito.doReturn("http://localhost:8180/token").when(oidcConfigurationMetadata).getTokenUri();
 	}
@@ -97,12 +85,21 @@ class SetupModeIT {
 	class AsAdmin {
 
 		@Test
-		@DisplayName("GET /billing returns 200")
+		@DisplayName("GET /billing returns 200 with the placeholder license's hub ID")
 		void testGetBilling() {
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", Matchers.is("42"))
 					.body("licensedSeats", Matchers.is(0));
+		}
+
+		@Test
+		@DisplayName("POST /license/trial returns 204")
+		void testRequestTrial() throws LicenseHolder.TrialLicenseRequestFailedException {
+			when().post("/license/trial")
+					.then().statusCode(204);
+
+			Mockito.verify(licenseHolder).requestTrialLicense();
 		}
 	}
 
@@ -111,10 +108,21 @@ class SetupModeIT {
 	class AsAnonymous {
 
 		@Test
-		@DisplayName("GET /config returns 200")
+		@DisplayName("GET /config returns 200 with licenseSetupRequired=true")
 		void testGetConfig() {
 			when().get("/config")
-					.then().statusCode(200);
+					.then().statusCode(200)
+					.body("licenseSetupRequired", Matchers.is(true));
+		}
+
+		@Test
+		@DisplayName("GET /config returns licenseSetupRequired=false once a license is configured")
+		void testGetConfigWithConfiguredLicense() {
+			Mockito.doReturn(false).when(licenseHolder).isSetupRequired();
+
+			when().get("/config")
+					.then().statusCode(200)
+					.body("licenseSetupRequired", Matchers.is(false));
 		}
 
 		@Test

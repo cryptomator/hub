@@ -34,6 +34,8 @@ export type ConfigDto = {
     desktopLicense: string;
   };
   billingUrl: string;
+  licenseApiUrl: string;
+  licenseSetupRequired: boolean;
 };
 
 class ConfigWrapper {

@@ -604,4 +604,22 @@
   "trial.enterpriseFeature.title": "Enterprise Feature",
   "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
 
+  "setupLicense.title": "Start using Cryptomator Hub",
+  "setupLicense.nonAdmin.title": "Setup Required",
+  "setupLicense.nonAdmin.description": "This Hub instance has not been set up yet. Please contact your administrator.",
+  "setupLicense.trial.title": "Try Cryptomator Hub",
+  "setupLicense.trial.description": "Get a free trial license and explore all features for a limited time.",
+  "setupLicense.trial.submit": "Start Your Trial",
+  "setupLicense.trial.error": "Retrieving a trial license failed. Make sure your browser can reach the license server and try again.",
+  "setupLicense.moreOptions": "Other options…",
+  "setupLicense.buy.title": "Buy a License",
+  "setupLicense.buy.description": "Purchase a license in the Cryptomator store. You will be redirected back here afterwards.",
+  "setupLicense.buy.submit": "Go to License Store",
+  "setupLicense.community.title": "Community Edition",
+  "setupLicense.community.description": "Using Cryptomator Hub non-commercially? Register a free community edition license.",
+  "setupLicense.community.submit": "Register Community License",
+  "setupLicense.existing.title": "Use an Existing License",
+  "setupLicense.existing.description": "Already have a license key? Paste it below.",
+  "setupLicense.existing.submit": "Apply License",
+  "setupLicense.existing.error": "The license key is invalid or does not match this Hub instance (Hub ID: {0})."
 }

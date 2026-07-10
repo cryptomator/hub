@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -44,6 +46,73 @@ class LicenseResourceTest {
 			@Claim(key = "sub", value = "admin")
 	})
 	class AsAdmin {
+
+		@Test
+		@DisplayName("POST /license/trial returns 204 and installs a trial license")
+		void testRequestTrial() throws LicenseHolder.TrialLicenseRequestFailedException {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			when().post("/license/trial")
+					.then().statusCode(204);
+
+			Mockito.verify(licenseHolder).requestTrialLicense();
+		}
+
+		@Test
+		@DisplayName("POST /license/trial returns 409 if a license is already configured")
+		void testRequestTrialConflict() throws LicenseHolder.TrialLicenseRequestFailedException {
+			Mockito.doReturn(false).when(licenseHolder).isSetupRequired();
+
+			when().post("/license/trial")
+					.then().statusCode(409);
+
+			Mockito.verify(licenseHolder, Mockito.never()).requestTrialLicense();
+		}
+
+		@Test
+		@DisplayName("POST /license/trial returns 502 if the license server does not issue a trial license")
+		void testRequestTrialUpstreamFailure() throws LicenseHolder.TrialLicenseRequestFailedException {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+			Mockito.doThrow(LicenseHolder.TrialLicenseRequestFailedException.class).when(licenseHolder).requestTrialLicense();
+
+			when().post("/license/trial")
+					.then().statusCode(502);
+		}
+
+		@Test
+		@DisplayName("PUT /license/trial returns 204 and installs the trial license along with its hub ID")
+		void testInstallTrial() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.JSON).body(Map.of("hubId", "1337", "licenseKey", "a.b.c"))
+					.when().put("/license/trial")
+					.then().statusCode(204);
+
+			Mockito.verify(licenseHolder).set("a.b.c", "1337");
+		}
+
+		@Test
+		@DisplayName("PUT /license/trial returns 400 if the license is invalid")
+		void testInstallTrialInvalidToken() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+			Mockito.doThrow(new JWTVerificationException("invalid")).when(licenseHolder).set("a.b.c", "1337");
+
+			given().contentType(ContentType.JSON).body(Map.of("hubId", "1337", "licenseKey", "a.b.c"))
+					.when().put("/license/trial")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("PUT /license/trial returns 409 if a license is already configured")
+		void testInstallTrialConflict() {
+			Mockito.doReturn(false).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.JSON).body(Map.of("hubId", "1337", "licenseKey", "a.b.c"))
+					.when().put("/license/trial")
+					.then().statusCode(409);
+
+			Mockito.verify(licenseHolder, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		}
 
 		@Test
 		@DisplayName("POST /license/refresh returns 204 and refreshes from the refreshUrl")
@@ -94,6 +163,25 @@ class LicenseResourceTest {
 	class AsAnyOtherRole {
 
 		@Test
+		@DisplayName("POST /license/trial returns 403 Forbidden")
+		void testRequestTrial() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			when().post("/license/trial")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("PUT /license/trial returns 403 Forbidden")
+		void testInstallTrial() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.JSON).body(Map.of("hubId", "1337", "licenseKey", "a.b.c"))
+					.when().put("/license/trial")
+					.then().statusCode(403);
+		}
+
+		@Test
 		@DisplayName("POST /license/refresh returns 403 Forbidden")
 		void testRefresh() {
 			when().post("/license/refresh")
@@ -113,6 +201,25 @@ class LicenseResourceTest {
 	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
+
+		@Test
+		@DisplayName("POST /license/trial returns 401 Unauthorized")
+		void testRequestTrial() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			when().post("/license/trial")
+					.then().statusCode(401);
+		}
+
+		@Test
+		@DisplayName("PUT /license/trial returns 401 Unauthorized")
+		void testInstallTrial() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.JSON).body(Map.of("hubId", "1337", "licenseKey", "a.b.c"))
+					.when().put("/license/trial")
+					.then().statusCode(401);
+		}
 
 		@Test
 		@DisplayName("POST /license/refresh returns 401 Unauthorized")
