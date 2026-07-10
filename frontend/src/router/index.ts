@@ -178,7 +178,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/setup-license',
     component: SetupLicense,
-    props: (route) => ({ token: route.query.token, session: route.query.session }),
+    props: (route) => ({ session: route.query.session }),
     meta: { skipSetup: true, skipLicenseSetup: true }, // requires auth, but neither user key setup nor a configured license
   },
   {

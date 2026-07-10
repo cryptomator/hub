@@ -116,7 +116,6 @@ enum State {
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  token?: string
   session?: string
 }>();
 
@@ -162,8 +161,6 @@ async function fetchData() {
     state.value = State.GetLicense;
     if (props.session) {
       await applyLicense(() => backend.license.refresh(props.session));
-    } else if (props.token) {
-      await applyLicense(() => backend.billing.setToken(props.token!));
     }
   } catch (error) {
     console.error('Retrieving setup information failed.', error);
