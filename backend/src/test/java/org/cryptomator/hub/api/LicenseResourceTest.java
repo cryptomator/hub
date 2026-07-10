@@ -8,6 +8,7 @@ import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.ws.rs.NotFoundException;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeAll;
@@ -152,6 +153,28 @@ class LicenseResourceTest {
 					.then().statusCode(500);
 		}
 
+		@Test
+		@DisplayName("POST /license/refresh with session returns 204 during setup mode (store callback on the setup page)")
+		void testRefreshSessionDuringSetup() throws LicenseHolder.LicenseRefreshFailedException {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.URLENC).formParam("session", SESSION.toString())
+					.when().post("/license/refresh")
+					.then().statusCode(204);
+
+			Mockito.verify(licenseHolder).refreshLicense(SESSION);
+		}
+
+		@Test
+		@DisplayName("POST /license/refresh with unknown session returns 404")
+		void testRefreshSessionUnknown() throws LicenseHolder.LicenseRefreshFailedException {
+			Mockito.doThrow(new NotFoundException()).when(licenseHolder).refreshLicense(SESSION);
+
+			given().contentType(ContentType.URLENC).formParam("session", SESSION.toString())
+					.when().post("/license/refresh")
+					.then().statusCode(404);
+		}
+
 	}
 
 	@Nested
@@ -196,6 +219,16 @@ class LicenseResourceTest {
 					.then().statusCode(403);
 		}
 
+		@Test
+		@DisplayName("POST /license/refresh with session returns 403 Forbidden also during setup mode")
+		void testRefreshSessionDuringSetup() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
+			given().contentType(ContentType.URLENC).formParam("session", SESSION.toString())
+					.when().post("/license/refresh")
+					.then().statusCode(403);
+		}
+
 	}
 
 	@Nested
@@ -231,6 +264,16 @@ class LicenseResourceTest {
 		@Test
 		@DisplayName("POST /license/refresh with session returns 401 Unauthorized")
 		void testRefreshSession() {
+			given().contentType(ContentType.URLENC).formParam("session", SESSION.toString())
+					.when().post("/license/refresh")
+					.then().statusCode(401);
+		}
+
+		@Test
+		@DisplayName("POST /license/refresh with session returns 401 Unauthorized also during setup mode")
+		void testRefreshSessionDuringSetup() {
+			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
+
 			given().contentType(ContentType.URLENC).formParam("session", SESSION.toString())
 					.when().post("/license/refresh")
 					.then().statusCode(401);
