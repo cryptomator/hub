@@ -610,5 +610,7 @@
 
   "trial.enterpriseFeature.title": "Enterprise Feature",
   "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
+  "trial.paidFeature.title": "Paid Feature",
+  "trial.paidFeature.description": "This feature is only permanently available with a paid license.",
 
 }
