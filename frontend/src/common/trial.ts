@@ -12,7 +12,7 @@ export type TrialLicense = {
 };
 
 export async function requestTrialLicense(licenseApiUrl: string, captcha: string): Promise<TrialLicense> {
-  const axios = AxiosStatic.create({ baseURL: licenseApiUrl });
+  const axios = AxiosStatic.create({ baseURL: licenseApiUrl, timeout: 15000 }); // unlike same-origin backend calls, this crosses the internet — fail fast instead of spinning forever
   const params = new URLSearchParams({ captcha: captcha });
   return axios.post<TrialLicense>('/hub/trial', params).then(response => response.data);
 }

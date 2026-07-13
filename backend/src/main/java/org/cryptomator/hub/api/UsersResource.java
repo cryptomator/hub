@@ -179,7 +179,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
-		User user = userRepo.findById(jwt.getSubject());
+		User user = userRepo.findByIdOptional(jwt.getSubject()).orElseThrow(() -> new NotFoundException("no user matching the subject of the JWT"));
 		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withDevices) {
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
