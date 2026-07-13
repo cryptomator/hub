@@ -33,6 +33,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -49,7 +50,7 @@ public class LicenseHolder {
 	private final Settings.Repository settingsRepo;
 	private final LicenseApi licenseApi;
 
-	private volatile DecodedJWT license;
+	private final AtomicReference<DecodedJWT> license = new AtomicReference<>();
 	private DecodedJWT unconfiguredLicense;
 
 	@Inject
@@ -75,7 +76,8 @@ public class LicenseHolder {
 
 	@PostConstruct
 	void init() {
-		this.license = this.loadLicense();
+		var license = this.loadLicense();
+		this.license.set(license);
 		if (isSetupRequired()) {
 			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
 		}
@@ -130,6 +132,7 @@ public class LicenseHolder {
 	 * @return {@code true} while no real license is set
 	 */
 	public boolean isSetupRequired() {
+		var license = this.license.get();
 		return license != null && license == unconfiguredLicense;
 	}
 
@@ -220,13 +223,13 @@ public class LicenseHolder {
 	 * @throws IllegalStateException              if a real license is already configured
 	 */
 	@Transactional
-	public void requestTrialLicense() throws TrialLicenseRequestFailedException {
+	public synchronized void requestTrialLicense() throws TrialLicenseRequestFailedException {
 		if (!isSetupRequired()) {
 			throw new IllegalStateException("A license is already configured");
 		}
 		var settings = settingsRepo.get();
 		try {
-			this.license = requestAnonTrialLicense(settings);
+			this.license.set(requestAnonTrialLicense(settings));
 		} catch (RuntimeException e) { // e.g. WebApplicationException or ProcessingException from the REST client, JWTVerificationException, IllegalArgumentException (unsolvable challenge)
 			throw new TrialLicenseRequestFailedException("Failed to obtain trial license from license server", e);
 		}
@@ -244,7 +247,7 @@ public class LicenseHolder {
 	 * @throws IllegalStateException    if a license is already configured
 	 */
 	@Transactional
-	public void set(String token, String hubId) throws JWTVerificationException {
+	public synchronized void set(String token, String hubId) throws JWTVerificationException {
 		if (!isSetupRequired()) {
 			throw new IllegalStateException("A license is already configured");
 		}
@@ -253,7 +256,7 @@ public class LicenseHolder {
 		settings.setHubId(hubId);
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
-		this.license = validated;
+		this.license.set(validated);
 	}
 
 	/**
@@ -263,9 +266,9 @@ public class LicenseHolder {
 	 * @throws JWTVerificationException if the license cannot be verfied
 	 */
 	@Transactional
-	public void set(String token) throws JWTVerificationException {
+	public synchronized void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
-		this.license = licenseValidator.validate(token, settings.getHubId());
+		this.license.set(licenseValidator.validate(token, settings.getHubId()));
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
 	}
@@ -360,6 +363,7 @@ public class LicenseHolder {
 
 	@NotNull
 	public DecodedJWT get() {
+		var license = this.license.get();
 		if (license == null) {
 			throw new IllegalStateException();
 		}
@@ -367,6 +371,7 @@ public class LicenseHolder {
 	}
 
 	public HubLicenseEntitlements getEntitlements() {
+		var license = get();
 		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
 		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
 		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
