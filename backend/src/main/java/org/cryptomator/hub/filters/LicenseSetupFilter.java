@@ -6,7 +6,6 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -20,16 +19,9 @@ import org.cryptomator.hub.license.LicenseHolder;
 public class LicenseSetupFilter implements ContainerRequestFilter {
 
 	private final LicenseHolder license;
-
-	@Context
-	ResourceInfo resourceInfo;
+	private final ResourceInfo resourceInfo; // @RequestScoped bean, injected as a client proxy resolving against the current request
 
 	@Inject
-	LicenseSetupFilter(LicenseHolder license) {
-		this.license = license;
-	}
-
-	// visible for testing
 	LicenseSetupFilter(LicenseHolder license, ResourceInfo resourceInfo) {
 		this.license = license;
 		this.resourceInfo = resourceInfo;
