@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "Ungültige Bild-URL",
   "groupEditCreate.profilePictureUrl": "Profilbild-URL",
   "groupEditCreate.selectRolesPlaceholder": "Rolle(n) auswählen",
-  "groupEditCreate.error.groupNameAlreadyExists": "Eine Gruppe mit diesem Namen existiert bereits.",
   "trustDetails.trustLevel": "Vertrauenslevel {0}",
   "trustDetails.trustLevel.untrusted": "Unverifiziert",
   "trustDetails.showSignDialogBtn": "Identität prüfen...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "Ungültige Bild-URL",
   "userEditCreate.validation.required": "Dieses Feld ist erforderlich",
   "userEditCreate.validation.passwordMismatch": "Passwörter stimmen nicht überein",
-  "userEditCreate.error.userAlreadyExists": "Ein Benutzer mit diesem Benutzernamen existiert bereits.",
-  "userEditCreate.error.emailAlreadyExists": "Ein Benutzer mit dieser E-Mail existiert bereits.",
   "userList.edit.user.button": "Bearbeiten",
   "userList.userName": "Name",
   "userList.groups.count": "Gruppen",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Tresorzugriff wiederherstellen",
   "vaultDetails.emergencyAccess.setupCouncil": "Emergency Access Council einrichten",
   "vaultDetails.emergencyAccess.fixCouncil": "Emergency Access Council korrigieren",
-  "vaultDetails.error.licenseViolated": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
   "vaultDetails.error.reactivateFailed": "Deine Cryptomator Hub-Lizenz hat die Anzahl der verfügbaren Sitze überschritten. Die Reaktivierung dieses Tresors würde das Limit überschreiten. Bitte informiere einen Hub-Administrator, um die Lizenz zu erweitern.",
   "vaultDetails.recoverVault.title": "Du hast deinen Account zurückgesetzt!",
   "vaultDetails.recoverVault.description": "Um wieder Zugriff auf den Tresor zu erhalten, musst du deinen Zugriff mit dem Wiederherstellungsschlüssel wiederherstellen oder ein anderer Eigentümer muss die Zugriffsrechte aktualisieren.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "Upgrade erforderlich",
   "missingEntitlements.description": "Diese Funktion ist nicht Teil deiner aktuellen Lizenz.",
   "trial.enterpriseFeature.title": "Enterprise-Funktion",
-  "trial.enterpriseFeature.description": "Diese Funktion ist dauerhaft nur mit einer Enterprise-Lizenz verfügbar."
+  "trial.enterpriseFeature.description": "Diese Funktion ist dauerhaft nur mit einer Enterprise-Lizenz verfügbar.",
+  "setupLicense.nonAdmin.title": "Einrichtung erforderlich"
 }
