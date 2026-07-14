@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.WebApplicationException;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -43,9 +42,7 @@ public class LicenseHolder {
 	private final Settings.Repository settingsRepo;
 	private final LicenseApi licenseApi;
 
-	private final AtomicReference<@Nullable DecodedJWT> licenseRef = new AtomicReference<>();
-	private @Nullable DecodedJWT unconfiguredLicense;
-	private volatile @Nullable CachedEntitlements cachedEntitlements;
+	private final AtomicReference<@Nullable LicenseState> cachedState = new AtomicReference<>();
 
 	@Inject
 	LicenseHolder(@ConfigProperty(name = "hub.managed-instance", defaultValue = "false") Boolean managedInstance,
@@ -70,15 +67,15 @@ public class LicenseHolder {
 
 	@PostConstruct
 	void init() {
-		var license = this.loadLicense();
-		this.licenseRef.set(license);
-		if (isSetupRequired()) {
+		var state = this.loadLicense();
+		this.cachedState.set(state);
+		if (state.unconfigured()) {
 			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
 		}
 		// refresh upon startup:
 		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
-		var hasNotBeenIssuedRecently = license.getIssuedAtAsInstant().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES));
-		var isTrialLicense = getEntitlements().showTrialHint();
+		var hasNotBeenIssuedRecently = state.license().getIssuedAtAsInstant().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES));
+		var isTrialLicense = state.entitlements().showTrialHint();
 		if (hasNotBeenIssuedRecently && !isTrialLicense) {
 			LOG.debug("License was issued more than 5 minutes ago. Attempting a refresh to ensure we have the latest license information from the license server.");
 			try {
@@ -93,30 +90,30 @@ public class LicenseHolder {
 	 * Loads the license during application startup: from the database if present, otherwise from the {@code hub.initial-license} config property.
 	 * If neither is available (or validation fails), the app starts in setup mode with an {@link UnconfiguredLicense} — this method never throws.
 	 *
-	 * @return a valid (but possibly expired) license or the placeholder license indicating that {@link #isSetupRequired() setup is required}
+	 * @return the state holding a valid (but possibly expired) license, or an {@link LicenseState#unconfigured() unconfigured} state indicating that {@link #isSetupRequired() setup is required}
 	 */
 	@Transactional
 	@WithSpan("LicenseHolder.loadLicense")
-	DecodedJWT loadLicense() {
+	LicenseState loadLicense() {
 		var settings = settingsRepo.get();
-		this.unconfiguredLicense = UnconfiguredLicense.create(settings.getHubId());
+		var unconfigured = LicenseState.unconfigured(settings.getHubId());
 		if (settings.getLicenseKey() != null) {
 			try {
-				return validateExistingLicense(settings);
+				return LicenseState.from(validateExistingLicense(settings));
 			} catch (JWTVerificationException e) {
 				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}. Starting in setup mode; an admin needs to provide a valid license via the web interface.", settings.getHubId());
-				return unconfiguredLicense; // keep the stored license key untouched, so it remains available for inspection
+				return unconfigured; // keep the stored license key untouched, so it remains available for inspection
 			}
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
 			try {
-				return validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
+				return LicenseState.from(validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get()));
 			} catch (JWTVerificationException e) {
 				LOG.error("Failed to apply license from property hub.initial-license. Starting in setup mode; an admin needs to provide a valid license via the web interface.", e);
-				return unconfiguredLicense;
+				return unconfigured;
 			}
 		} else {
 			LOG.warn("No license configured. Starting in setup mode; an admin needs to obtain a license via the web interface.");
-			return unconfiguredLicense;
+			return unconfigured;
 		}
 	}
 
@@ -126,8 +123,8 @@ public class LicenseHolder {
 	 * @return {@code true} while no real license is set
 	 */
 	public boolean isSetupRequired() {
-		var license = this.licenseRef.get();
-		return license != null && license == unconfiguredLicense;
+		var state = this.cachedState.get();
+		return state != null && state.unconfigured();
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
@@ -201,7 +198,7 @@ public class LicenseHolder {
 		if (!isSetupRequired()) {
 			throw new IllegalStateException("A license is already configured");
 		}
-		this.licenseRef.set(validateAndPersist(settingsRepo.get(), token, hubId));
+		this.cachedState.set(LicenseState.from(validateAndPersist(settingsRepo.get(), token, hubId)));
 	}
 
 	/**
@@ -213,7 +210,7 @@ public class LicenseHolder {
 	@Transactional
 	public synchronized void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
-		this.licenseRef.set(validateAndPersist(settings, token, settings.getHubId()));
+		this.cachedState.set(LicenseState.from(validateAndPersist(settings, token, settings.getHubId())));
 	}
 
 	/**
@@ -279,33 +276,20 @@ public class LicenseHolder {
 		}
 	}
 
-	@NotNull
 	public DecodedJWT get() {
-		var license = this.licenseRef.get();
-		if (license == null) {
-			throw new IllegalStateException();
-		}
-		return license;
+		return state().license();
 	}
 
 	public HubLicenseEntitlements getEntitlements() {
-		var license = get();
-		var cached = this.cachedEntitlements;
-		if (cached == null || cached.license() != license) { // deserializing the claim is comparatively expensive and this runs on every request, so memoize per license instance
-			cached = new CachedEntitlements(license, parseEntitlements(license));
-			this.cachedEntitlements = cached;
-		}
-		return cached.entitlements();
+		return state().entitlements();
 	}
 
-	private static HubLicenseEntitlements parseEntitlements(DecodedJWT license) {
-		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
-		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
-		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
-			return HubLicenseEntitlements.create().withSeats(license.getClaim("seats").asLong());
-		} else {
-			return entitlements;
+	private LicenseState state() {
+		var state = this.cachedState.get();
+		if (state == null) {
+			throw new IllegalStateException();
 		}
+		return state;
 	}
 
 	/**
@@ -321,7 +305,30 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
-	private record CachedEntitlements(DecodedJWT license, HubLicenseEntitlements entitlements) {
+	/**
+	 * The current license together with the values derived from it, swapped atomically so no derived value can outlive the license it was parsed from.
+	 * While {@link #unconfigured()}, the license is the {@link UnconfiguredLicense} placeholder and the instance runs in setup mode.
+	 */
+	record LicenseState(DecodedJWT license, HubLicenseEntitlements entitlements, boolean unconfigured) {
+
+		static LicenseState from(DecodedJWT license) {
+			return new LicenseState(license, parseEntitlements(license), false);
+		}
+
+		static LicenseState unconfigured(String hubId) {
+			var placeholderLicense = UnconfiguredLicense.create(hubId);
+			return new LicenseState(placeholderLicense, parseEntitlements(placeholderLicense), true);
+		}
+
+		private static HubLicenseEntitlements parseEntitlements(DecodedJWT license) {
+			if (license.getClaim("org.cryptomator.hub.entitlements").isMissing()) {
+				// legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
+				// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
+				return HubLicenseEntitlements.create().withSeats(license.getClaim("seats").asLong());
+			} else {
+				return license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
+			}
+		}
 	}
 
 	public static class LicenseRefreshFailedException extends Exception {

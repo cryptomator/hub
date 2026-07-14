@@ -1,6 +1,7 @@
 package org.cryptomator.hub.license;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.ws.rs.InternalServerErrorException;
 import org.cryptomator.hub.entities.Settings;
@@ -38,6 +39,15 @@ class LicenseHolderTest {
 		return new LicenseHolder(false, initialId, initialLicenseToken, Optional.empty(), Optional.empty(), validator, randomSleeper, settingsRepo, licenseApi);
 	}
 
+	// mocks a license whose entitlements claim is parseable, which happens eagerly whenever a license is installed
+	private static DecodedJWT mockLicense() {
+		var entitlementsClaim = mock(Claim.class);
+		doReturn(HubLicenseEntitlements.create()).when(entitlementsClaim).as(HubLicenseEntitlements.class);
+		var license = mock(DecodedJWT.class);
+		doReturn(entitlementsClaim).when(license).getClaim("org.cryptomator.hub.entitlements");
+		return license;
+	}
+
 	@Nested
 	@DisplayName("Testing loadLicense()")
 	class TestLoadLicense {
@@ -59,12 +69,13 @@ class LicenseHolderTest {
 			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.of("43"), Optional.of("initToken")));
 			Mockito.doReturn("token").when(settings).getLicenseKey();
 			Mockito.doReturn("42").when(settings).getHubId();
-			var license = Mockito.mock(DecodedJWT.class);
+			var license = mockLicense();
 			Mockito.doReturn(license).when(licenseHolderSpy).validateExistingLicense(any());
 
 			var result = licenseHolderSpy.loadLicense();
 
-			Assertions.assertEquals(license, result);
+			Assertions.assertEquals(license, result.license());
+			Assertions.assertFalse(result.unconfigured());
 			verify(licenseHolderSpy).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(any(), any(), any());
 		}
@@ -78,8 +89,9 @@ class LicenseHolderTest {
 
 			var result = licenseHolderSpy.loadLicense();
 
-			Assertions.assertEquals("42", result.getId());
-			Assertions.assertEquals(0L, result.getClaim("seats").asLong());
+			Assertions.assertTrue(result.unconfigured());
+			Assertions.assertEquals("42", result.license().getId());
+			Assertions.assertEquals(0L, result.entitlements().seats());
 			verify(settings, never()).setLicenseKey(any()); // stored license key remains untouched
 			verify(settings, never()).setHubId(any());
 		}
@@ -90,12 +102,13 @@ class LicenseHolderTest {
 			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.of("43"), Optional.of("token")));
 			Mockito.doReturn(null).when(settings).getLicenseKey();
 			Mockito.doReturn("42").when(settings).getHubId();
-			var license = Mockito.mock(DecodedJWT.class);
+			var license = mockLicense();
 			Mockito.doReturn(license).when(licenseHolderSpy).validateAndApplyInitLicense(any(), any(), any());
 
 			var result = licenseHolderSpy.loadLicense();
 
-			Assertions.assertEquals(license, result);
+			Assertions.assertEquals(license, result.license());
+			Assertions.assertFalse(result.unconfigured());
 			verify(licenseHolderSpy, never()).validateExistingLicense(any());
 			verify(licenseHolderSpy).validateAndApplyInitLicense(settings, "token", "43");
 		}
@@ -110,7 +123,7 @@ class LicenseHolderTest {
 
 			var result = licenseHolderSpy.loadLicense();
 
-			Assertions.assertEquals(0L, result.getClaim("seats").asLong());
+			Assertions.assertTrue(result.unconfigured());
 			verify(settings, never()).setLicenseKey(any());
 			verify(settings, never()).setHubId(any());
 		}
@@ -129,7 +142,7 @@ class LicenseHolderTest {
 
 			var result = licenseHolderSpy.loadLicense();
 
-			Assertions.assertEquals(0L, result.getClaim("seats").asLong());
+			Assertions.assertTrue(result.unconfigured());
 			verify(licenseHolderSpy, never()).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(Mockito.eq(settings), any(), any());
 			verify(licenseApi, never()).generateChallenge();
@@ -167,7 +180,7 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("Setting a valid trial token adopts the hub ID, persists both and leaves setup mode")
 		void testSetValidToken() {
-			var decodedJWT = mock(DecodedJWT.class);
+			var decodedJWT = mockLicense();
 			Mockito.doReturn(decodedJWT).when(validator).validate("token", "new-hub-id");
 
 			licenseHolderSpy.set("token", "new-hub-id");
@@ -195,7 +208,7 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("Throws IllegalStateException, if a license is already configured")
 		void testAlreadyConfigured() {
-			var decodedJWT = mock(DecodedJWT.class);
+			var decodedJWT = mockLicense();
 			Mockito.doReturn(decodedJWT).when(validator).validate("token", "new-hub-id");
 			licenseHolderSpy.set("token", "new-hub-id");
 
@@ -304,7 +317,7 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("Setting a valid token validates and persists it to db")
 		void testSetValidToken() {
-			var decodedJWT = mock(DecodedJWT.class);
+			var decodedJWT = mockLicense();
 			when(validator.validate("token", "42")).thenReturn(decodedJWT);
 
 			Settings settings = mock(Settings.class);
@@ -384,6 +397,7 @@ class LicenseHolderTest {
 			Mockito.doReturn("42").when(settings).getHubId();
 			Mockito.doReturn(settings).when(settingsRepo).get();
 			Mockito.doReturn("newToken").when(licenseHolderSpy).requestLicenseRefresh("token");
+			Mockito.doReturn(mockLicense()).when(validator).validate("newToken", "42");
 
 			licenseHolderSpy.refreshLicense();
 
@@ -409,7 +423,7 @@ class LicenseHolderTest {
 			Mockito.doReturn("42").when(settings).getHubId();
 			Mockito.doReturn(settings).when(settingsRepo).get();
 			Mockito.doReturn("newToken").when(licenseApi).getLicense(SESSION);
-			Mockito.doReturn(mock(DecodedJWT.class)).when(validator).validate("newToken", "42");
+			Mockito.doReturn(mockLicense()).when(validator).validate("newToken", "42");
 
 			licenseHolder.refreshLicense(SESSION);
 
