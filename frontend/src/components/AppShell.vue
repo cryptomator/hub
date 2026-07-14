@@ -9,8 +9,8 @@
           <span class="sr-only">{{ t('nav.mobileMenu') }}</span>
           <Bars3Icon class="h-6 w-6" aria-hidden="true" />
         </button>
-        <router-link to="/app" class="flex items-center">
-          <img src="/logo-text.svg" class="h-8" alt="Cryptomator Hub" />
+        <router-link to="/app" class="flex grow items-center justify-center">
+          <img src="/logo.svg" class="h-8" alt="Cryptomator Hub" />
         </router-link>
       </div>
 

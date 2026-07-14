@@ -1,6 +1,6 @@
 <template>
-  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-12">
-    {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
+  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mb-12">
+    {{ t('trial.paidFeature.description') }} <!-- TODO: link to feature comparison? -->
   </ContentBanner>
 
   <div v-if="state == State.Loading">
