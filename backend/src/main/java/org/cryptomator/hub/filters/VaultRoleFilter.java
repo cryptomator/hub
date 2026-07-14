@@ -7,7 +7,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
@@ -34,16 +33,15 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	private final EmergencyRecoveryProcess.Repository recoveryRepo;
 	private final Vault.Repository vaultRepo;
-
-	@Context
-	ResourceInfo resourceInfo;
+	private final ResourceInfo resourceInfo; // @RequestScoped bean, injected as a client proxy resolving against the current request
 
 	@Inject
-	VaultRoleFilter(JsonWebToken jwt, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, EmergencyRecoveryProcess.Repository recoveryRepo, Vault.Repository vaultRepo) {
+	VaultRoleFilter(JsonWebToken jwt, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, EmergencyRecoveryProcess.Repository recoveryRepo, Vault.Repository vaultRepo, ResourceInfo resourceInfo) {
 		this.jwt = jwt;
 		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
 		this.recoveryRepo = recoveryRepo;
 		this.vaultRepo = vaultRepo;
+		this.resourceInfo = resourceInfo;
 	}
 
 	@Override

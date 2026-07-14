@@ -55,6 +55,7 @@
     "@heroicons/vue": "^2.2.0",
     "@noble/ciphers": "^2.2.0",
     "@scure/base": "^2.2.0",
+    "altcha": "^3.1.0",
     "axios": "^1.18.1",
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",

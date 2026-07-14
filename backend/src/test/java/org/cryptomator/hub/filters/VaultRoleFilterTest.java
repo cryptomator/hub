@@ -39,12 +39,10 @@ class VaultRoleFilterTest {
 	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccess.Repository.class);
 	private final EmergencyRecoveryProcess.Repository recoveryRepo = Mockito.mock(EmergencyRecoveryProcess.Repository.class);
 	private final Vault.Repository vaultRepo = Mockito.mock(Vault.Repository.class);
-	private final VaultRoleFilter filter = new VaultRoleFilter(jwt, effectiveVaultAccessRepo, recoveryRepo, vaultRepo);
+	private final VaultRoleFilter filter = new VaultRoleFilter(jwt, effectiveVaultAccessRepo, recoveryRepo, vaultRepo, resourceInfo);
 
 	@BeforeEach
 	void setup() {
-		filter.resourceInfo = resourceInfo;
-
 		Mockito.doReturn(uriInfo).when(context).getUriInfo();
 		Mockito.doReturn(securityContext).when(context).getSecurityContext();
 	}

@@ -22,7 +22,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
@@ -50,17 +49,16 @@ public class EmergencyAccessResource {
 	private final JsonWebToken jwt;
 	private final Vault.Repository vaultRepo;
 	private final EventLogger eventLogger;
-
-	@Context
-	HttpServerRequest request;
+	private final HttpServerRequest request; // @RequestScoped bean, injected as a client proxy resolving against the current request
 
 	@Inject
-	EmergencyAccessResource(EmergencyRecoveryProcess.Repository recoverProcessRepo, RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo, JsonWebToken jwt, Vault.Repository vaultRepo, EventLogger eventLogger) {
+	EmergencyAccessResource(EmergencyRecoveryProcess.Repository recoverProcessRepo, RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo, JsonWebToken jwt, Vault.Repository vaultRepo, EventLogger eventLogger, HttpServerRequest request) {
 		this.recoverProcessRepo = recoverProcessRepo;
 		this.recoveredKeySharesRepo = recoveredKeySharesRepo;
 		this.jwt = jwt;
 		this.vaultRepo = vaultRepo;
 		this.eventLogger = eventLogger;
+		this.request = request;
 	}
 
 	@PUT
