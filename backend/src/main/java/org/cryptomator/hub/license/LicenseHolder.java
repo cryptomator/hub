@@ -45,6 +45,7 @@ public class LicenseHolder {
 
 	private final AtomicReference<@Nullable DecodedJWT> licenseRef = new AtomicReference<>();
 	private @Nullable DecodedJWT unconfiguredLicense;
+	private volatile @Nullable CachedEntitlements cachedEntitlements;
 
 	@Inject
 	LicenseHolder(@ConfigProperty(name = "hub.managed-instance", defaultValue = "false") Boolean managedInstance,
@@ -135,29 +136,16 @@ public class LicenseHolder {
 		if (license == null) {
 			throw new JWTVerificationException("No license");
 		}
-		try {
-			var validated = licenseValidator.validate(license, settings.getHubId());
-			LOG.info("Verified existing license.");
-			return validated;
-		} catch (JWTVerificationException e) {
-			LOG.warn("License in database is invalid or does not match hubId", e);
-			throw e;
-		}
+		var validated = licenseValidator.validate(license, settings.getHubId());
+		LOG.info("Verified existing license.");
+		return validated;
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
 	DecodedJWT validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) throws JWTVerificationException {
-		try {
-			var validated = licenseValidator.validate(initialLicenseToken, initialHubId);
-			settings.setLicenseKey(initialLicenseToken);
-			settings.setHubId(initialHubId);
-			settingsRepo.persistAndFlush(settings);
-			LOG.info("Successfully imported license from property hub.initial-license.");
-			return validated;
-		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
-			throw e;
-		}
+		var validated = validateAndPersist(settings, initialLicenseToken, initialHubId);
+		LOG.info("Successfully imported license from property hub.initial-license.");
+		return validated;
 	}
 
 	LicenseApi.Solution solveChallenge() {
@@ -213,12 +201,7 @@ public class LicenseHolder {
 		if (!isSetupRequired()) {
 			throw new IllegalStateException("A license is already configured");
 		}
-		var validated = licenseValidator.validate(token, hubId);
-		var settings = settingsRepo.get();
-		settings.setHubId(hubId);
-		settings.setLicenseKey(token);
-		settingsRepo.persistAndFlush(settings);
-		this.licenseRef.set(validated);
+		this.licenseRef.set(validateAndPersist(settingsRepo.get(), token, hubId));
 	}
 
 	/**
@@ -230,9 +213,18 @@ public class LicenseHolder {
 	@Transactional
 	public synchronized void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
+		this.licenseRef.set(validateAndPersist(settings, token, settings.getHubId()));
+	}
+
+	/**
+	 * Validates the given token against the given hub ID, persists both to the settings and returns the validated license.
+	 */
+	private DecodedJWT validateAndPersist(Settings settings, String token, String hubId) throws JWTVerificationException {
+		var validated = licenseValidator.validate(token, hubId);
+		settings.setHubId(hubId);
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
-		this.licenseRef.set(licenseValidator.validate(token, settings.getHubId()));
+		return validated;
 	}
 
 	/**
@@ -258,7 +250,7 @@ public class LicenseHolder {
 
 	public void refreshLicense(UUID session) throws LicenseRefreshFailedException, WebApplicationException {
 		var refreshedLicense = licenseApi.getLicense(session);
-		validateAndSet(refreshedLicense);
+		setRefreshedLicense(refreshedLicense);
 	}
 
 	public void refreshLicense() throws LicenseRefreshFailedException {
@@ -266,15 +258,14 @@ public class LicenseHolder {
 			throw new LicenseRefreshFailedException("No license configured");
 		}
 		var refreshedLicense = requestLicenseRefresh(get().getToken());
-		validateAndSet(refreshedLicense);
+		setRefreshedLicense(refreshedLicense);
 	}
 
-	private void validateAndSet(String refreshedLicense) throws LicenseRefreshFailedException {
+	private void setRefreshedLicense(String refreshedLicense) throws LicenseRefreshFailedException {
 		try {
 			set(refreshedLicense);
 		} catch (JWTVerificationException e) {
-			LOG.errorv(e, "Failed to refresh license token. Refreshed token is invalid: {0}", refreshedLicense);
-			throw new LicenseRefreshFailedException("Invalid new license token.", e);
+			throw new LicenseRefreshFailedException("Refreshed license token is invalid: " + refreshedLicense, e); // token included for diagnosis, all callers log or map this exception
 		}
 	}
 
@@ -289,7 +280,7 @@ public class LicenseHolder {
 	}
 
 	@NotNull
-	public synchronized DecodedJWT get() {
+	public DecodedJWT get() {
 		var license = this.licenseRef.get();
 		if (license == null) {
 			throw new IllegalStateException();
@@ -299,6 +290,15 @@ public class LicenseHolder {
 
 	public HubLicenseEntitlements getEntitlements() {
 		var license = get();
+		var cached = this.cachedEntitlements;
+		if (cached == null || cached.license() != license) { // deserializing the claim is comparatively expensive and this runs on every request, so memoize per license instance
+			cached = new CachedEntitlements(license, parseEntitlements(license));
+			this.cachedEntitlements = cached;
+		}
+		return cached.entitlements();
+	}
+
+	private static HubLicenseEntitlements parseEntitlements(DecodedJWT license) {
 		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
 		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
 		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
@@ -319,6 +319,9 @@ public class LicenseHolder {
 
 	public boolean isManagedInstance() {
 		return managedInstance;
+	}
+
+	private record CachedEntitlements(DecodedJWT license, HubLicenseEntitlements entitlements) {
 	}
 
 	public static class LicenseRefreshFailedException extends Exception {
