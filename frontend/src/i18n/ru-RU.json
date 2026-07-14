@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "Неверный URL изображения",
   "groupEditCreate.profilePictureUrl": "URL изображения профиля",
   "groupEditCreate.selectRolesPlaceholder": "Выберите роли",
-  "groupEditCreate.error.groupNameAlreadyExists": "Группа с таким именем уже существует.",
   "trustDetails.trustLevel": "Уровень доверия {0}",
   "trustDetails.trustLevel.untrusted": "Непроверенный",
   "trustDetails.showSignDialogBtn": "Проверить личность...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "Неверный URL изображения",
   "userEditCreate.validation.required": "Это поле обязательно",
   "userEditCreate.validation.passwordMismatch": "Пароли не совпадают",
-  "userEditCreate.error.userAlreadyExists": "Пользователь с таким именем уже существует.",
-  "userEditCreate.error.emailAlreadyExists": "Пользователь с такой почтой уже существует.",
   "userList.edit.user.button": "Изменить",
   "userList.userName": "Имя",
   "userList.groups.count": "Группы",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Восстановить доступ к хранилищу",
   "vaultDetails.emergencyAccess.setupCouncil": "Настроить совет чрезвычайного доступа",
   "vaultDetails.emergencyAccess.fixCouncil": "Исправить совет чрезвычайного доступа",
-  "vaultDetails.error.licenseViolated": "Срок действия лицензии на использование хаба Cryptomator истёк, либо превышено количество лицензионных мест. Сообщите администратору хаба о необходимости продлить или обновить лицензию.",
   "vaultDetails.error.reactivateFailed": "Ваша лицензия на хаб Cryptomator превысила количество доступных мест. Сообщите администратору хаба о необходимости обновить лицензию.",
   "vaultDetails.recoverVault.title": "Вы сбросили свой аккаунт!",
   "vaultDetails.recoverVault.description": "Чтобы восстановить доступ к хранилищу, необходимо использовать ключ восстановления, либо другой владелец должен обновить права доступа.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "Необходимо обновление",
   "missingEntitlements.description": "Эта функция не входит в вашу лицензию.",
   "trial.enterpriseFeature.title": "Enterprise-функция",
-  "trial.enterpriseFeature.description": "Эта функция доступна только на постоянной основе с корпоративной лицензией."
+  "trial.enterpriseFeature.description": "Эта функция доступна только на постоянной основе с корпоративной лицензией.",
+  "setupLicense.nonAdmin.title": "Требуется настройка"
 }
