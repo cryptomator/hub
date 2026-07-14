@@ -230,9 +230,9 @@ public class LicenseHolder {
 	@Transactional
 	public synchronized void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
-		this.licenseRef.set(licenseValidator.validate(token, settings.getHubId()));
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
+		this.licenseRef.set(licenseValidator.validate(token, settings.getHubId()));
 	}
 
 	/**
