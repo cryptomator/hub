@@ -34,12 +34,6 @@ public interface LicenseApi {
 	Solution generatePresolvedChallenge(@HeaderParam("Authorization") String authHeader);
 
 	@POST
-	@Path("/hub/trial")
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	@Produces(MediaType.APPLICATION_JSON)
-	TrialLicenseResponse generateTrialLicense(@FormParam("captcha") String captcha);
-
-	@POST
 	@Path("/hub/refresh")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.TEXT_PLAIN)
@@ -77,10 +71,5 @@ public interface LicenseApi {
 			}
 		}
 	}
-
-	record TrialLicenseResponse(@JsonProperty("hubId") String hubId,
-								@JsonProperty("licenseKey") String licenseKey) {
-	}
-
 
 }

@@ -656,6 +656,12 @@ class LicenseService {
     });
   }
 
+  public async installTrial(hubId: string, licenseKey: string): Promise<void> {
+    return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 409));
+  }
+
   public async refresh(session?: string): Promise<void> {
     if (session) {
       const params = new URLSearchParams({ session: session });

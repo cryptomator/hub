@@ -8,7 +8,13 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   base: './', // we use a <base href="/"/> tag, which all other urls need to be relative to
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag === 'altcha-widget'
+        }
+      }
+    }),
     vueI18nPlugin({
       include: path.resolve(__dirname, './src/i18n/*.json')
     }),
