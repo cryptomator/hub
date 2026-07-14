@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "Недійсна URL-адреса зображення",
   "groupEditCreate.profilePictureUrl": "URL-адреса зображення профілю",
   "groupEditCreate.selectRolesPlaceholder": "Виберіть ролі",
-  "groupEditCreate.error.groupNameAlreadyExists": "Група з такою назвою вже існує.",
   "trustDetails.trustLevel": "Рівень довіри {0}",
   "trustDetails.trustLevel.untrusted": "Не підтверджено",
   "trustDetails.showSignDialogBtn": "Перевірити особу...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "Недійсна URL-адреса зображення",
   "userEditCreate.validation.required": "Це поле обов’язкове",
   "userEditCreate.validation.passwordMismatch": "Паролі не збігаються",
-  "userEditCreate.error.userAlreadyExists": "Користувач з таким іменем вже існує.",
-  "userEditCreate.error.emailAlreadyExists": "Користувач з цією електронною поштою вже існує.",
   "userList.edit.user.button": "Редагувати",
   "userList.userName": "Назва",
   "userList.groups.count": "Групи",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Відновити доступ до сховища",
   "vaultDetails.emergencyAccess.setupCouncil": "Налаштувати раду екстреного доступу",
   "vaultDetails.emergencyAccess.fixCouncil": "Виправити раду екстреного доступу",
-  "vaultDetails.error.licenseViolated": "Термін дії вашої ліцензії Cryptomator Hub минув або ви перевищили кількість ліцензованих місць. Будь ласка, повідомте адміністратора Hub для поновлення або оновлення ліцензії.",
   "vaultDetails.error.reactivateFailed": "Ваша ліцензія Cryptomator Hub перевищила кількість доступних місць. Повторна активація цього сховища призведе до перевищення ліміту. Будь ласка, повідомте адміністратора Hub про необхідність оновлення ліцензії.",
   "vaultDetails.recoverVault.title": "Ви скинули свій обліковий запис!",
   "vaultDetails.recoverVault.description": "Щоб відновити доступ до сховища, ви повинні використати ключ відновлення або ж інший власник має оновити дозволи на доступ.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "Необхідне оновлення",
   "missingEntitlements.description": "Ця функція не входить до вашої поточної ліцензії.",
   "trial.enterpriseFeature.title": "Корпоративні особливості",
-  "trial.enterpriseFeature.description": "Ця функція доступна на постійній основі тільки з Корпоративною ліцензією."
+  "trial.enterpriseFeature.description": "Ця функція доступна на постійній основі тільки з Корпоративною ліцензією.",
+  "setupLicense.nonAdmin.title": "Необхідне налаштування"
 }
