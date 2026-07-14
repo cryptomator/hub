@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "A URL da imagem é inválida!",
   "groupEditCreate.profilePictureUrl": "URL da foto do perfil",
   "groupEditCreate.selectRolesPlaceholder": "Selecionar função(ões)",
-  "groupEditCreate.error.groupNameAlreadyExists": "Já existe um grupo com esse nome.",
   "trustDetails.trustLevel": "Nível de confiança: {0}",
   "trustDetails.trustLevel.untrusted": "Não verificado",
   "trustDetails.showSignDialogBtn": "Verificar identidade...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "A URL da imagem é inválida!",
   "userEditCreate.validation.required": "Este campo é obrigatório",
   "userEditCreate.validation.passwordMismatch": "As senhas são diferentes",
-  "userEditCreate.error.userAlreadyExists": "Já existe um usuário com este nome.",
-  "userEditCreate.error.emailAlreadyExists": "Já existe um usuário com este e-mail.",
   "userList.edit.user.button": "Editar",
   "userList.userName": "Nome",
   "userList.groups.count": "Grupos",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Recuperar acesso ao cofre",
   "vaultDetails.emergencyAccess.setupCouncil": "Configurar Conselho do Acesso de Emergência",
   "vaultDetails.emergencyAccess.fixCouncil": "Corrigir Conselho do Acesso de Emergência",
-  "vaultDetails.error.licenseViolated": "Sua licença do Cryptomator Hub expirou ou você excedeu o número de licenças válidas. Informe a renovação a um administrador do Hub ou atualize-a.",
   "vaultDetails.error.reactivateFailed": "Sua licença do Cryptomator Hub excedeu o número de lugares disponíveis ou expirou. Informe ao administrador do Hub para atualizar ou renová-la.",
   "vaultDetails.recoverVault.title": "Você redefiniu a sua conta!",
   "vaultDetails.recoverVault.description": "Para recuperar o acesso ao cofre, você deve restaurar seu acesso usando a chave de recuperação ou outro proprietário deve atualizar as permissões de acesso.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "Atualização obrigatória",
   "missingEntitlements.description": "Esse recurso não faz parte da sua licença atual.",
   "trial.enterpriseFeature.title": "Funcionalidades empresariais",
-  "trial.enterpriseFeature.description": "Esta funcionalidade apenas está permanentemente disponível com uma licença empresarial."
+  "trial.enterpriseFeature.description": "Esta funcionalidade apenas está permanentemente disponível com uma licença empresarial.",
+  "setupLicense.nonAdmin.title": "Configuração necessária"
 }
