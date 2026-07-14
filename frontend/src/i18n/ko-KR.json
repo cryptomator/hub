@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "유효하지 않은 이미지 URL",
   "groupEditCreate.profilePictureUrl": "프로필 사진 URL",
   "groupEditCreate.selectRolesPlaceholder": "역할 선택",
-  "groupEditCreate.error.groupNameAlreadyExists": "이미 존재하는 그룹 이름입니다.",
   "trustDetails.trustLevel": "신뢰 단계 {0}",
   "trustDetails.trustLevel.untrusted": "미인증",
   "trustDetails.showSignDialogBtn": "신원 확인...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "유효하지 않은 이미지 URL",
   "userEditCreate.validation.required": "필수 입력 항목입니다",
   "userEditCreate.validation.passwordMismatch": "비밀번호가 일치하지 않습니다",
-  "userEditCreate.error.userAlreadyExists": "이 사용자 이름을 가진 사용자가 이미 존재합니다.",
-  "userEditCreate.error.emailAlreadyExists": "이 이메일을 가진 사용자가 이미 존재합니다.",
   "userList.edit.user.button": "수정",
   "userList.userName": "이름",
   "userList.groups.count": "그룹",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Vault 접근 복구하기",
   "vaultDetails.emergencyAccess.setupCouncil": "비상 접근 위원회 설정하기",
   "vaultDetails.emergencyAccess.fixCouncil": "비상 접근 위원회 수정하기",
-  "vaultDetails.error.licenseViolated": "Cryptomator Hub 라이선스가 만료되었거나 자리의 수가 초과하였습니다. Hub 관리자에게 라이선스를 갱신하거나 업그레이드 하도록 알리십시오.",
   "vaultDetails.error.reactivateFailed": "Cryptomator Hub 라이선스의 가용 시트 수가 초과되었습니다. 이 Vault를 다시 활성화하면 라이선스 한도를 초과하게 됩니다. Hub 관리자에게 문의하여 라이선스를 업그레이드해 주십시오.",
   "vaultDetails.recoverVault.title": "계정을 리셋하였습니다!",
   "vaultDetails.recoverVault.description": "Vault에 대한 접근을 다시 얻으려면, 복구 키를 통해 계정을 복원하거나 다른 소유자가 접근 권한을 업데이트해야 합니다.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "업그레이드가 필요합니다.",
   "missingEntitlements.description": "이 기능은 현재 라이선스에 포함되어 있지 않습니다.",
   "trial.enterpriseFeature.title": "엔터프라이즈용 기능",
-  "trial.enterpriseFeature.description": "이 기능은 엔터프라이즈 라이선스를 보유한 경우에만 영구적으로 사용할 수 있습니다."
+  "trial.enterpriseFeature.description": "이 기능은 엔터프라이즈 라이선스를 보유한 경우에만 영구적으로 사용할 수 있습니다.",
+  "setupLicense.nonAdmin.title": "설정 필요함"
 }
