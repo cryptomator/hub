@@ -162,5 +162,6 @@
   "vaultList.filter.entry.ownedVaults": "ملكي",
   "vaultList.search.placeholder": "بحث…",
   "vaultList.badge.owner": "المالك",
-  "vaultList.badge.archived": "مؤرشف"
+  "vaultList.badge.archived": "مؤرشف",
+  "setupLicense.nonAdmin.title": "الإعداد مطلوب"
 }
