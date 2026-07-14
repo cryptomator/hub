@@ -330,8 +330,6 @@
   "userEditCreate.invalidImageUrl": "URL d'image invalide",
   "userEditCreate.validation.required": "Ce champ est obligatoire",
   "userEditCreate.validation.passwordMismatch": "Les mots de passe ne correspondent pas",
-  "userEditCreate.error.userAlreadyExists": "Un utilisateur avec ce nom d'utilisateur existe déjà.",
-  "userEditCreate.error.emailAlreadyExists": "Un utilisateur existe déjà avec ce courriel.",
   "userList.edit.user.button": "Éditer",
   "userList.userName": "Nom",
   "userList.groups.count": "Groupes",
@@ -379,7 +377,6 @@
   "vaultDetails.actions.recoverVault": "Récupérer l'accès au coffre",
   "vaultDetails.emergencyAccess.setupCouncil": "Configurer le Conseil d'accès d'urgence",
   "vaultDetails.emergencyAccess.fixCouncil": "Réparer le Conseil d'accès d'urgence",
-  "vaultDetails.error.licenseViolated": "Votre licence Cryptomator Hub a expiré ou vous avez dépassé le nombre de sièges sous licence. Veuillez en informer un administrateur Hub pour renouveler ou mettre à niveau la licence.",
   "vaultDetails.error.reactivateFailed": "Votre licence Cryptomator Hub a dépassé le nombre de places disponibles. La réactivation de ce coffre dépasserait la limite. Veuillez demander à l'administrateur du Hub de mettre à niveau la licence.",
   "vaultDetails.recoverVault.title": "Vous avez réinitialisé votre compte !",
   "vaultDetails.recoverVault.description": "Pour regagner l'accès au coffre, vous devez restaurer votre accès en utilisant la clé de récupération, ou un autre propriétaire doit mettre à jour les autorisations d'accès.",
@@ -409,5 +406,6 @@
   "missingEntitlements.title": "Amélioration requise",
   "missingEntitlements.description": "Cette fonctionnalité ne fait pas partie de votre licence actuelle.",
   "trial.enterpriseFeature.title": "Fonctionnalités pour les entreprises",
-  "trial.enterpriseFeature.description": "Cette fonctionnalité n'est disponible de manière permanente qu'avec une licence Enterprise."
+  "trial.enterpriseFeature.description": "Cette fonctionnalité n'est disponible de manière permanente qu'avec une licence Enterprise.",
+  "setupLicense.nonAdmin.title": "Configuration requise"
 }
