@@ -333,7 +333,6 @@
   "groupEditCreate.invalidImageUrl": "URL dell'immagine non valido",
   "groupEditCreate.profilePictureUrl": "URL dell'Immagine del Profilo",
   "groupEditCreate.selectRolesPlaceholder": "Seleziona il/i ruolo/i",
-  "groupEditCreate.error.groupNameAlreadyExists": "Esiste già un gruppo con questo nome.",
   "trustDetails.trustLevel": "Livello di fiducia {0}",
   "trustDetails.trustLevel.untrusted": "Non verificato",
   "trustDetails.showSignDialogBtn": "Verifica Identità...",
@@ -460,8 +459,6 @@
   "userEditCreate.invalidImageUrl": "URL dell'immagine non valido",
   "userEditCreate.validation.required": "Questo campo è obbligatorio",
   "userEditCreate.validation.passwordMismatch": "Le password non corrispondono",
-  "userEditCreate.error.userAlreadyExists": "Esiste già un utente con questo nome.",
-  "userEditCreate.error.emailAlreadyExists": "Esiste già un'utente con questo indirizzo email.",
   "userList.edit.user.button": "Modifica",
   "userList.userName": "Nome",
   "userList.groups.count": "Gruppi",
@@ -509,7 +506,6 @@
   "vaultDetails.actions.recoverVault": "Recupera l'accesso alla cassaforte",
   "vaultDetails.emergencyAccess.setupCouncil": "Imposta il Gruppo per l'Accesso di Emergenza",
   "vaultDetails.emergencyAccess.fixCouncil": "Correggi il Gruppo per l'Accesso di Emergenza",
-  "vaultDetails.error.licenseViolated": "La licenza Cryptomator Hub è scaduta o hai superato il numero di utenti disponibili. Si prega informare un amministratore per rinnovare o aggiornare la licenza.",
   "vaultDetails.error.reactivateFailed": "La tua licenza per Cryptomator Hub ha superato il numero di utenti disponibili. La riattivazione di questa cassaforte supererebbe il limite. Si prega contattare un amministratore dell'Hub per aggiornare la licenza.",
   "vaultDetails.recoverVault.title": "Hai resettato il tuo account!",
   "vaultDetails.recoverVault.description": "Per recuperare l'accesso alla cassaforte, è necessario utilizzare la chiave di ripristino, oppure un altro proprietario deve aggiornare i permessi di accesso.",
@@ -539,5 +535,6 @@
   "missingEntitlements.title": "Aggiornamento Richiesto",
   "missingEntitlements.description": "Questa funzionalità non è compresa nella tua attuale licenza.",
   "trial.enterpriseFeature.title": "Funzionalità Aziendali",
-  "trial.enterpriseFeature.description": "Questa funzionalità è disponibile in maniera continuativa solo con una licenza Aziendale."
+  "trial.enterpriseFeature.description": "Questa funzionalità è disponibile in maniera continuativa solo con una licenza Aziendale.",
+  "setupLicense.nonAdmin.title": "Configurazione necessaria"
 }
