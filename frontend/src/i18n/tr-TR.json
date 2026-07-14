@@ -371,7 +371,6 @@
   "vaultDetails.actions.reactivateVault": "Kasayı Yeniden Etkinleştir",
   "vaultDetails.actions.claimOwnership": "Sahiplik Talep Et",
   "vaultDetails.actions.recoverVault": "Kasa Erişimini Kurtar",
-  "vaultDetails.error.licenseViolated": "Cryptomator Hub lisansınızın süresi doldu veya lisanslı koltuk sayısını aştınız. Lütfen bir Hub yöneticisine lisansı yenilemesini veya yükseltmesini bildirin.",
   "vaultDetails.recoverVault.title": "Hesabınızı Sıfırladınız!",
   "vaultDetails.recoverVault.description": "Kasaya yeniden erişim kazanmak için kurtarma anahtarını kullanarak erişiminizi geri yüklemeniz veya başka bir sahibin erişim izinlerini güncellemesi gerekir.",
   "vaultList.title": "Kasalar",
@@ -393,5 +392,6 @@
   "vaultList.badge.archived": "Arşivlenmiş",
   "userList.filter.result.empty.title": "Kullanıcı yok",
   "groupList.empty.title": "Grup yok",
-  "groupList.filter.result.empty.title": "Grup yok"
+  "groupList.filter.result.empty.title": "Grup yok",
+  "setupLicense.nonAdmin.title": "Kurulum Gerekli"
 }
