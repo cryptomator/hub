@@ -93,14 +93,6 @@ class SetupModeIT {
 					.body("licensedSeats", Matchers.is(0));
 		}
 
-		@Test
-		@DisplayName("POST /license/trial returns 204")
-		void testRequestTrial() throws LicenseHolder.TrialLicenseRequestFailedException {
-			when().post("/license/trial")
-					.then().statusCode(204);
-
-			Mockito.verify(licenseHolder).requestTrialLicense();
-		}
 	}
 
 	@Nested

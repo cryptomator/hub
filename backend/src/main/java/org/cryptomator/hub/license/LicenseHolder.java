@@ -11,19 +11,12 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
+import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,8 +43,8 @@ public class LicenseHolder {
 	private final Settings.Repository settingsRepo;
 	private final LicenseApi licenseApi;
 
-	private final AtomicReference<DecodedJWT> license = new AtomicReference<>();
-	private DecodedJWT unconfiguredLicense;
+	private final AtomicReference<@Nullable DecodedJWT> licenseRef = new AtomicReference<>();
+	private @Nullable DecodedJWT unconfiguredLicense;
 
 	@Inject
 	LicenseHolder(@ConfigProperty(name = "hub.managed-instance", defaultValue = "false") Boolean managedInstance,
@@ -77,7 +70,7 @@ public class LicenseHolder {
 	@PostConstruct
 	void init() {
 		var license = this.loadLicense();
-		this.license.set(license);
+		this.licenseRef.set(license);
 		if (isSetupRequired()) {
 			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
 		}
@@ -106,7 +99,7 @@ public class LicenseHolder {
 	DecodedJWT loadLicense() {
 		var settings = settingsRepo.get();
 		this.unconfiguredLicense = UnconfiguredLicense.create(settings.getHubId());
-		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
+		if (settings.getLicenseKey() != null) {
 			try {
 				return validateExistingLicense(settings);
 			} catch (JWTVerificationException e) {
@@ -132,14 +125,18 @@ public class LicenseHolder {
 	 * @return {@code true} while no real license is set
 	 */
 	public boolean isSetupRequired() {
-		var license = this.license.get();
+		var license = this.licenseRef.get();
 		return license != null && license == unconfiguredLicense;
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
 	DecodedJWT validateExistingLicense(Settings settings) throws JWTVerificationException {
+		var license = settings.getLicenseKey();
+		if (license == null) {
+			throw new JWTVerificationException("No license");
+		}
 		try {
-			var validated = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
+			var validated = licenseValidator.validate(license, settings.getHubId());
 			LOG.info("Verified existing license.");
 			return validated;
 		} catch (JWTVerificationException e) {
@@ -161,20 +158,6 @@ public class LicenseHolder {
 			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
 			throw e;
 		}
-	}
-
-	@Transactional(Transactional.TxType.MANDATORY)
-	@WithSpan("LicenseHolder.requestAnonTrialLicense")
-	DecodedJWT requestAnonTrialLicense(Settings settings) throws WebApplicationException {
-		LOG.info("No license found. Requesting trial license...");
-		var solution = solveChallenge();
-		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
-		var validated = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
-		settings.setLicenseKey(trialResponse.licenseKey());
-		settings.setHubId(trialResponse.hubId());
-		settingsRepo.persistAndFlush(settings);
-		LOG.info("Successfully retrieved trial license.");
-		return validated;
 	}
 
 	LicenseApi.Solution solveChallenge() {
@@ -215,27 +198,6 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Requests an anonymous trial license from the license server and installs it, replacing the placeholder license.
-	 * <p>
-	 * Only permitted while {@link #isSetupRequired() setup is required}, since the issued trial license comes with a new hub ID that must not replace the ID an existing license is bound to.
-	 *
-	 * @throws TrialLicenseRequestFailedException if the license server could not be reached or did not issue a valid trial license
-	 * @throws IllegalStateException              if a real license is already configured
-	 */
-	@Transactional
-	public synchronized void requestTrialLicense() throws TrialLicenseRequestFailedException {
-		if (!isSetupRequired()) {
-			throw new IllegalStateException("A license is already configured");
-		}
-		var settings = settingsRepo.get();
-		try {
-			this.license.set(requestAnonTrialLicense(settings));
-		} catch (RuntimeException e) { // e.g. WebApplicationException or ProcessingException from the REST client, JWTVerificationException, IllegalArgumentException (unsolvable challenge)
-			throw new TrialLicenseRequestFailedException("Failed to obtain trial license from license server", e);
-		}
-	}
-
-	/**
 	 * Parses, verifies and persists the given token as the license in the database, adopting the given hub ID.
 	 * <p>
 	 * Used to install a trial license that was obtained from the license server by the browser: trial licenses are issued with a freshly minted hub ID,
@@ -256,7 +218,7 @@ public class LicenseHolder {
 		settings.setHubId(hubId);
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
-		this.license.set(validated);
+		this.licenseRef.set(validated);
 	}
 
 	/**
@@ -268,7 +230,7 @@ public class LicenseHolder {
 	@Transactional
 	public synchronized void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
-		this.license.set(licenseValidator.validate(token, settings.getHubId()));
+		this.licenseRef.set(licenseValidator.validate(token, settings.getHubId()));
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
 	}
@@ -303,8 +265,7 @@ public class LicenseHolder {
 		if (isSetupRequired()) {
 			throw new LicenseRefreshFailedException("No license configured");
 		}
-		var refreshUrl = getLicenseRefreshUri();
-		var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+		var refreshedLicense = requestLicenseRefresh(get().getToken());
 		validateAndSet(refreshedLicense);
 	}
 
@@ -317,53 +278,19 @@ public class LicenseHolder {
 		}
 	}
 
-	private URI getLicenseRefreshUri() {
-		var refreshUrlClaim = get().getClaim("refreshUrl");
-		if (refreshUrlClaim.isMissing()) {
-			throw new IllegalStateException("Missing refreshUrl claim.");
-		}
-		try {
-			return new URI(refreshUrlClaim.asString());
-		} catch (NullPointerException | URISyntaxException e) {
-			throw new IllegalStateException("Invalid value for refreshUrl claim", e);
-		}
-	}
-
 	//visible for testing
-	String requestLicenseRefresh(URI refreshUrl, String licenseToken) throws LicenseRefreshFailedException {
+	String requestLicenseRefresh(String licenseToken) throws LicenseRefreshFailedException {
 		var solution = solveChallenge();
-		// TODO: do we eventually want to migrate away from refreshUrl and use hard-coded api? using it in other places already anyway.
-//		try {
-//			return licenseApi.refreshLicense(licenseToken, solution.toCaptcha());
-//		} catch (WebApplicationException e) {
-//			throw new LicenseRefreshFailedException(e.getResponse().getStatus());
-//		}
-		try (var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()) {
-			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8)
-					+ "&captcha=" + URLEncoder.encode(solution.toCaptcha(), StandardCharsets.UTF_8);
-			var request = HttpRequest.newBuilder() //
-					.uri(refreshUrl) //
-					.header("Content-Type", MediaType.APPLICATION_FORM_URLENCODED) //
-					.POST(HttpRequest.BodyPublishers.ofString(body)) //
-					.version(HttpClient.Version.HTTP_1_1) //
-					.build();
-			var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-			if (response.statusCode() == 200 && !response.body().isEmpty()) {
-				return response.body();
-			} else {
-				throw new LicenseRefreshFailedException("License endpoint responded with status code " + response.statusCode());
-			}
-		} catch (IOException e) {
-			throw new LicenseRefreshFailedException("I/O error", e);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new LicenseRefreshFailedException("License refresh was interrupted", e);
+		try {
+			return licenseApi.refreshLicense(licenseToken, solution.toCaptcha());
+		} catch (WebApplicationException e) {
+			throw new LicenseRefreshFailedException("License endpoint responded with status code " + e.getResponse().getStatus());
 		}
 	}
 
 	@NotNull
-	public DecodedJWT get() {
-		var license = this.license.get();
+	public synchronized DecodedJWT get() {
+		var license = this.licenseRef.get();
 		if (license == null) {
 			throw new IllegalStateException();
 		}
@@ -387,22 +314,11 @@ public class LicenseHolder {
 	 * @return {@code true}, if the license expired, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		var license = get();
-		if (license == null) {
-			throw new IllegalStateException();
-		}
-		return license.getExpiresAt().toInstant().isBefore(Instant.now());
+		return get().getExpiresAt().toInstant().isBefore(Instant.now());
 	}
 
 	public boolean isManagedInstance() {
 		return managedInstance;
-	}
-
-	public static class TrialLicenseRequestFailedException extends Exception {
-
-		TrialLicenseRequestFailedException(String message, Throwable cause) {
-			super(message, cause);
-		}
 	}
 
 	public static class LicenseRefreshFailedException extends Exception {

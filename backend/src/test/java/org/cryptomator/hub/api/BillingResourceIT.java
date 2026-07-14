@@ -99,7 +99,7 @@ public class BillingResourceIT {
 		@Test
 		@DisplayName("PUT /billing/token returns 400 due to expired token")
 		void testPutExpiredToken() {
-			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(EXPIRED_TOKEN);
+			Mockito.doThrow(new JWTVerificationException("expired")).when(licenseHolder).set(EXPIRED_TOKEN);
 			given().contentType(ContentType.TEXT).body(EXPIRED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
@@ -108,7 +108,7 @@ public class BillingResourceIT {
 		@Test
 		@DisplayName("PUT /billing/token returns 400 due to invalid signature")
 		void testPutTokenWithInvalidSignature() {
-			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(TOKEN_WITH_INVALID_SIGNATURE);
+			Mockito.doThrow(new JWTVerificationException("invalid signature")).when(licenseHolder).set(TOKEN_WITH_INVALID_SIGNATURE);
 			given().contentType(ContentType.TEXT).body(TOKEN_WITH_INVALID_SIGNATURE)
 					.when().put("/billing/token")
 					.then().statusCode(400);

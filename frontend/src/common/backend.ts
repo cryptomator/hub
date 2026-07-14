@@ -655,12 +655,6 @@ class LicenseService {
     });
   }
 
-  public async requestTrial(): Promise<void> {
-    return axiosAuth.post('/license/trial')
-      .then(() => {})
-      .catch((error) => rethrowAndConvertIfExpected(error, 409));
-  }
-
   public async installTrial(hubId: string, licenseKey: string): Promise<void> {
     return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
       .then(() => {})

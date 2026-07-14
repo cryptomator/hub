@@ -49,38 +49,6 @@ class LicenseResourceTest {
 	class AsAdmin {
 
 		@Test
-		@DisplayName("POST /license/trial returns 204 and installs a trial license")
-		void testRequestTrial() throws LicenseHolder.TrialLicenseRequestFailedException {
-			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
-
-			when().post("/license/trial")
-					.then().statusCode(204);
-
-			Mockito.verify(licenseHolder).requestTrialLicense();
-		}
-
-		@Test
-		@DisplayName("POST /license/trial returns 409 if a license is already configured")
-		void testRequestTrialConflict() throws LicenseHolder.TrialLicenseRequestFailedException {
-			Mockito.doReturn(false).when(licenseHolder).isSetupRequired();
-
-			when().post("/license/trial")
-					.then().statusCode(409);
-
-			Mockito.verify(licenseHolder, Mockito.never()).requestTrialLicense();
-		}
-
-		@Test
-		@DisplayName("POST /license/trial returns 502 if the license server does not issue a trial license")
-		void testRequestTrialUpstreamFailure() throws LicenseHolder.TrialLicenseRequestFailedException {
-			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
-			Mockito.doThrow(LicenseHolder.TrialLicenseRequestFailedException.class).when(licenseHolder).requestTrialLicense();
-
-			when().post("/license/trial")
-					.then().statusCode(502);
-		}
-
-		@Test
 		@DisplayName("PUT /license/trial returns 204 and installs the trial license along with its hub ID")
 		void testInstallTrial() {
 			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
@@ -186,15 +154,6 @@ class LicenseResourceTest {
 	class AsAnyOtherRole {
 
 		@Test
-		@DisplayName("POST /license/trial returns 403 Forbidden")
-		void testRequestTrial() {
-			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
-
-			when().post("/license/trial")
-					.then().statusCode(403);
-		}
-
-		@Test
 		@DisplayName("PUT /license/trial returns 403 Forbidden")
 		void testInstallTrial() {
 			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
@@ -234,15 +193,6 @@ class LicenseResourceTest {
 	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
-
-		@Test
-		@DisplayName("POST /license/trial returns 401 Unauthorized")
-		void testRequestTrial() {
-			Mockito.doReturn(true).when(licenseHolder).isSetupRequired();
-
-			when().post("/license/trial")
-					.then().statusCode(401);
-		}
 
 		@Test
 		@DisplayName("PUT /license/trial returns 401 Unauthorized")

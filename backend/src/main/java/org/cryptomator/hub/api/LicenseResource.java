@@ -15,7 +15,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
@@ -63,26 +62,6 @@ public class LicenseResource {
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}
 
-	}
-
-	@POST
-	@Path("/trial")
-	@RolesAllowed("admin")
-	@AvailableDuringSetup
-	@Operation(summary = "Request a trial license", description = "Requests a trial license from the license server and installs it. Only allowed while no license is configured yet.")
-	@APIResponse(responseCode = "204", description = "Trial license installed")
-	@APIResponse(responseCode = "409", description = "A license is already configured")
-	@APIResponse(responseCode = "502", description = "Failed to obtain a trial license from the license server")
-	public Response requestTrial() {
-		if (!licenseHolder.isSetupRequired()) {
-			throw new ClientErrorException("A license is already configured", Response.Status.CONFLICT);
-		}
-		try {
-			licenseHolder.requestTrialLicense();
-			return Response.noContent().build();
-		} catch (LicenseHolder.TrialLicenseRequestFailedException e) {
-			throw new ServerErrorException("Failed to obtain a trial license from the license server", Response.Status.BAD_GATEWAY, e);
-		}
 	}
 
 	@PUT

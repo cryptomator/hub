@@ -15,7 +15,8 @@ import java.util.Base64;
 public final class UnconfiguredLicense {
 
 	private static final String HEADER = """
-			{"alg":"none","typ":"JWT"}""";
+			{"alg":"none","typ":"JWT"} \
+			""";
 	// iat 0 = epoch, exp 32503680000 = 3000-01-01T00:00:00Z; entitlements mirror HubLicenseEntitlements.create()
 	private static final String PAYLOAD_TEMPLATE = """
 			{
