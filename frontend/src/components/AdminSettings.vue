@@ -288,7 +288,6 @@ async function fetchData() {
     const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
     billing.value = await backend.billing.get();
     version.value = await versionDto;
-    latestVersion.value = await versionAvailable;
     hasLegacyDevices.value = await backend.devices.hasLegacyDevices();
 
     const settings = await backend.settings.get();
@@ -298,6 +297,7 @@ async function fetchData() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
+    latestVersion.value = await versionAvailable;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
