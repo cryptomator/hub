@@ -561,5 +561,21 @@
   "trial.paidFeature.description": "Ця функція постійно доступна лише з платною ліцензією.",
   "setupLicense.title": "Почати використання Cryptomator Hub",
   "setupLicense.nonAdmin.title": "Необхідне налаштування",
-  "setupLicense.nonAdmin.description": "Цей екземпляр Hub ще не налаштовано. Будь ласка, зв’яжіться зі своїм адміністратором."
+  "setupLicense.nonAdmin.description": "Цей екземпляр Hub ще не налаштовано. Будь ласка, зв’яжіться зі своїм адміністратором.",
+  "setupLicense.trial.title": "Спробувати Cryptomator Hub",
+  "setupLicense.trial.description": "Отримайте безкоштовну пробну ліцензію та випробуйте всі функції протягом обмеженого часу.",
+  "setupLicense.trial.submit": "Розпочати пробний період",
+  "setupLicense.trial.error": "Не вдалося отримати пробну ліцензію. Переконайтеся, що ваш браузер має доступ до сервера ліцензій, і спробуйте ще раз.",
+  "setupLicense.moreOptions": "Інші варіанти…",
+  "setupLicense.buy.title": "Купити ліцензію",
+  "setupLicense.buy.description": "Придбайте ліцензію в магазині Cryptomator. Після цього вас буде перенаправлено назад.",
+  "setupLicense.buy.submit": "Перейти до магазину ліцензій",
+  "setupLicense.community.title": "Community Edition",
+  "setupLicense.community.description": "Використовуєте Cryptomator Hub у некомерційних цілях? Зареєструйте безкоштовну ліцензію Community Edition.",
+  "setupLicense.community.submit": "Активувати ліцензію",
+  "setupLicense.existing.title": "Використати наявну ліцензію",
+  "setupLicense.existing.description": "Уже маєте ліцензійний ключ? Вставте його нижче.",
+  "setupLicense.existing.submit": "Застосувати ліцензію",
+  "setupLicense.existing.error": "Ліцензійний ключ недійсний або не відповідає цьому екземпляру Hub (Hub ID: {0}).",
+  "setupLicense.session.error": "Не вдалося отримати вашу ліцензію з магазину. Будь ласка, спробуйте ще раз або зверніться до служби підтримки, якщо проблема не зникає."
 }
