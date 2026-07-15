@@ -333,6 +333,7 @@
   "groupEditCreate.invalidImageUrl": "Ungültige Bild-URL",
   "groupEditCreate.profilePictureUrl": "Profilbild-URL",
   "groupEditCreate.selectRolesPlaceholder": "Rolle(n) auswählen",
+  "groupEditCreate.error.alreadyExists": "Diese Gruppe existiert bereits.",
   "trustDetails.trustLevel": "Vertrauenslevel {0}",
   "trustDetails.trustLevel.untrusted": "Unverifiziert",
   "trustDetails.showSignDialogBtn": "Identität prüfen...",
