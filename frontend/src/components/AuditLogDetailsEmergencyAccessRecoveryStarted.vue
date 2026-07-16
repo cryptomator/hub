@@ -38,11 +38,14 @@
           <code class="text-xs">{{ event.recoveryType }}</code>
         </dd>
       </div>
-      <div v-if="event.details" class="flex items-start gap-2">
-        <dt class="text-xs text-gray-500 mt-1">
-          <code>details</code>
+      <div v-if="event.details" class="flex flex-col gap-1">
+        <dt>
+          <button type="button" class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-hidden" :aria-expanded="detailsExpanded" @click="detailsExpanded = !detailsExpanded">
+            <code>details</code>
+            <ChevronRightIcon class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-90': detailsExpanded }" aria-hidden="true" />
+          </button>
         </dt>
-        <dd class="text-xs text-gray-900">
+        <dd v-if="detailsExpanded" class="text-xs text-gray-900">
           <pre class="max-w-[48rem] overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 rounded p-2 ring-1 ring-inset ring-gray-200">{{ prettyDetails }}</pre>
         </dd>
       </div>
@@ -51,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronRightIcon } from '@heroicons/vue/20/solid';
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventEmergencyAccessRecoveryStartedDto } from '../common/auditlog';
@@ -64,6 +68,7 @@ const props = defineProps<{
 
 const resolvedVault = ref<VaultDto>();
 const resolvedCouncilMember = ref<AuthorityDto>();
+const detailsExpanded = ref(false);
 
 const prettyDetails = computed(() => {
   const raw = props.event.details ?? '';
