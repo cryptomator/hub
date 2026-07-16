@@ -45,8 +45,8 @@
             <ChevronRightIcon class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-90': detailsExpanded }" aria-hidden="true" />
           </button>
         </dt>
-        <dd v-if="detailsExpanded" class="text-xs text-gray-900">
-          <pre class="max-w-[48rem] overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 rounded p-2 ring-1 ring-inset ring-gray-200">{{ prettyDetails }}</pre>
+        <dd v-if="detailsExpanded" class="text-sm text-gray-900 pl-3 border-l border-gray-100">
+          <AuditLogJsonView :value="parsedDetails" />
         </dd>
       </div>
     </dl>
@@ -59,6 +59,7 @@ import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventEmergencyAccessRecoveryStartedDto } from '../common/auditlog';
 import type { AuthorityDto, VaultDto } from '../common/backend';
+import AuditLogJsonView from './AuditLogJsonView.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -70,12 +71,13 @@ const resolvedVault = ref<VaultDto>();
 const resolvedCouncilMember = ref<AuthorityDto>();
 const detailsExpanded = ref(false);
 
-const prettyDetails = computed(() => {
+const parsedDetails = computed<unknown>(() => {
   const raw = props.event.details ?? '';
-  if (!raw) return '';
+  if (!raw) {
+    return null;
+  }
   try {
-    const obj = JSON.parse(raw);
-    return JSON.stringify(obj, null, 2);
+    return JSON.parse(raw);
   } catch {
     return raw;
   }
