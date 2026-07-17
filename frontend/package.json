@@ -28,7 +28,7 @@
     "@eslint/js": "^10.0.1",
     "@intlify/devtools-types": "^11.4.6",
     "@intlify/unplugin-vue-i18n": "^11.2.4",
-    "@stylistic/eslint-plugin": "^2.13.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.3.2",
     "@types/blueimp-md5": "^2.18.2",
