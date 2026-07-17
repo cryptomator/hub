@@ -537,5 +537,6 @@
   "missingEntitlements.description": "Diese Funktion ist nicht Teil deiner aktuellen Lizenz.",
   "trial.enterpriseFeature.title": "Enterprise-Funktion",
   "trial.enterpriseFeature.description": "Diese Funktion ist dauerhaft nur mit einer Enterprise-Lizenz verfügbar.",
+  "trial.paidFeature.description": "Diese Funktion ist nur mit einer kostenpflichtigen Lizenz dauerhaft verfügbar.",
   "setupLicense.nonAdmin.title": "Einrichtung erforderlich"
 }
