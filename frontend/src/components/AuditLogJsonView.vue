@@ -1,7 +1,7 @@
 <template>
   <!-- object: one row per entry; primitive values inline, nested values indented below -->
   <dl v-if="kind === 'object'" class="flex flex-col gap-1">
-    <div v-for="([key, val], i) in objectEntries" :key="i" :class="isComplex(val) ? 'flex flex-col gap-1' : 'flex items-baseline gap-2'">
+    <div v-for="([key, val]) in objectEntries" :key="key" :class="isComplex(val) ? 'flex flex-col gap-1' : 'flex items-baseline gap-2'">
       <dt class="text-xs text-gray-500">
         <code>{{ key }}</code>
       </dt>
