@@ -65,6 +65,11 @@
   "admin.licenseInfo.manageSubscription": "Spravovať predplatné",
   "admin.licenseInfo.type.title": "Typ",
   "admin.licenseInfo.getLicense": "Získať licenciu",
+  "admin.licenseInfo.enterLicense": "Aktualizovať Licenciu manuálne",
+  "enterLicenseDialog.title": "Aktualizovať Licenciu",
+  "enterLicenseDialog.description": "Licenčné kľúče sa zvyčajne aktualizujú automaticky. Ak vám podpora Cryptomator poskytla kľúč, môžete ho zadať sem.",
+  "enterLicenseDialog.licenseKey": "Licenčný kľúč",
+  "enterLicenseDialog.error.invalidLicenseKey": "Neplatný formát licenčného kľúča.",
   "admin.webOfTrust.information": "Dozvedieť sa viac.",
   "admin.webOfTrust.save": "Uložiť",
   "admin.webOfTrust.saved": "Uložené!",
@@ -139,6 +144,8 @@
   "nav.emergencyAccess": "Núdzový prístup",
   "nav.profile.admin": "Administrátor",
   "nav.groups": "Skupiny",
+  "nav.closeMenu": "Zatvoriť ponuku",
+  "nav.sidebar.title": "Navigácia",
   "recoveryKeyDialog.title": "Kľúč pre obnovenie",
   "recoverVaultDialog.description": "Vpíšte kľúč obnovy do trezoru pre znovuzískanie prístupu doň.",
   "recoverVaultDialog.submit": "Obnoviť trezor",
@@ -176,5 +183,10 @@
   "vaultList.addVault": "Pridať",
   "vaultList.filter": "Filter",
   "trial.enterpriseFeature.title": "Podniková funkcia",
-  "trial.enterpriseFeature.description": "Táto funkcia je trvalo dostupná iba s licenciou Enterprise."
+  "trial.enterpriseFeature.description": "Táto funkcia je trvalo dostupná iba s licenciou Enterprise.",
+  "trial.paidFeature.title": "Platená funkcia",
+  "setupLicense.nonAdmin.title": "Vyžaduje sa nastavenie",
+  "setupLicense.moreOptions": "Ďalšie možnosti…",
+  "setupLicense.buy.title": "Zakúpiť licenciu",
+  "setupLicense.existing.submit": "Aplikovať Licenciu"
 }
