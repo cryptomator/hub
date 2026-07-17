@@ -538,5 +538,6 @@
   "trial.enterpriseFeature.title": "Enterprise-Funktion",
   "trial.enterpriseFeature.description": "Diese Funktion ist dauerhaft nur mit einer Enterprise-Lizenz verfügbar.",
   "trial.paidFeature.description": "Diese Funktion ist nur mit einer kostenpflichtigen Lizenz dauerhaft verfügbar.",
-  "setupLicense.nonAdmin.title": "Einrichtung erforderlich"
+  "setupLicense.nonAdmin.title": "Einrichtung erforderlich",
+  "setupLicense.session.error": "Das Abrufen Ihrer Lizenz aus dem Shop ist fehlgeschlagen. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, falls das Problem weiterhin besteht."
 }
