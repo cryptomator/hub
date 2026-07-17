@@ -3,8 +3,7 @@
   <dl v-if="kind === 'object'" class="flex flex-col gap-1">
     <div v-for="([key, val], i) in objectEntries" :key="i" :class="isComplex(val) ? 'flex flex-col gap-1' : 'flex items-baseline gap-2'">
       <dt class="text-xs text-gray-500">
-        <AuditLogResolvedId v-if="isUuid(key)" :id="key" />
-        <code v-else>{{ key }}</code>
+        <code>{{ key }}</code>
       </dt>
       <dd class="text-sm text-gray-900" :class="{ 'pl-3 border-l border-gray-100': isComplex(val) }">
         <AuditLogJsonView :value="val" :force-id="isIdKey(key)" />
@@ -19,7 +18,7 @@
     </li>
   </ul>
 
-  <!-- resolvable id (key ends with Id/Ids, or value is a uuid) -->
+  <!-- resolvable id (enclosing key is whitelisted as id-bearing) -->
   <AuditLogResolvedId v-else-if="resolvableId != null" :id="resolvableId" />
 
   <!-- primitives -->
@@ -30,6 +29,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { AUTHORITY_ID_KEYS } from '../common/auditlog';
 import AuditLogResolvedId from './AuditLogResolvedId.vue';
 
 const props = defineProps<{
@@ -37,14 +37,8 @@ const props = defineProps<{
   forceId?: boolean
 }>();
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isUuid(v: unknown): v is string {
-  return typeof v === 'string' && UUID_RE.test(v);
-}
-
 function isIdKey(key: string): boolean {
-  return /Ids?$/.test(key);
+  return AUTHORITY_ID_KEYS.has(key);
 }
 
 function isComplex(v: unknown): boolean {
@@ -71,7 +65,7 @@ const arrayItems = computed<unknown[]>(() =>
 
 const resolvableId = computed<string | null>(() => {
   const v = props.value;
-  if (typeof v === 'string' && v !== '' && (props.forceId || isUuid(v))) {
+  if (typeof v === 'string' && v !== '' && props.forceId) {
     return v;
   } else {
     return null;
