@@ -53,7 +53,7 @@
           </button>
         </dt>
         <dd v-if="councilMembersExpanded" class="text-sm text-gray-900 pl-3 border-l border-gray-100">
-          <AuditLogJsonView :value="councilMembers" :force-id="true" />
+          <AuditLogJsonView :value="councilMembers" :force-id="Array.isArray(councilMembers)" />
         </dd>
       </div>
     </dl>
@@ -77,12 +77,16 @@ const props = defineProps<{
 const resolvedAdmin = ref<AuthorityDto | undefined>();
 const councilMembersExpanded = ref(false);
 
-const councilMembers = computed<string[]>(() => {
+const councilMembers = computed<unknown>(() => {
+  const raw = props.event.councilMemberIds ?? '';
+  if (raw === '') {
+    return '';
+  }
   try {
-    const parsed = JSON.parse(props.event.councilMemberIds ?? '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : raw; // fall back to the raw value on unexpected shape
   } catch {
-    return [];
+    return raw; // visible fallback on malformed input
   }
 });
 
