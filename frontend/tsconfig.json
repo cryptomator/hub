@@ -17,9 +17,5 @@
     "noUnusedLocals": false,
     "noFallthroughCasesInSwitch": true
   },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  },
   "include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts"]
 }

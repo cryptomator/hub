@@ -6,7 +6,7 @@ on:
     types: [labeled]
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 26
   JAVA_VERSION: 25
 
 defaults:

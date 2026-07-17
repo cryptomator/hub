@@ -3,10 +3,12 @@ package org.cryptomator.hub.metrics;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongGauge;
 import io.opentelemetry.api.metrics.Meter;
+import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
+@Startup
 public class VaultUnlockMetrics {
 
 	private static final String UNLOCKS_TOTAL_METRIC = "hub_vault_unlocks_total";

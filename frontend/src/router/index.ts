@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationN
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
+import { licenseSetupGuard } from './licenseSetupGuard';
 import userdata from '../common/userdata';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
@@ -17,6 +18,7 @@ import EmergencyAccessVaultList from '../components/emergencyaccess/EmergencyAcc
 import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
+import SetupLicense from '../components/SetupLicense.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
@@ -49,7 +51,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/logout',
     component: AuthenticatedMain, // any component will do
-    meta: { skipAuth: true, skipSetup: true },
+    meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true },
     beforeEnter: async () => {
       const auth = await authPromise;
       if (auth.isAuthenticated()) {
@@ -174,6 +176,12 @@ const routes: RouteRecordRaw[] = [
     meta: { skipSetup: true }, // no setup required to run setup ;)
   },
   {
+    path: '/app/setup-license',
+    component: SetupLicense,
+    props: (route) => ({ session: route.query.session }),
+    meta: { skipSetup: true, skipLicenseSetup: true }, // requires auth, but neither user key setup nor a configured license
+  },
+  {
     path: '/app/unlock-success',
     component: UnlockSuccess,
     props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device }),
@@ -182,17 +190,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/unlock-error',
     component: UnlockError,
-    meta: { skipAuth: true, skipSetup: true }
+    meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true }
   },
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
-    meta: { skipAuth: true, skipSetup: true }
+    meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true }
   },
   {
     path: '/app/forbidden',
     component: Forbidden,
-    meta: { skipAuth: true, skipSetup: true }
+    meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true }
   },
 ];
 
@@ -232,7 +240,10 @@ router.beforeEach(async (to) => {
   return { path: to.path, query: remainingQuery, replace: true };
 });
 
-// THIRD check user/browser keys (requires auth)
+// THIRD check instance license setup (requires auth, must run before user key setup)
+router.beforeEach(licenseSetupGuard);
+
+// FOURTH check user/browser keys (requires auth)
 router.beforeEach(async (to) => {
   if (to.meta.skipSetup) {
     return;
@@ -251,7 +262,7 @@ router.beforeEach(async (to) => {
   }
 });
 
-// FOURTH apply user language
+// FIFTH apply user language
 router.beforeEach(async (to) => {
   if (!to.meta.skipAuth) {
     const me = await userdata.me;

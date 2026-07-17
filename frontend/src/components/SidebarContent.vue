@@ -1,12 +1,12 @@
 <template>
-  <div class="flex grow flex-col gap-y-5 px-4 pb-4">
+  <div class="flex grow flex-col gap-y-4 p-4">
     <div class="flex h-16 shrink-0 items-center gap-x-4 px-2">
       <button v-if="showClose" type="button" class="-m-2.5 p-2.5 text-gray-300 hover:text-white" @click="emit('close')">
         <span class="sr-only">{{ t('nav.closeMenu') }}</span>
         <XMarkIcon class="h-6 w-6" aria-hidden="true" />
       </button>
-      <router-link to="/app" class="flex h-8 items-center" @click="emit('navigate')">
-        <img src="/logo-text.svg" class="h-8" alt="Cryptomator Hub" />
+      <router-link to="/app" class="flex h-12 grow items-center justify-center" @click="emit('navigate')">
+        <img src="/logo.svg" class="h-12" alt="Cryptomator Hub" />
       </router-link>
     </div>
 

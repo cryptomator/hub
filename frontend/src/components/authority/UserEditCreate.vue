@@ -108,9 +108,9 @@
                     <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:ring-primary text-sm">
                       <div class="flex flex-wrap gap-2">
                         <template v-if="selectedRoleOptions.length > 0">
-                          <button v-for="role in selectedRoleOptions" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" @click.stop="removeRole(role)">
-                            <span class="mr-1">{{ roleOptions[role] }}</span>
-                            <span class="text-green-800 font-bold">&times;</span>
+                          <button v-for="role in selectedRoleOptions" :key="role" :disabled="isSelf && role === 'admin'" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 disabled:cursor-not-allowed" @click.stop="removeRole(role)">
+                            <span :class="[isSelf && role === 'admin' ? '' : 'mr-1']">{{ roleOptions[role] }}</span>
+                            <span v-if="!(isSelf && role === 'admin')" class="text-green-800 font-bold">&times;</span>
                           </button>
                         </template>
                         <template v-else>
@@ -124,7 +124,7 @@
 
                     <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                       <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 text-sm">
-                        <ListboxOption v-for="(label, key) in roleOptions" :key="key" v-slot="{ selected }" :value="key" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary">
+                        <ListboxOption v-for="(label, key) in roleOptions" :key="key" v-slot="{ selected }" :value="key" :disabled="isSelf && key === 'admin'" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary ui-disabled:opacity-50 ui-disabled:cursor-not-allowed">
                           <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
                           <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-primary">
                             <CheckIcon class="h-5 w-5" />
@@ -236,6 +236,7 @@ import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import backend, { asError, ConflictError, generateFallbackPictureUrl, isSelectableRealmRole, RealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
+import userdata from '../../common/userdata';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -279,6 +280,10 @@ const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 const loading = ref(true);
 const onFetchError = ref<Error>();
+const currentUserId = ref<string>('');
+
+// admins must not be able to revoke their own admin role (enforced by the backend, mirrored here by locking the admin role)
+const isSelf = computed(() => props.mode === 'EDIT' && props.id === currentUserId.value);
 
 const selectedRoleOptions = computed({
   get() {
@@ -312,6 +317,7 @@ watch(() => data.pictureUrl, debouncedValidateImageUrl, { immediate: true });
 
 onMounted(async () => {
   loading.value = true;
+  currentUserId.value = (await userdata.me).id;
   if (props.mode === 'EDIT') {
     previewJdenticon.value = generateFallbackPictureUrl('USER', props.id);
     try {

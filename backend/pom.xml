@@ -136,6 +136,10 @@
 			<artifactId>quarkus-opentelemetry</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>io.opentelemetry.instrumentation</groupId>
+			<artifactId>opentelemetry-runtime-telemetry-java8</artifactId> <!-- java8 variant works in native images -->
+		</dependency>
+		<dependency>
 			<groupId>org.jspecify</groupId>
 			<artifactId>jspecify</artifactId>
 			<version>${jspecify.version}</version>

@@ -32,6 +32,7 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -84,6 +85,7 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@AvailableDuringSetup
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "update the logged-in user")
@@ -169,6 +171,7 @@ public class UsersResource {
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
+	@AvailableDuringSetup
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Transactional
@@ -176,7 +179,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
-		User user = userRepo.findById(jwt.getSubject());
+		User user = userRepo.findByIdOptional(jwt.getSubject()).orElseThrow(() -> new NotFoundException("no user matching the subject of the JWT"));
 		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withDevices) {
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
@@ -395,8 +398,11 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user updated")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
-	@APIResponse(responseCode = "409", description = "email already exists")
+	@APIResponse(responseCode = "409", description = "email already exists, or user attempted to revoke their own admin role")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
+		if (Objects.equals(userId, jwt.getSubject()) && !dto.realmRoles().contains(RealmRole.ADMIN)) {
+			throw new ClientErrorException("Users cannot revoke their own admin role", Response.Status.CONFLICT);
+		}
 		keycloakAuthorityPuller.updateUser(
 				userId,
 				dto.email(),

@@ -79,6 +79,13 @@
   "admin.licenseInfo.manageSubscription": "Manage Subscription",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Get License",
+  "admin.licenseInfo.enterLicense": "Update License Manually",
+
+  "enterLicenseDialog.title": "Update License",
+  "enterLicenseDialog.description": "License keys are normally updated automatically. If Cryptomator Support has provided you with a key, you can enter it here.",
+  "enterLicenseDialog.licenseKey": "License Key",
+  "enterLicenseDialog.error.invalidLicenseKey": "Invalid license key format.",
+  "enterLicenseDialog.error.rejected": "License rejected: {0}",
 
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
@@ -478,7 +485,7 @@
   "recoverVaultDialog.submit": "Recover Vault",
   "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
   "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
-  
+
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
   "regenerateAccountKeyDialog.saveAccountKey.title": "Save Account Key",
@@ -631,5 +638,26 @@
 
   "trial.enterpriseFeature.title": "Enterprise Feature",
   "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
+  "trial.paidFeature.title": "Paid Feature",
+  "trial.paidFeature.description": "This feature is only permanently available with a paid license.",
 
+  "setupLicense.title": "Start using Cryptomator Hub",
+  "setupLicense.nonAdmin.title": "Setup Required",
+  "setupLicense.nonAdmin.description": "This Hub instance has not been set up yet. Please contact your administrator.",
+  "setupLicense.trial.title": "Try Cryptomator Hub",
+  "setupLicense.trial.description": "Get a free trial license and explore all features for a limited time.",
+  "setupLicense.trial.submit": "Start Your Trial",
+  "setupLicense.trial.error": "Retrieving a trial license failed. Make sure your browser can reach the license server and try again.",
+  "setupLicense.moreOptions": "Other options…",
+  "setupLicense.buy.title": "Buy a License",
+  "setupLicense.buy.description": "Purchase a license in the Cryptomator store. You will be redirected back here afterwards.",
+  "setupLicense.buy.submit": "Go to License Store",
+  "setupLicense.community.title": "Community Edition",
+  "setupLicense.community.description": "Using Cryptomator Hub non-commercially? Register a free community edition license.",
+  "setupLicense.community.submit": "Register Community License",
+  "setupLicense.existing.title": "Use an Existing License",
+  "setupLicense.existing.description": "Already have a license key? Paste it below.",
+  "setupLicense.existing.submit": "Apply License",
+  "setupLicense.existing.error": "The license key is invalid or does not match this Hub instance (Hub ID: {0}).",
+  "setupLicense.session.error": "Retrieving your license from the store failed. Please try again or contact support if the problem persists."
 }
