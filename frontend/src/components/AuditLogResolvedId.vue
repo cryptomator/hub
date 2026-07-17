@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref, watch } from 'vue';
 import auditlog from '../common/auditlog';
 import type { AuthorityDto } from '../common/backend';
 
@@ -16,12 +16,17 @@ const props = defineProps<{
 
 const name = ref<string>();
 
-onMounted(async () => {
+watch(() => props.id, async (id) => {
+  name.value = undefined;
   try {
-    const authority: AuthorityDto = await auditlog.entityCache.getAuthority(props.id);
-    name.value = authority?.name;
+    const authority: AuthorityDto = await auditlog.entityCache.getAuthority(id);
+    if (props.id === id) { // ignore out-of-order resolution if the id changed meanwhile
+      name.value = authority?.name;
+    }
   } catch {
-    name.value = undefined;
+    if (props.id === id) {
+      name.value = undefined;
+    }
   }
-});
+}, { immediate: true });
 </script>
