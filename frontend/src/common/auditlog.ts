@@ -170,7 +170,7 @@ export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemove
  * Keys within a raw-JSON audit event payload (e.g. the `details` of an emergency access event)
  * whose value(s) are authority ids that should be resolved to names in the audit log UI.
  */
-export const AUTHORITY_ID_KEYS: ReadonlySet<string> = new Set(['newOwnerIds', 'newMemberIds']);
+export const AUTHORITY_ID_KEYS: ReadonlySet<string> = new Set(['newOwnerIds', 'newMemberIds', 'emergencyCouncilMemberIds']);
 
 /* Entity Cache */
 
