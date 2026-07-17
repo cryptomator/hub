@@ -1,7 +1,7 @@
 import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
-import path from 'path';
+import path from 'node:path';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -21,23 +21,28 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
-    minify: 'esbuild',
     target: 'esnext',
     assetsInlineLimit: 0,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: (id: string) => {
-          if (id.includes('/node_modules/@heroicons/')) {
-            return 'heroicons';
-          } else if (id.includes('/node_modules/vue')) {
-            return 'vue';
-          } else if (id.includes('/node_modules/')) {
-            return 'libs';
-          } else if (id.includes('/src/i18n/')) {
-            return 'locales';
-          } else if (id.includes('/src/components/emergencyaccess/')) {
-            return 'emergency-access';
-          }
+        codeSplitting: {
+          groups: [{
+            includeDependenciesRecursively: false, // only the matched module itself, like rollup's manualChunks
+            name: (id: string) => {
+              if (id.includes('/node_modules/@heroicons/')) {
+                return 'heroicons';
+              } else if (id.includes('/node_modules/vue')) {
+                return 'vue';
+              } else if (id.includes('/node_modules/')) {
+                return 'libs';
+              } else if (id.includes('/src/i18n/') || id.startsWith('virtual:intlify-i18n')) { // unplugin-vue-i18n emits locale messages as virtual modules
+                return 'locales';
+              } else if (id.includes('/src/components/emergencyaccess/')) {
+                return 'emergency-access';
+              }
+              return null;
+            }
+          }]
         }
       }
     }
