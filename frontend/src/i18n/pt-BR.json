@@ -77,6 +77,12 @@
   "admin.licenseInfo.manageSubscription": "Gerenciar assinatura",
   "admin.licenseInfo.type.title": "Tipo",
   "admin.licenseInfo.getLicense": "Obter licença",
+  "admin.licenseInfo.enterLicense": "Atualizar a licença manualmente",
+  "enterLicenseDialog.title": "Atualizar Licença",
+  "enterLicenseDialog.description": "As chaves de licença são normalmente atualizadas automaticamente. Caso o Suporte do Cryptomator ofereceu a você uma chave, digite-a aqui.",
+  "enterLicenseDialog.licenseKey": "Chave de Licença",
+  "enterLicenseDialog.error.invalidLicenseKey": "Formato inválido de chave de licença.",
+  "enterLicenseDialog.error.rejected": "Licença rejeitada: {0}",
   "admin.webOfTrust.title": "Rede de confiança",
   "admin.webOfTrust.description": "Configure os ajustes da rede de confiança para gerenciar como a confiança é estabelecida entre os usuários no sistema. Estas configurações afetam a verificação de identidades e as assinaturas de chaves.",
   "admin.webOfTrust.information": "Saiba mais.",
@@ -536,5 +542,13 @@
   "missingEntitlements.description": "Esse recurso não faz parte da sua licença atual.",
   "trial.enterpriseFeature.title": "Funcionalidades empresariais",
   "trial.enterpriseFeature.description": "Esta funcionalidade apenas está permanentemente disponível com uma licença empresarial.",
-  "setupLicense.nonAdmin.title": "Configuração necessária"
+  "trial.paidFeature.title": "Recurso pago",
+  "trial.paidFeature.description": "Esse recurso apenas está permanentemente disponível com uma licença paga.",
+  "setupLicense.nonAdmin.title": "Configuração necessária",
+  "setupLicense.trial.title": "Experimente o Crytomator Hub",
+  "setupLicense.trial.description": "Adquira uma licença experimental e explore todos os recursos por um tempo limitado.",
+  "setupLicense.trial.submit": "Iniciar seu período experimental",
+  "setupLicense.trial.error": "Falha ao adquirir uma licença experimental. Verifique a conexão entre o seu navegador e o servidor de licenças e tente novamente.",
+  "setupLicense.moreOptions": "Outras opções…",
+  "setupLicense.buy.title": "Comprar uma Licença"
 }
