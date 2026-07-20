@@ -37,8 +37,6 @@ export default defineConfig({
                 return 'libs';
               } else if (id.includes('/src/i18n/') || id.startsWith('virtual:intlify-i18n')) { // unplugin-vue-i18n emits locale messages as virtual modules
                 return 'locales';
-              } else if (id.includes('/src/components/emergencyaccess/')) {
-                return 'emergency-access';
               }
               return null;
             }
