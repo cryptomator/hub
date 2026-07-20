@@ -45,14 +45,15 @@
           <code class="text-xs">{{ String(event.allowChoosingCouncil) }}</code>
         </dd>
       </div>
-      <div v-if="councilIds.length > 0" class="flex items-baseline gap-2">
-        <dt class="text-xs text-gray-500">
-          <code>councilMembers</code>
+      <div class="flex flex-col gap-1">
+        <dt>
+          <button type="button" class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 focus:outline-hidden" :aria-expanded="councilMembersExpanded" @click="councilMembersExpanded = !councilMembersExpanded">
+            <code>councilMembers</code>
+            <ChevronRightIcon class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-90': councilMembersExpanded }" aria-hidden="true" />
+          </button>
         </dt>
-        <dd class="flex items-center flex-wrap gap-2 text-sm text-gray-900">
-          <code v-for="id in councilIds" :key="id" class="text-xs text-gray-700">
-            {{ id }}
-          </code>
+        <dd v-if="councilMembersExpanded" class="text-sm text-gray-900 pl-3 border-l border-gray-100">
+          <AuditLogJsonView :value="councilMembers" :force-id="Array.isArray(councilMembers)" />
         </dd>
       </div>
     </dl>
@@ -60,10 +61,12 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronRightIcon } from '@heroicons/vue/20/solid';
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventEmergencyAccessSettingsChangedDto } from '../common/auditlog';
 import type { AuthorityDto } from '../common/backend';
+import AuditLogJsonView from './AuditLogJsonView.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -72,13 +75,20 @@ const props = defineProps<{
 }>();
 
 const resolvedAdmin = ref<AuthorityDto | undefined>();
+const councilMembersExpanded = ref(false);
 
-const councilIds = computed<string[]>(() =>
-  (props.event.councilMemberIds ?? '')
-    .split(/\s+/)
-    .map(s => s.trim())
-    .filter(Boolean)
-);
+const councilMembers = computed<unknown>(() => {
+  const raw = props.event.councilMemberIds ?? '';
+  if (raw === '') {
+    return '';
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : raw; // fall back to the raw value on unexpected shape
+  } catch {
+    return raw; // visible fallback on malformed input
+  }
+});
 
 onMounted(async () => {
   resolvedAdmin.value = await auditlog.entityCache.getAuthority(props.event.adminId);
