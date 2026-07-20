@@ -1,19 +1,19 @@
 <template>
   <!-- object: one row per entry; primitive values inline, nested values indented below -->
   <dl v-if="kind === 'object'" class="flex flex-col gap-1">
-    <div v-for="([key, val]) in objectEntries" :key="key" :class="isComplex(val) ? 'flex flex-col gap-1' : 'flex items-baseline gap-2'">
+    <div v-for="([key, val]) in objectEntries" :key="key" :class="isObject(val) ? 'flex flex-col gap-1' : 'flex items-baseline gap-2'">
       <dt class="text-xs text-gray-500">
         <code>{{ key }}</code>
       </dt>
-      <dd class="text-sm text-gray-900" :class="{ 'pl-3 border-l border-gray-100': isComplex(val) }">
-        <AuditLogJsonView :value="val" :force-id="isIdKey(key)" />
+      <dd class="text-sm text-gray-900" :class="{ 'pl-3 border-l border-gray-100': isObject(val) }">
+        <AuditLogJsonView :value="val" :force-id="isAuthorityId(key)" />
       </dd>
     </div>
   </dl>
 
   <!-- array: one item per line; id-ness propagates from the enclosing key -->
   <ul v-else-if="kind === 'array'" class="flex flex-col gap-1">
-    <li v-for="(item, i) in arrayItems" :key="i" :class="{ 'pl-3 border-l border-gray-100': isComplex(item) }">
+    <li v-for="(item, i) in arrayItems" :key="i" :class="{ 'pl-3 border-l border-gray-100': isObject(item) }">
       <AuditLogJsonView :value="item" :force-id="forceId" />
     </li>
   </ul>
@@ -37,11 +37,11 @@ const props = defineProps<{
   forceId?: boolean
 }>();
 
-function isIdKey(key: string): boolean {
+function isAuthorityId(key: string): boolean {
   return AUTHORITY_ID_KEYS.has(key);
 }
 
-function isComplex(v: unknown): boolean {
+function isObject(v: unknown): boolean {
   return v !== null && typeof v === 'object';
 }
 
