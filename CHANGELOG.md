@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replace the top navigation bar with a sidebar
-- Updated Keycloak to 26.6.4
+- Updated Keycloak to 26.7.0
 - Updated to Java 25
 - Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)
