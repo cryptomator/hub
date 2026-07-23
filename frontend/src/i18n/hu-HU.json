@@ -573,5 +573,9 @@
   "setupLicense.community.title": "Közösségi kiadás",
   "setupLicense.community.description": "A Cryptomator Hub-ot nem kereskedelmi célra használja? Regisztráljon egy ingyenes közösségi kiadású licencet.",
   "setupLicense.community.submit": "Közösségi licenc regisztrációja",
-  "setupLicense.existing.title": "Meglévő licenc használata"
+  "setupLicense.existing.title": "Meglévő licenc használata",
+  "setupLicense.existing.description": "Van már licenckulcsa? Illessze be ide alább.",
+  "setupLicense.existing.submit": "Licenc alkalmazása",
+  "setupLicense.existing.error": "A licenckulcs érvénytelen, vagy nem egyezik meg ezzel a Hub-példánnyal (Hub-azonosító: {0}).",
+  "setupLicense.session.error": "A licenc letöltése az áruházból nem sikerült. Kérjük, próbálja meg újra, vagy ha a probléma továbbra is fennáll, vegye fel a kapcsolatot az ügyfélszolgálattal."
 }
