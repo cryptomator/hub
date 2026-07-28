@@ -14,6 +14,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -495,6 +497,61 @@ class LicenseHolderTest {
 			Mockito.doThrow(new InternalServerErrorException()).when(licenseApi).refreshLicense("token", "fooBar123");
 
 			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh("token"));
+		}
+	}
+
+	@Nested
+	@DisplayName("Testing isExpired()")
+	class TestIsExpired {
+
+		private LicenseHolder licenseHolderSpy;
+		private DecodedJWT licenseJwt;
+
+		@BeforeEach
+		void setup() {
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			licenseJwt = mock(DecodedJWT.class);
+			Mockito.doReturn(licenseJwt).when(licenseHolderSpy).get();
+		}
+
+		@Test
+		@DisplayName("license expiring in the future is not expired")
+		void testNotExpired() {
+			Mockito.doReturn(Instant.now().plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired within grace period is not considered expired")
+		void testExpiredWithinGracePeriod() {
+			Mockito.doReturn(Instant.now().minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired almost beyond grace period is not considered expired")
+		void testExpiredAlmostBeyondGracePeriod() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.GRACE_PERIOD).plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired beyond grace period is considered expired")
+		void testExpiredBeyondGracePeriod() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.GRACE_PERIOD).minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertTrue(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("grace period ends 9 days after the expiry date")
+		void testGracePeriodEndsAt() {
+			Mockito.doReturn(Instant.parse("2026-07-27T00:00:00Z")).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertEquals(Instant.parse("2026-08-05T00:00:00Z"), licenseHolderSpy.getGracePeriodEndsAt());
 		}
 	}
 

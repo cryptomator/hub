@@ -10,6 +10,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.ws.rs.NotFoundException;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -17,11 +18,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.is;
 
 @QuarkusTest
 @DisplayName("Resource /license")
@@ -146,6 +149,32 @@ class LicenseResourceTest {
 	}
 
 	@Nested
+	@DisplayName("As user")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	class AsUser {
+
+		@Test
+		@DisplayName("GET /license/user-info returns 200 with seats, expiry and grace period end")
+		void testGetUserInfo() {
+			Mockito.doReturn(Instant.parse("2026-07-27T00:00:00Z")).when(licenseHolder).getExpiresAt();
+			Mockito.doReturn(Instant.parse("2026-08-05T00:00:00Z")).when(licenseHolder).getGracePeriodEndsAt();
+			Mockito.doReturn(HubLicenseEntitlements.create().withSeats(5)).when(licenseHolder).getEntitlements();
+			Mockito.doReturn(3L).when(effectiveVaultAccessRepo).countSeatOccupyingUsers();
+
+			when().get("/license/user-info")
+					.then().statusCode(200)
+					.body("licensedSeats", is(5))
+					.body("usedSeats", is(3))
+					.body("expiresAt", is("2026-07-27T00:00:00Z"))
+					.body("gracePeriodEndsAt", is("2026-08-05T00:00:00Z"));
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As any other role")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
@@ -193,6 +222,13 @@ class LicenseResourceTest {
 	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
+
+		@Test
+		@DisplayName("GET /license/user-info returns 401 Unauthorized")
+		void testGetUserInfo() {
+			when().get("/license/user-info")
+					.then().statusCode(401);
+		}
 
 		@Test
 		@DisplayName("PUT /license/trial returns 401 Unauthorized")
