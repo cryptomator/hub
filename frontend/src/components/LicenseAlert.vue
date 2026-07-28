@@ -1,5 +1,5 @@
 <template>
-  <ContentBanner v-if="props.licenseStatus.isExpired()" type="error" :title="t('licenseAlert.licenseExpired.title')" class="mb-4">
+  <ContentBanner v-if="props.licenseStatus.isExpired('allowGracePeriod')" type="error" :title="t('licenseAlert.licenseExpired.title')" class="mb-4">
     <i18n-t v-if="props.isAdmin" keypath="licenseAlert.licenseExpired.admin.description" scope="global" tag="p">
       <router-link to="/app/admin/settings" class="underline hover:no-underline">
         {{ t('licenseAlert.button') }}
@@ -17,13 +17,13 @@
     <p v-else>{{ t('licenseAlert.noRemainingSeats.user.description') }}</p>
   </ContentBanner>
 
-  <ContentBanner v-else-if="props.licenseStatus.isExpiredWithinLeeway()" type="warning" :title="t('licenseAlert.licenseExpiredWithinLeeway.title')" class="mb-4">
-    <i18n-t v-if="props.isAdmin" keypath="licenseAlert.licenseExpiredWithinLeeway.admin.description" scope="global" tag="p">
+  <ContentBanner v-else-if="props.licenseStatus.isExpired()" type="warning" :title="t('licenseAlert.licenseExpiredGracePeriod.title')" class="mb-4">
+    <i18n-t v-if="props.isAdmin" keypath="licenseAlert.licenseExpiredGracePeriod.admin.description" scope="global" tag="p">
       <router-link to="/app/admin/settings" class="underline hover:no-underline">
         {{ t('licenseAlert.button') }}
       </router-link>
     </i18n-t>
-    <p v-else>{{ t('licenseAlert.licenseExpiredWithinLeeway.user.description') }}</p>
+    <p v-else>{{ t('licenseAlert.licenseExpiredGracePeriod.user.description') }}</p>
   </ContentBanner>
 </template>
 

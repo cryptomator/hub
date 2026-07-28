@@ -230,15 +230,12 @@ export class LicenseUserInfoDto {
     public licensedSeats: number,
     public usedSeats: number,
     public expiresAt: Date | null,
-    public leewayEndsAt: Date | null) {
+    public gracePeriodEndsAt: Date | null) {
   }
 
-  public isExpired(): boolean {
-    return this.leewayEndsAt != null && new Date() > this.leewayEndsAt; // no leeway end means no expiration date, i.e. the license cannot expire
-  }
-
-  public isExpiredWithinLeeway(): boolean {
-    return this.expiresAt != null && new Date() > this.expiresAt && !this.isExpired();
+  public isExpired(mode?: 'allowGracePeriod'): boolean {
+    const deadline = mode === 'allowGracePeriod' ? this.gracePeriodEndsAt : this.expiresAt;
+    return deadline != null && new Date() > deadline; // no deadline means no expiration date, i.e. the license cannot expire
   }
 
   public isExceeded(): boolean {
@@ -246,7 +243,7 @@ export class LicenseUserInfoDto {
   }
 
   public isViolated(): boolean {
-    return this.isExpired() || this.isExceeded();
+    return this.isExpired('allowGracePeriod') || this.isExceeded();
   }
 
 }
@@ -661,14 +658,14 @@ class LicenseService {
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
       const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : null;
-      const leewayEndsAt = response.data.leewayEndsAt ? new Date(response.data.leewayEndsAt) : null;
-      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, leewayEndsAt);
+      const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : null;
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, gracePeriodEndsAt);
     });
   }
 
   public async installTrial(hubId: string, licenseKey: string): Promise<void> {
     return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 409));
   }
 

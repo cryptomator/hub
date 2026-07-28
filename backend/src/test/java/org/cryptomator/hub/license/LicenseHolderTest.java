@@ -523,35 +523,35 @@ class LicenseHolderTest {
 		}
 
 		@Test
-		@DisplayName("license expired within leeway is not considered expired")
-		void testExpiredWithinLeeway() {
+		@DisplayName("license expired within grace period is not considered expired")
+		void testExpiredWithinGracePeriod() {
 			Mockito.doReturn(Instant.now().minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
 
 			Assertions.assertFalse(licenseHolderSpy.isExpired());
 		}
 
 		@Test
-		@DisplayName("license expired almost beyond leeway is not considered expired")
-		void testExpiredAlmostBeyondLeeway() {
-			Mockito.doReturn(Instant.now().minus(LicenseHolder.EXPIRATION_LEEWAY).plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+		@DisplayName("license expired almost beyond grace period is not considered expired")
+		void testExpiredAlmostBeyondGracePeriod() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.GRACE_PERIOD).plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
 
 			Assertions.assertFalse(licenseHolderSpy.isExpired());
 		}
 
 		@Test
-		@DisplayName("license expired beyond leeway is considered expired")
-		void testExpiredBeyondLeeway() {
-			Mockito.doReturn(Instant.now().minus(LicenseHolder.EXPIRATION_LEEWAY).minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+		@DisplayName("license expired beyond grace period is considered expired")
+		void testExpiredBeyondGracePeriod() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.GRACE_PERIOD).minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
 
 			Assertions.assertTrue(licenseHolderSpy.isExpired());
 		}
 
 		@Test
-		@DisplayName("leeway ends 9 days after the expiry date")
-		void testLeewayEndsAt() {
+		@DisplayName("grace period ends 9 days after the expiry date")
+		void testGracePeriodEndsAt() {
 			Mockito.doReturn(Instant.parse("2026-07-27T00:00:00Z")).when(licenseJwt).getExpiresAtAsInstant();
 
-			Assertions.assertEquals(Instant.parse("2026-08-05T00:00:00Z"), licenseHolderSpy.getLeewayEndsAt());
+			Assertions.assertEquals(Instant.parse("2026-08-05T00:00:00Z"), licenseHolderSpy.getGracePeriodEndsAt());
 		}
 	}
 

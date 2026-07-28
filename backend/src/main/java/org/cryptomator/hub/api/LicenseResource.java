@@ -45,7 +45,7 @@ public class LicenseResource {
 	@Path("/user-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed("user")
-	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats, the license expiration date and the end of the expiration leeway.")
+	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats, the license expiration date and the end of the grace period.")
 	@APIResponse(responseCode = "200")
 	public LicenseUserInfoDto get() {
 		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
@@ -55,13 +55,13 @@ public class LicenseResource {
 	public record LicenseUserInfoDto(@JsonProperty("licensedSeats") Integer licensedSeats,
 									 @JsonProperty("usedSeats") Integer usedSeats,
 									 @JsonProperty("expiresAt") Instant expiresAt,
-									 @JsonProperty("leewayEndsAt") Instant leewayEndsAt) {
+									 @JsonProperty("gracePeriodEndsAt") Instant gracePeriodEndsAt) {
 
 		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
 			var licensedSeats = (int) licenseHolder.getEntitlements().seats();
 			var expiresAt = licenseHolder.getExpiresAt();
-			var leewayEndsAt = licenseHolder.getLeewayEndsAt();
-			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt, leewayEndsAt);
+			var gracePeriodEndsAt = licenseHolder.getGracePeriodEndsAt();
+			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt, gracePeriodEndsAt);
 		}
 
 	}

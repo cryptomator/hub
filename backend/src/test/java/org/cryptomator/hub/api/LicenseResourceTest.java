@@ -157,10 +157,10 @@ class LicenseResourceTest {
 	class AsUser {
 
 		@Test
-		@DisplayName("GET /license/user-info returns 200 with seats, expiry and leeway end")
+		@DisplayName("GET /license/user-info returns 200 with seats, expiry and grace period end")
 		void testGetUserInfo() {
 			Mockito.doReturn(Instant.parse("2026-07-27T00:00:00Z")).when(licenseHolder).getExpiresAt();
-			Mockito.doReturn(Instant.parse("2026-08-05T00:00:00Z")).when(licenseHolder).getLeewayEndsAt();
+			Mockito.doReturn(Instant.parse("2026-08-05T00:00:00Z")).when(licenseHolder).getGracePeriodEndsAt();
 			Mockito.doReturn(HubLicenseEntitlements.create().withSeats(5)).when(licenseHolder).getEntitlements();
 			Mockito.doReturn(3L).when(effectiveVaultAccessRepo).countSeatOccupyingUsers();
 
@@ -169,7 +169,7 @@ class LicenseResourceTest {
 					.body("licensedSeats", is(5))
 					.body("usedSeats", is(3))
 					.body("expiresAt", is("2026-07-27T00:00:00Z"))
-					.body("leewayEndsAt", is("2026-08-05T00:00:00Z"));
+					.body("gracePeriodEndsAt", is("2026-08-05T00:00:00Z"));
 		}
 
 	}

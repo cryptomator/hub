@@ -36,11 +36,11 @@ describe('asError', () => {
 
 describe('LicenseUserInfoDto', () => {
   const hour = 60 * 60 * 1000;
-  const leeway = 3 * 24 * hour; // arbitrary — the actual leeway is determined server-side
+  const gracePeriod = 3 * 24 * hour; // arbitrary — the actual grace period is determined server-side
 
   function licenseExpiringAt(expiresAt: Date | null): LicenseUserInfoDto {
-    const leewayEndsAt = expiresAt != null ? new Date(expiresAt.getTime() + leeway) : null;
-    return new LicenseUserInfoDto(5, 3, expiresAt, leewayEndsAt);
+    const gracePeriodEndsAt = expiresAt != null ? new Date(expiresAt.getTime() + gracePeriod) : null;
+    return new LicenseUserInfoDto(5, 3, expiresAt, gracePeriodEndsAt);
   }
 
   it('license expiring in the future is not expired', () => {
@@ -49,14 +49,8 @@ describe('LicenseUserInfoDto', () => {
     expect(license.isExpired()).toBe(false);
   });
 
-  it('license expired within the leeway is not considered expired', () => {
+  it('license past its expiration date is expired', () => {
     const license = licenseExpiringAt(new Date(Date.now() - hour));
-
-    expect(license.isExpired()).toBe(false);
-  });
-
-  it('license expired beyond the leeway is considered expired', () => {
-    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
 
     expect(license.isExpired()).toBe(true);
   });
@@ -67,49 +61,49 @@ describe('LicenseUserInfoDto', () => {
     expect(license.isExpired()).toBe(false);
   });
 
-  it('license expiring in the future is not within the leeway', () => {
+  it('license expiring in the future is not expired when allowing the grace period', () => {
     const license = licenseExpiringAt(new Date(Date.now() + hour));
 
-    expect(license.isExpiredWithinLeeway()).toBe(false);
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
   });
 
-  it('license recently expired is within the leeway', () => {
+  it('license expired within the grace period is not expired when allowing the grace period', () => {
     const license = licenseExpiringAt(new Date(Date.now() - hour));
 
-    expect(license.isExpiredWithinLeeway()).toBe(true);
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
   });
 
-  it('license expired almost beyond the leeway is still within the leeway', () => {
-    const license = licenseExpiringAt(new Date(Date.now() - leeway + hour));
+  it('license expired almost beyond the grace period is not expired when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod + hour));
 
-    expect(license.isExpiredWithinLeeway()).toBe(true);
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
   });
 
-  it('license expired beyond the leeway is not within the leeway', () => {
-    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
+  it('license expired beyond the grace period is expired even when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod - hour));
 
-    expect(license.isExpiredWithinLeeway()).toBe(false);
+    expect(license.isExpired('allowGracePeriod')).toBe(true);
   });
 
-  it('license without expiration date is never within the leeway', () => {
+  it('license without expiration date cannot expire even when allowing the grace period', () => {
     const license = licenseExpiringAt(null);
 
-    expect(license.isExpiredWithinLeeway()).toBe(false);
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
   });
 
-  it('license expired beyond the leeway is violated', () => {
-    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
+  it('license expired beyond the grace period is violated', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod - hour));
 
     expect(license.isViolated()).toBe(true);
   });
 
   it('license with more used than licensed seats is violated', () => {
-    const license = new LicenseUserInfoDto(5, 6, new Date(Date.now() + hour), new Date(Date.now() + leeway + hour));
+    const license = new LicenseUserInfoDto(5, 6, new Date(Date.now() + hour), new Date(Date.now() + gracePeriod + hour));
 
     expect(license.isViolated()).toBe(true);
   });
 
-  it('license expired within the leeway is not violated', () => {
+  it('license expired within the grace period is not violated', () => {
     const license = licenseExpiringAt(new Date(Date.now() - hour));
 
     expect(license.isViolated()).toBe(false);

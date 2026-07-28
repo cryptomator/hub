@@ -38,7 +38,7 @@ public class LicenseHolder {
 	 * bridging the gap between the end of a billing period and the license server confirming the renewal.
 	 */
 	// visible for testing
-	static final Duration EXPIRATION_LEEWAY = Duration.ofDays(9);
+	static final Duration GRACE_PERIOD = Duration.ofDays(9);
 
 	private final Boolean managedInstance;
 	private final Optional<String> initialId;
@@ -312,19 +312,19 @@ public class LicenseHolder {
 	/**
 	 * Returns the instant after which the license is considered {@link #isExpired() expired}.
 	 *
-	 * @return the license's expiry date plus {@link #EXPIRATION_LEEWAY}
+	 * @return the license's expiry date plus {@link #GRACE_PERIOD}
 	 */
-	public Instant getLeewayEndsAt() {
-		return getExpiresAt().plus(EXPIRATION_LEEWAY);
+	public Instant getGracePeriodEndsAt() {
+		return getExpiresAt().plus(GRACE_PERIOD);
 	}
 
 	/**
-	 * Checks if the license is expired, granting a grace period of {@link #EXPIRATION_LEEWAY}.
+	 * Checks if the license is expired, granting a grace period of {@link #GRACE_PERIOD}.
 	 *
-	 * @return {@code true}, if the license expired more than {@link #EXPIRATION_LEEWAY} ago, {@code false} otherwise.
+	 * @return {@code true}, if the license expired more than {@link #GRACE_PERIOD} ago, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		return getLeewayEndsAt().isBefore(Instant.now());
+		return getGracePeriodEndsAt().isBefore(Instant.now());
 	}
 
 	public boolean isManagedInstance() {
