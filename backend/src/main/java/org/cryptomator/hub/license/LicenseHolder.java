@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -31,6 +32,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class LicenseHolder {
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
+
+	/**
+	 * Grace period after the license's expiry date during which the license is still treated as active,
+	 * bridging the gap between the end of a billing period and the license server confirming the renewal.
+	 */
+	// visible for testing
+	static final Duration EXPIRATION_LEEWAY = Duration.ofDays(9);
 
 	private final Boolean managedInstance;
 	private final Optional<String> initialId;
@@ -293,12 +301,30 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Checks if the license is expired.
+	 * Returns the expiry date of the license.
 	 *
-	 * @return {@code true}, if the license expired, {@code false} otherwise.
+	 * @return the license's {@code exp} claim
+	 */
+	public Instant getExpiresAt() {
+		return get().getExpiresAtAsInstant();
+	}
+
+	/**
+	 * Returns the instant after which the license is considered {@link #isExpired() expired}.
+	 *
+	 * @return the license's expiry date plus {@link #EXPIRATION_LEEWAY}
+	 */
+	public Instant getLeewayEndsAt() {
+		return getExpiresAt().plus(EXPIRATION_LEEWAY);
+	}
+
+	/**
+	 * Checks if the license is expired, granting a grace period of {@link #EXPIRATION_LEEWAY}.
+	 *
+	 * @return {@code true}, if the license expired more than {@link #EXPIRATION_LEEWAY} ago, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		return get().getExpiresAt().toInstant().isBefore(Instant.now());
+		return getLeewayEndsAt().isBefore(Instant.now());
 	}
 
 	public boolean isManagedInstance() {

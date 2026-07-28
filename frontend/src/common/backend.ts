@@ -229,16 +229,24 @@ export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
-    public expiresAt: Date | null) {
+    public expiresAt: Date | null,
+    public leewayEndsAt: Date | null) {
   }
 
   public isExpired(): boolean {
-    const now = new Date();
-    return now > (this.expiresAt ?? now); //if expired is null, the license cannot expire
+    return this.leewayEndsAt != null && new Date() > this.leewayEndsAt; // no leeway end means no expiration date, i.e. the license cannot expire
+  }
+
+  public isExpiredWithinLeeway(): boolean {
+    return this.expiresAt != null && new Date() > this.expiresAt && !this.isExpired();
   }
 
   public isExceeded(): boolean {
     return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
+  }
+
+  public isViolated(): boolean {
+    return this.isExpired() || this.isExceeded();
   }
 
 }
@@ -652,7 +660,9 @@ class LicenseService {
 
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
-      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
+      const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : null;
+      const leewayEndsAt = response.data.leewayEndsAt ? new Date(response.data.leewayEndsAt) : null;
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, leewayEndsAt);
     });
   }
 

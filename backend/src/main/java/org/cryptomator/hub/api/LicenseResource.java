@@ -45,7 +45,7 @@ public class LicenseResource {
 	@Path("/user-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed("user")
-	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats and if defined, the license expiration date.")
+	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats, the license expiration date and the end of the expiration leeway.")
 	@APIResponse(responseCode = "200")
 	public LicenseUserInfoDto get() {
 		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
@@ -54,12 +54,14 @@ public class LicenseResource {
 
 	public record LicenseUserInfoDto(@JsonProperty("licensedSeats") Integer licensedSeats,
 									 @JsonProperty("usedSeats") Integer usedSeats,
-									 @JsonProperty("expiresAt") Instant expiresAt) {
+									 @JsonProperty("expiresAt") Instant expiresAt,
+									 @JsonProperty("leewayEndsAt") Instant leewayEndsAt) {
 
 		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
 			var licensedSeats = (int) licenseHolder.getEntitlements().seats();
-			var expiresAt = licenseHolder.get().getExpiresAtAsInstant();
-			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
+			var expiresAt = licenseHolder.getExpiresAt();
+			var leewayEndsAt = licenseHolder.getLeewayEndsAt();
+			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt, leewayEndsAt);
 		}
 
 	}

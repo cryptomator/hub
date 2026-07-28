@@ -14,6 +14,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -495,6 +497,61 @@ class LicenseHolderTest {
 			Mockito.doThrow(new InternalServerErrorException()).when(licenseApi).refreshLicense("token", "fooBar123");
 
 			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh("token"));
+		}
+	}
+
+	@Nested
+	@DisplayName("Testing isExpired()")
+	class TestIsExpired {
+
+		private LicenseHolder licenseHolderSpy;
+		private DecodedJWT licenseJwt;
+
+		@BeforeEach
+		void setup() {
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			licenseJwt = mock(DecodedJWT.class);
+			Mockito.doReturn(licenseJwt).when(licenseHolderSpy).get();
+		}
+
+		@Test
+		@DisplayName("license expiring in the future is not expired")
+		void testNotExpired() {
+			Mockito.doReturn(Instant.now().plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired within leeway is not considered expired")
+		void testExpiredWithinLeeway() {
+			Mockito.doReturn(Instant.now().minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired almost beyond leeway is not considered expired")
+		void testExpiredAlmostBeyondLeeway() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.EXPIRATION_LEEWAY).plus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertFalse(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("license expired beyond leeway is considered expired")
+		void testExpiredBeyondLeeway() {
+			Mockito.doReturn(Instant.now().minus(LicenseHolder.EXPIRATION_LEEWAY).minus(1, ChronoUnit.HOURS)).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertTrue(licenseHolderSpy.isExpired());
+		}
+
+		@Test
+		@DisplayName("leeway ends 9 days after the expiry date")
+		void testLeewayEndsAt() {
+			Mockito.doReturn(Instant.parse("2026-07-27T00:00:00Z")).when(licenseJwt).getExpiresAtAsInstant();
+
+			Assertions.assertEquals(Instant.parse("2026-08-05T00:00:00Z"), licenseHolderSpy.getLeewayEndsAt());
 		}
 	}
 

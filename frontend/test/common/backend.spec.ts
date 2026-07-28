@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
-import { asError, NotFoundError } from '../../src/common/backend';
+import { asError, LicenseUserInfoDto, NotFoundError } from '../../src/common/backend';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({}) }));
 vi.mock('../../src/common/config', () => ({ default: {}, backendBaseURL: '/api/' }));
@@ -31,5 +31,87 @@ describe('asError', () => {
 
   it('wraps non-error values', () => {
     expect(asError('boom').message).toEqual('Unknown Error');
+  });
+});
+
+describe('LicenseUserInfoDto', () => {
+  const hour = 60 * 60 * 1000;
+  const leeway = 3 * 24 * hour; // arbitrary — the actual leeway is determined server-side
+
+  function licenseExpiringAt(expiresAt: Date | null): LicenseUserInfoDto {
+    const leewayEndsAt = expiresAt != null ? new Date(expiresAt.getTime() + leeway) : null;
+    return new LicenseUserInfoDto(5, 3, expiresAt, leewayEndsAt);
+  }
+
+  it('license expiring in the future is not expired', () => {
+    const license = licenseExpiringAt(new Date(Date.now() + hour));
+
+    expect(license.isExpired()).toBe(false);
+  });
+
+  it('license expired within the leeway is not considered expired', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isExpired()).toBe(false);
+  });
+
+  it('license expired beyond the leeway is considered expired', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
+
+    expect(license.isExpired()).toBe(true);
+  });
+
+  it('license without expiration date cannot expire', () => {
+    const license = licenseExpiringAt(null);
+
+    expect(license.isExpired()).toBe(false);
+  });
+
+  it('license expiring in the future is not within the leeway', () => {
+    const license = licenseExpiringAt(new Date(Date.now() + hour));
+
+    expect(license.isExpiredWithinLeeway()).toBe(false);
+  });
+
+  it('license recently expired is within the leeway', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isExpiredWithinLeeway()).toBe(true);
+  });
+
+  it('license expired almost beyond the leeway is still within the leeway', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - leeway + hour));
+
+    expect(license.isExpiredWithinLeeway()).toBe(true);
+  });
+
+  it('license expired beyond the leeway is not within the leeway', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
+
+    expect(license.isExpiredWithinLeeway()).toBe(false);
+  });
+
+  it('license without expiration date is never within the leeway', () => {
+    const license = licenseExpiringAt(null);
+
+    expect(license.isExpiredWithinLeeway()).toBe(false);
+  });
+
+  it('license expired beyond the leeway is violated', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - leeway - hour));
+
+    expect(license.isViolated()).toBe(true);
+  });
+
+  it('license with more used than licensed seats is violated', () => {
+    const license = new LicenseUserInfoDto(5, 6, new Date(Date.now() + hour), new Date(Date.now() + leeway + hour));
+
+    expect(license.isViolated()).toBe(true);
+  });
+
+  it('license expired within the leeway is not violated', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isViolated()).toBe(false);
   });
 });
