@@ -248,6 +248,7 @@
   "licenseAlert.licenseExpired.title": "Lisan süresi doldu",
   "licenseAlert.licenseExpired.admin.description": "Cryptomator Hub lisansınızın süresi doldu. Kasalarınızı tekrar yönetmek ve kilidini açmak için {0}'dan yenileyin.",
   "licenseAlert.licenseExpired.user.description": "Cryptomator Hub lisansınızın süresi doldu. Lisansı yenilemek için lütfen bir Hub yöneticisini bilgilendirin.",
+  "licenseAlert.licenseExpiredGracePeriod.user.description": "Cryptomator Hub lisansınızın vadesi doldu. Kasalarınıza erişebilmek için bir Hub yöneticisini bilgilendirerek lisansınızı yenileyin.",
   "licenseAlert.button": "Yönetici Bölümü",
   "legacyDeviceList.description.information": "Daha fazla bilgi edin.",
   "legacyDeviceList.deviceName": "Cihaz Adı",
