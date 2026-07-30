@@ -367,6 +367,7 @@
   "licenseAlert.licenseExpired.title": "Lizenz abgelaufen",
   "licenseAlert.licenseExpired.admin.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Öffne den {0} und erneuere dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
   "licenseAlert.licenseExpired.user.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erweitern.",
+  "licenseAlert.licenseExpiredGracePeriod.user.description": "Ihre Cryptomator Hub-Lizenz ist abgelaufen. Bitte informieren Sie einen Hub Administrator, um die Lizenz zu erneuern, um den Zugriff auf Ihre Tresore zu behalten.",
   "licenseAlert.button": "Admin-Bereich",
   "legacyDeviceList.title": "Veraltete Geräte",
   "legacyDeviceList.description": "Diese Geräte wurden mit einer älteren Version von Hub erstellt und müssen aktualisiert werden, um Tresore in zukünftigen Versionen zu entsperren. Wenn du sie nicht mehr brauchst, entferne sie bitte. Andernfalls aktualisiere bitte den Cryptomator auf diesem Gerät. Dein nächstes Entsperren wird die Aktualisierung automatisch auslösen.",
