@@ -615,6 +615,20 @@ public class VaultResource {
 		}
 	}
 
+	@DELETE
+	@Path("/{vaultId}")
+	@RolesAllowed("user")
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@Transactional
+	@Operation(summary = "deletes a vault", description = "deletes the vault with the given id, including all memberships, access tokens and emergency access data")
+	@APIResponse(responseCode = "204", description = "vault deleted")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	public Response delete(@PathParam("vaultId") UUID vaultId) {
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		vaultRepo.delete(vault);
+		return Response.noContent().build();
+	}
+
 	@POST
 	@Path("/{vaultId}/claim-ownership")
 	@RolesAllowed("user")

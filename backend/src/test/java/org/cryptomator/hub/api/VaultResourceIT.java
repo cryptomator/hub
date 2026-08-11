@@ -802,6 +802,45 @@ public class VaultResourceIT {
 	}
 
 	@Nested
+	@DisplayName("Deleting vaults as user1")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class DeleteVaultAsUser1 {
+
+		@Test
+		@Order(1)
+		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD returns 403 for non-existing vault")
+		void deleteNonExistingVault() {
+			when().delete("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100002222 returns 403, because user1 is only a member")
+		void deleteVault2() {
+			when().delete("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 204, subsequent GET returns 404")
+		@DBRollbackAfter
+		void deleteVault1() {
+			when().delete("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(204);
+
+			when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(404);
+		}
+	}
+
+	@Nested
 	@DisplayName("Claim Ownership")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
