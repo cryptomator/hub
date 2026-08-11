@@ -441,6 +441,9 @@
   "licenseAlert.licenseExpired.title": "License expired",
   "licenseAlert.licenseExpired.admin.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to manage and unlock your vaults again.",
   "licenseAlert.licenseExpired.user.description": "Your Cryptomator Hub license has expired. Please inform a Hub administrator to renew the license.",
+  "licenseAlert.licenseExpiredGracePeriod.title": "License renewal required",
+  "licenseAlert.licenseExpiredGracePeriod.admin.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to keep access to your vaults.",
+  "licenseAlert.licenseExpiredGracePeriod.user.description": "Your Cryptomator Hub license has expired. Please inform a Hub administrator to renew the license in order to keep access to your vaults.",
   "licenseAlert.button": "Admin Section",
 
   "legacyDeviceList.title": "Legacy Devices",

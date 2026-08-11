@@ -16,11 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disable users to exclude them from license seat count (#427, #428)
 - Display a banner to indicate that legacy devices are still in use, since these will be removed in the next major release (#420)
 - Published Helm chart (#406, #456)
+- Grace period after license expiry: vaults stay accessible during this period and a banner prompts to renew the license
 
 ### Changed
 
 - Replace the top navigation bar with a sidebar
-- Updated Keycloak to 26.6.4
+- Updated Keycloak to 26.7.1
 - Updated to Java 25
 - Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)

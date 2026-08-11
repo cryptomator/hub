@@ -244,16 +244,21 @@ export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
-    public expiresAt: Date | null) {
+    public expiresAt: Date | null,
+    public gracePeriodEndsAt: Date | null) {
   }
 
-  public isExpired(): boolean {
-    const now = new Date();
-    return now > (this.expiresAt ?? now); //if expired is null, the license cannot expire
+  public isExpired(mode?: 'allowGracePeriod'): boolean {
+    const deadline = mode === 'allowGracePeriod' ? this.gracePeriodEndsAt : this.expiresAt;
+    return deadline != null && new Date() > deadline; // no deadline means no expiration date, i.e. the license cannot expire
   }
 
   public isExceeded(): boolean {
     return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
+  }
+
+  public isViolated(): boolean {
+    return this.isExpired('allowGracePeriod') || this.isExceeded();
   }
 
 }
@@ -685,13 +690,15 @@ class LicenseService {
 
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
-      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
+      const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : null;
+      const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : null;
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, gracePeriodEndsAt);
     });
   }
 
   public async installTrial(hubId: string, licenseKey: string): Promise<void> {
     return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 409));
   }
 

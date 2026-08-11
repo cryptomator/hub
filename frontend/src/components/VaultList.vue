@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <LicenseAlert v-if="isLicenseViolated && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
+  <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
   <ContentBanner v-if="anyUserHasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
     {{ t('legacyDeviceBanner.admin.description') }}
@@ -180,13 +180,7 @@ const canCreateVaults = ref<boolean>(false);
 const hasLegacyDevices = ref<boolean>(false);
 const anyUserHasLegacyDevices = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
-const isLicenseViolated = computed(() => {
-  if (licenseStatus.value) {
-    return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
-  } else {
-    return false;
-  }
-});
+const isLicenseViolated = computed(() => licenseStatus.value?.isViolated() ?? false);
 
 const isCommunityLicense = computed(() => {
   return !licenseStatus.value?.expiresAt;
