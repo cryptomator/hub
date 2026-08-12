@@ -549,7 +549,7 @@ async function initialize() {
         recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
-        uvfVault.value = await UniversalVaultFormat.create({ enabled: settings.value.enableAutomaticAccessGrant, maxWotDepth: settings.value.automaticAccessGrantTrustThreshold });
+        uvfVault.value = await UniversalVaultFormat.create({ enabled: settings.value.enableAutomaticAccessGrant, trustThreshold: settings.value.automaticAccessGrantTrustThreshold });
         recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
         break;
     }
@@ -748,7 +748,7 @@ async function createVault() {
         if (!props.recover) {
           // Apply the (possibly per-vault-overridden) automatic access grant policy now that the override step is done.
           // On recovery the existing vault's policy must be preserved, so we leave the recovered metadata untouched.
-          uvfVault.value.metadata.automaticAccessGrant = { enabled: vaultAutoGrantEnabled.value, maxWotDepth: Number(vaultAutoGrantTrustThreshold.value) };
+          uvfVault.value.metadata.automaticAccessGrant = { enabled: vaultAutoGrantEnabled.value, trustThreshold: Number(vaultAutoGrantTrustThreshold.value) };
         }
         const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile(absBackendBaseURL, vault.value);

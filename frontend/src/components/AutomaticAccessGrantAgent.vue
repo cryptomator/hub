@@ -21,7 +21,7 @@ import wot from '../common/wot';
  * (desktop, mobile, CLI) can be modelled after the flow below.
  *
  * Security model — every input to the grant decision comes from a source the server cannot forge:
- *  - The trust threshold (`maxWotDepth`) and the on/off switch (`enabled`) are read from the vault's encrypted,
+ *  - The trust threshold (`trustThreshold`) and the on/off switch (`enabled`) are read from the vault's encrypted,
  *    tamper-proof UVF metadata, NOT from /api/settings. An evil DB admin therefore cannot lower the bar.
  *  - The trust path is cryptographically verified with `wot.verify`, which also confirms that the chain attests the
  *    recipient's actual public keys — so the server cannot substitute an attacker-controlled key.
@@ -113,7 +113,7 @@ async function processVault(vaultId: string, candidateUserIds: string[]): Promis
   }
 
   const vaultKeys: UniversalVaultFormat = await unwrapVaultKeys(vault);
-  const { enabled, maxWotDepth } = vaultKeys.metadata.automaticAccessGrant;
+  const { enabled, trustThreshold } = vaultKeys.metadata.automaticAccessGrant;
   if (!enabled) {
     disqualifiedVaults.add(vaultId); // this vault has opted out of automatic access grant
     return false;
@@ -128,7 +128,7 @@ async function processVault(vaultId: string, candidateUserIds: string[]): Promis
     if (candidate.type !== 'USER' || !candidate.ecdhPublicKey || !candidate.ecdsaPublicKey) {
       continue; // groups / not-yet-set-up users can't receive a key
     }
-    if (!await isTrusted(candidate.id, candidate.ecdhPublicKey, candidate.ecdsaPublicKey, maxWotDepth)) {
+    if (!await isTrusted(candidate.id, candidate.ecdhPublicKey, candidate.ecdsaPublicKey, trustThreshold)) {
       continue; // no usable / sufficiently-short trust path to this user (yet) — retried next cycle
     }
     const publicKey = base64.decode(candidate.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
@@ -150,11 +150,11 @@ async function processVault(vaultId: string, candidateUserIds: string[]): Promis
  * @param userId the candidate's id
  * @param ecdhPublicKey the candidate's ECDH public key (base64), as the server reports it
  * @param ecdsaPublicKey the candidate's ECDSA public key (base64), as the server reports it
- * @param maxWotDepth the vault's trust threshold: the maximum signature-chain length up to which a candidate is trusted
+ * @param trustThreshold the vault's trust threshold: the maximum signature-chain length up to which a candidate is trusted
  */
-async function isTrusted(userId: string, ecdhPublicKey: string, ecdsaPublicKey: string, maxWotDepth: number): Promise<boolean> {
+async function isTrusted(userId: string, ecdhPublicKey: string, ecdsaPublicKey: string, trustThreshold: number): Promise<boolean> {
   const trust = await backend.trust.get(userId);
-  if (!trust || trust.signatureChain.length > maxWotDepth) {
+  if (!trust || trust.signatureChain.length > trustThreshold) {
     return false; // no trust path, or the candidate is too distant
   }
   try {

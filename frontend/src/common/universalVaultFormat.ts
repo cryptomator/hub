@@ -28,7 +28,7 @@ type VaultMetadataJWEAutomaticAccessGrantDto = {
    * A value of `-1` is reserved for downstream products that disable the trust check entirely. This client neither
    * produces nor honors it: such vaults simply receive no automatic grants from here.
    */
-  maxWotDepth: number
+  trustThreshold: number
 };
 
 type UvfAccessTokenPayload = AccessTokenPayload & {
