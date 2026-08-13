@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -112,6 +113,7 @@ public class AuditLogResource {
 		return auditEventRepo.findAllInPeriod(startDate, endDate, type, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
 	}
 
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 	@JsonSubTypes({ //
 			@JsonSubTypes.Type(value = DeviceRegisteredEventDto.class, name = DeviceRegisteredEvent.TYPE), //

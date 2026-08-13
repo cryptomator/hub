@@ -301,29 +301,29 @@ function removeUser(u: UserDto) {
 }
 
 const requiredKeySharesValidationText = computed(() => {
-  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return t('admin.emergencyAccess.validation.maxValue', [255]);
-  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return t('admin.emergencyAccess.validation.minValue', [2]);
+  if (defaultRequiredEmergencyKeySharesToHighError.value) return t('admin.emergencyAccess.validation.maxValue', [255]);
+  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value) return t('admin.emergencyAccess.validation.minValue', [2]);
   return '';
 });
 
 const requiredMinMembersValidationText = computed(() => {
-  if (defaultMinMembersToHighError.value != null) return t('admin.emergencyAccess.validation.maxValue', [255]);
-  else if (defaultMinMembersLessThenTwoError.value != null) return t('admin.emergencyAccess.validation.minValue', [2]);
-  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value != null) return t('admin.emergencyAccess.validation.minMembersAtLeastRequiredShares');
+  if (defaultMinMembersToHighError.value) return t('admin.emergencyAccess.validation.maxValue', [255]);
+  else if (defaultMinMembersLessThenTwoError.value) return t('admin.emergencyAccess.validation.minValue', [2]);
+  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value) return t('admin.emergencyAccess.validation.minMembersAtLeastRequiredShares');
   return '';
 });
 
-const onSaveErrorRecovery = ref<Error | null>(null);
+const onSaveErrorRecovery = ref<Error>();
 
-const defaultRequiredEmergencyKeySharesLessThenTwoError = ref<Error | null>(null);
-const defaultRequiredEmergencyKeySharesToHighError = ref<Error | null>(null);
-const defaultRequiredEmergencyKeySharesError = ref<Error | null>(null);
+const defaultRequiredEmergencyKeySharesLessThenTwoError = ref<Error>();
+const defaultRequiredEmergencyKeySharesToHighError = ref<Error>();
+const defaultRequiredEmergencyKeySharesError = ref<Error>();
 
-const defaultMinMembersLessThenTwoError = ref<Error | null>(null);
-const defaultMinMembersToHighError = ref<Error | null>(null);
-const defaultMinMembersLowerThenRequiredEmergencyKeySharesError = ref<Error | null>(null);
+const defaultMinMembersLessThenTwoError = ref<Error>();
+const defaultMinMembersToHighError = ref<Error>();
+const defaultMinMembersLowerThenRequiredEmergencyKeySharesError = ref<Error>();
 
-const selectedMembersError = ref<Error | null>(null);
+const selectedMembersError = ref<Error>();
 
 watch([selectedUsers, requiredShares], ([users, shares]) => {
   noRedundancy.value = !!shares && users.length === shares;
@@ -334,8 +334,8 @@ watch([requiredShares], ([r]) => {
   isKeySplittingInvalid.value = false;
   isMinMembersKeySplittingInvalid.value = false;
 
-  defaultRequiredEmergencyKeySharesLessThenTwoError.value = null;
-  defaultRequiredEmergencyKeySharesToHighError.value = null;
+  defaultRequiredEmergencyKeySharesLessThenTwoError.value = undefined;
+  defaultRequiredEmergencyKeySharesToHighError.value = undefined;
 
   if (r! >= 255 || r! < 2){
     isKeySplittingInvalid.value = true;
@@ -345,16 +345,16 @@ watch([requiredShares], ([r]) => {
 });
 
 function validateRecoverySettings(): boolean {
-  defaultRequiredEmergencyKeySharesError.value = null;
-  selectedMembersError.value = null;
-  onSaveErrorRecovery.value = null;
-  defaultRequiredEmergencyKeySharesLessThenTwoError.value = null;
-  defaultRequiredEmergencyKeySharesToHighError.value = null;
-  defaultMinMembersLessThenTwoError.value = null;
-  defaultMinMembersToHighError.value = null;
-  defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = null;
+  defaultRequiredEmergencyKeySharesError.value = undefined;
+  selectedMembersError.value = undefined;
+  onSaveErrorRecovery.value = undefined;
+  defaultRequiredEmergencyKeySharesLessThenTwoError.value = undefined;
+  defaultRequiredEmergencyKeySharesToHighError.value = undefined;
+  defaultMinMembersLessThenTwoError.value = undefined;
+  defaultMinMembersToHighError.value = undefined;
+  defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = undefined;
   
-  if (requiredShares.value == null || minMembers.value == null) {
+  if (requiredShares.value === undefined || minMembers.value === undefined) {
     onSaveErrorRecovery.value = new Error('Missing input');
     return false;
   }
@@ -425,16 +425,16 @@ function reset() {
   initialCouncilMembers.value = [...initialEmergencyAccessSettings.value.selectedUsers];
   enableEmergencyAccess.value = initialEmergencyAccessSettings.value.enableEmergencyAccess;
   addedCouncilMembers.value = [];
-  defaultRequiredEmergencyKeySharesError.value = null;
-  selectedMembersError.value = null;
-  onSaveErrorRecovery.value = null;
+  defaultRequiredEmergencyKeySharesError.value = undefined;
+  selectedMembersError.value = undefined;
+  onSaveErrorRecovery.value = undefined;
 }
 
 watch(() => [selectedUsers.value.map(u => u.id).join(','), minMembers.value, requiredShares.value],
   () => { 
-    selectedMembersError.value = null; 
-    defaultRequiredEmergencyKeySharesError.value = null; 
-    defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = null;
+    selectedMembersError.value = undefined;
+    defaultRequiredEmergencyKeySharesError.value = undefined;
+    defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = undefined;
   });
 onMounted(async () => {
   await fetchEmergencyAccess();

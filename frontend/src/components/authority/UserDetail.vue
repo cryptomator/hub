@@ -155,7 +155,7 @@ const user = ref<UserDtoWithDetails>({
 });
 
 const loading = ref<boolean>(true);
-const fetchError = ref<Error | null>(null);
+const fetchError = ref<Error>();
 const onEnableUserError = ref<Error>();
 const currentUserId = ref<string>('');
 
@@ -165,7 +165,7 @@ async function handleGroupsSaved(newGroups: GroupDto[]) {
 
 async function fetchUser() {
   loading.value = true;
-  fetchError.value = null;
+  fetchError.value = undefined;
   try {
     user.value = await backend.users.getUser(props.id);
     user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));

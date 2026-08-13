@@ -285,12 +285,12 @@ const filterIsReset = computed(() =>
   && endDateFilter.value == endDate.value.toISOString().split('T')[0]
   && selectedEventTypes.value.length == 0
 );
-const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
+const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) !== undefined);
 const endDateFilterIsValid = computed(() => {
   const endDate = validateDateFilterValue(endDateFilter.value);
-  if (endDate == null) {
+  if (endDate === undefined) {
     return false;
-  } else if (endDate != null && startDateFilterIsValid.value) {
+  } else if (startDateFilterIsValid.value) {
     const startDate = new Date(startDateFilter.value);
     return startDate <= endDate;
   } else {
@@ -421,13 +421,13 @@ function endOfDate(date: Date): Date {
   return date;
 }
 
-function validateDateFilterValue(dateFilterValue: string): Date | null {
+function validateDateFilterValue(dateFilterValue: string): Date | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFilterValue)) {
-    return null;
+    return undefined;
   }
   const date = new Date(dateFilterValue);
   if (Number.isNaN(date.getTime())) {
-    return null;
+    return undefined;
   } else {
     return date;
   }

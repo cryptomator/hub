@@ -115,11 +115,11 @@ function onMembersSaved(newMembers: AuthorityDto[]) {
 }
 
 const loading = ref(true);
-const fetchError = ref<Error | null>(null);
+const fetchError = ref<Error>();
 
 async function fetchGroup() {
   loading.value = true;
-  fetchError.value = null;
+  fetchError.value = undefined;
   try {
     group.value = await backend.groups.getGroup(props.id);
   } catch (error) {

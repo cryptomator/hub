@@ -2,7 +2,7 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
-  <div v-else-if="onFetchError == null">
+  <div v-else-if="!onFetchError">
     <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
     <ContentBanner v-if="entitlements.emergencyAccessEnabled && entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">

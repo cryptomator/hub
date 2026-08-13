@@ -705,6 +705,7 @@ public class VaultResource {
 
 	}
 
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDtoWithRole(
 			@JsonProperty("id") UUID id,
 			@JsonProperty("name") String name,

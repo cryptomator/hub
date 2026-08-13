@@ -38,8 +38,8 @@ describe('LicenseUserInfoDto', () => {
   const hour = 60 * 60 * 1000;
   const gracePeriod = 3 * 24 * hour; // arbitrary — the actual grace period is determined server-side
 
-  function licenseExpiringAt(expiresAt: Date | null): LicenseUserInfoDto {
-    const gracePeriodEndsAt = expiresAt != null ? new Date(expiresAt.getTime() + gracePeriod) : null;
+  function licenseExpiringAt(expiresAt: Date | undefined): LicenseUserInfoDto {
+    const gracePeriodEndsAt = expiresAt !== undefined ? new Date(expiresAt.getTime() + gracePeriod) : undefined;
     return new LicenseUserInfoDto(5, 3, expiresAt, gracePeriodEndsAt);
   }
 
@@ -56,7 +56,7 @@ describe('LicenseUserInfoDto', () => {
   });
 
   it('license without expiration date cannot expire', () => {
-    const license = licenseExpiringAt(null);
+    const license = licenseExpiringAt(undefined);
 
     expect(license.isExpired()).toBe(false);
   });
@@ -86,7 +86,7 @@ describe('LicenseUserInfoDto', () => {
   });
 
   it('license without expiration date cannot expire even when allowing the grace period', () => {
-    const license = licenseExpiringAt(null);
+    const license = licenseExpiringAt(undefined);
 
     expect(license.isExpired('allowGracePeriod')).toBe(false);
   });

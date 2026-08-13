@@ -9,8 +9,8 @@
           <code>changed by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedChangedBy != null">{{ resolvedChangedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedChangedBy != null}">{{ event.changedBy }}</code>
+          <span v-if="resolvedChangedBy">{{ resolvedChangedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedChangedBy}">{{ event.changedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

@@ -9,8 +9,8 @@
           <code>removed by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedRemovedBy != null">{{ resolvedRemovedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedRemovedBy != null}">{{ event.removedBy }}</code>
+          <span v-if="resolvedRemovedBy">{{ resolvedRemovedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedRemovedBy}">{{ event.removedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -18,8 +18,8 @@
           <code>device</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
+          <span v-if="resolvedDevice">{{ resolvedDevice.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice}">{{ event.deviceId }}</code>
         </dd>
       </div>
     </dl>

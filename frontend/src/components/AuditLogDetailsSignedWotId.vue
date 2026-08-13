@@ -10,7 +10,7 @@
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedSigner">{{ resolvedSigner.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedSigner != null}">{{ event.signerId }}</code>
+          <code class="text-xs" :class="{'text-gray-600': resolvedSigner}">{{ event.signerId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -19,7 +19,7 @@
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedUser">{{ resolvedUser.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
+          <code class="text-xs" :class="{'text-gray-600': resolvedUser}">{{ event.userId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

@@ -229,13 +229,13 @@ export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
-    public expiresAt: Date | null,
-    public gracePeriodEndsAt: Date | null) {
+    public expiresAt: Date | undefined,
+    public gracePeriodEndsAt: Date | undefined) {
   }
 
   public isExpired(mode?: 'allowGracePeriod'): boolean {
     const deadline = mode === 'allowGracePeriod' ? this.gracePeriodEndsAt : this.expiresAt;
-    return deadline != null && new Date() > deadline; // no deadline means no expiration date, i.e. the license cannot expire
+    return deadline !== undefined && new Date() > deadline; // no deadline means no expiration date, i.e. the license cannot expire
   }
 
   public isExceeded(): boolean {
@@ -355,13 +355,13 @@ class VaultService {
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     const queryParams = role ? { role: role } : {};
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { params: queryParams })
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, undefined, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     const queryParams = role ? { role: role } : {};
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { params: queryParams })
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, undefined, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
@@ -657,8 +657,8 @@ class LicenseService {
 
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
-      const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : null;
-      const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : null;
+      const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : undefined;
+      const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : undefined;
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, gracePeriodEndsAt);
     });
   }
@@ -777,14 +777,14 @@ function convertExpectedToBackendError(status: number, errorMessage?: string): B
 }
 
 export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
-  if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
+  if (AxiosStatic.isAxiosError(error) && error.response && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status, typeof error.response.data === 'string' ? error.response.data : undefined);
   }
   throw error;
 }
 
 export function asError(error: unknown): Error {
-  if (AxiosStatic.isAxiosError(error) && error.response != null) {
+  if (AxiosStatic.isAxiosError(error) && error.response) {
     if (error.response.status === 404) {
       return new NotFoundError();
     }

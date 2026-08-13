@@ -9,8 +9,8 @@
           <code>created by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedCreatedBy != null">{{ resolvedCreatedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedCreatedBy != null}">{{ event.createdBy }}</code>
+          <span v-if="resolvedCreatedBy">{{ resolvedCreatedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedCreatedBy}">{{ event.createdBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -18,8 +18,8 @@
           <code>vault</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedVault != null">{{ resolvedVault.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
+          <span v-if="resolvedVault">{{ resolvedVault.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedVault}">{{ event.vaultId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

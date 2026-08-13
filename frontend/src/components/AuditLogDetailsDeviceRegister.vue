@@ -9,8 +9,8 @@
           <code>registered by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedRegisteredBy != null">{{ resolvedRegisteredBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedRegisteredBy != null}">{{ event.registeredBy }}</code>
+          <span v-if="resolvedRegisteredBy">{{ resolvedRegisteredBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedRegisteredBy}">{{ event.registeredBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -18,8 +18,8 @@
           <code>device</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
+          <span v-if="resolvedDevice">{{ resolvedDevice.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice}">{{ event.deviceId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
