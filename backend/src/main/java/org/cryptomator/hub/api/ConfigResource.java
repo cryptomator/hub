@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.OidcConfigurationMetadata;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -83,13 +84,13 @@ public class ConfigResource {
 
 	}
 
-	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
-							@JsonProperty("keycloakClientIdHub") String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") String keycloakClientIdCryptomator,
-							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
-							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel,
-							@JsonProperty("entitlements") HubLicenseEntitlements entitlements,
-							@JsonProperty("billingUrl") String billingUrl,
-							@JsonProperty("licenseApiUrl") String licenseApiUrl,
+	public record ConfigDto(@JsonProperty("keycloakUrl") @NotNull String keycloakUrl, @JsonProperty("keycloakRealm") @NotNull String keycloakRealm,
+							@JsonProperty("keycloakClientIdHub") @NotNull String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") @NotNull String keycloakClientIdCryptomator,
+							@JsonProperty("keycloakAuthEndpoint") @NotNull String authEndpoint, @JsonProperty("keycloakTokenEndpoint") @NotNull String tokenEndpoint,
+							@JsonProperty("serverTime") @NotNull Instant serverTime, @JsonProperty("apiLevel") @NotNull Integer apiLevel,
+							@JsonProperty("entitlements") @NotNull HubLicenseEntitlements entitlements,
+							@JsonProperty("billingUrl") @NotNull String billingUrl,
+							@JsonProperty("licenseApiUrl") @NotNull String licenseApiUrl,
 							@JsonProperty("licenseSetupRequired") boolean licenseSetupRequired) {
 	}
 
