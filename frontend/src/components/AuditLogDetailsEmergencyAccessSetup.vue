@@ -9,8 +9,8 @@
           <code>owner</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedOwner != null">{{ resolvedOwner.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedOwner != null}">{{ event.ownerId }}</code>
+          <span v-if="resolvedOwner">{{ resolvedOwner.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedOwner}">{{ event.ownerId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -18,8 +18,8 @@
           <code>vault</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedVault != null">{{ resolvedVault.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
+          <span v-if="resolvedVault">{{ resolvedVault.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedVault}">{{ event.vaultId }}</code>
         </dd>
       </div>
       <div v-if="event.ipAddress" class="flex items-baseline gap-2">

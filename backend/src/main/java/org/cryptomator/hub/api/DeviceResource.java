@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
@@ -247,6 +248,7 @@ public class DeviceResource {
 		return false;
 	}
 
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") Device.Type type,

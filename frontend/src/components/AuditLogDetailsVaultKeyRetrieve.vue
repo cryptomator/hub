@@ -9,8 +9,8 @@
           <code>retrieved by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedRetrievedBy != null">{{ resolvedRetrievedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedRetrievedBy != null}">{{ event.retrievedBy }}</code>
+          <span v-if="resolvedRetrievedBy">{{ resolvedRetrievedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedRetrievedBy}">{{ event.retrievedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -18,11 +18,11 @@
           <code>vault</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedVault != null">{{ resolvedVault.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
+          <span v-if="resolvedVault">{{ resolvedVault.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedVault}">{{ event.vaultId }}</code>
         </dd>
       </div>
-      <div v-if="event.ipAddress != null" class="flex items-baseline gap-2">
+      <div v-if="event.ipAddress !== undefined" class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>ip address</code>
         </dt>
@@ -30,13 +30,13 @@
           {{ event.ipAddress }}
         </dd>
       </div>
-      <div v-if="event.deviceId != null" class="flex items-baseline gap-2">
+      <div v-if="event.deviceId !== undefined" class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>device</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
+          <span v-if="resolvedDevice">{{ resolvedDevice.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice}">{{ event.deviceId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

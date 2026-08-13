@@ -42,7 +42,7 @@
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onDeleteUserError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onDeleteUserError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('deleteUserDialog.error.failed') }}
                 </p>
               </form>
@@ -64,7 +64,7 @@ import backend, { UserDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-const onDeleteUserError = ref<Error | null>(null);
+const onDeleteUserError = ref<Error>();
 
 const props = defineProps<{
   user: UserDto;
@@ -90,7 +90,7 @@ function show() {
 }
 
 async function deleteUser() {
-  onDeleteUserError.value = null;
+  onDeleteUserError.value = undefined;
 
   try {
     await backend.users.removeUser(props.user.id);

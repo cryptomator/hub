@@ -103,7 +103,7 @@
                     </div>
 
                     <div v-else-if="!recoveryProcess">
-                      <!-- every other phase should have a non-null recovery process -->
+                      <!-- every other phase should have a recovery process -->
                       Internal error: No recovery process available. <!-- no need to localize this. -->
                     </div>
 
@@ -467,7 +467,7 @@ async function searchUsers(query: string): Promise<AuthorityDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const abortDialog = ref<InstanceType<typeof ProcessAbortDialog> | null>(null);
+const abortDialog = ref<InstanceType<typeof ProcessAbortDialog>>();
 const wantAbort = ref(false);
 
 function requestCancel() {

@@ -10,8 +10,8 @@
           <code>granted by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedGrantedBy != null">{{ resolvedGrantedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedGrantedBy != null}">{{ event.grantedBy }}</code>
+          <span v-if="resolvedGrantedBy">{{ resolvedGrantedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedGrantedBy}">{{ event.grantedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -19,8 +19,8 @@
           <code>vault</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedVault != null">{{ resolvedVault.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
+          <span v-if="resolvedVault">{{ resolvedVault.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedVault}">{{ event.vaultId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -28,8 +28,8 @@
           <code>authority</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedAuthority != null">{{ resolvedAuthority.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedAuthority != null}">{{ event.authorityId }}</code>
+          <span v-if="resolvedAuthority">{{ resolvedAuthority.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedAuthority}">{{ event.authorityId }}</code>
         </dd>
       </div>
     </dl>

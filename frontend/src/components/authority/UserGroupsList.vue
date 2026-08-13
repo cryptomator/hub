@@ -100,7 +100,7 @@ const emit = defineEmits<{
 }>();
 
 const deletingGroup = ref<GroupDto>();
-const deleteGroupMemberDialog = ref<InstanceType<typeof UserGroupRemoveDialog> | null>(null);
+const deleteGroupMemberDialog = ref<InstanceType<typeof UserGroupRemoveDialog>>();
 
 function showDeleteDialog(g: GroupDto) {
   deletingGroup.value = g;
@@ -118,7 +118,7 @@ function onGroupRemoved() {
 // ---------------------------------------------------------------------------
 // GROUP dialog actions
 // ---------------------------------------------------------------------------
-const addGroupDialog = ref<InstanceType<typeof UserAddGroupDialog> | null>(null);
+const addGroupDialog = ref<InstanceType<typeof UserAddGroupDialog>>();
 
 function openAddGroupDialog() {
   addGroupDialog.value?.show();

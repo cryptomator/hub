@@ -9,8 +9,8 @@
           <code>reset by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedResetBy != null">{{ resolvedResetBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedResetBy != null}">{{ event.resetBy }}</code>
+          <span v-if="resolvedResetBy">{{ resolvedResetBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedResetBy}">{{ event.resetBy }}</code>
         </dd>
       </div>
     </dl>
