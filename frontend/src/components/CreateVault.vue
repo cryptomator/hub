@@ -575,25 +575,25 @@ async function handleDragLeave() {
 async function handleDrop(event: DragEvent) {
   onUploadError.value = undefined;
   isDraggingOver.value = false;
-  let file: File | null = null;
+  let file: File | undefined;
   if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
     //new DataTransferItemList API
     const item = event.dataTransfer.items[0];
     if (item.kind == 'file') {
-      file = item.getAsFile();
+      file = item.getAsFile() ?? undefined;
     }
   } else {
-    file = event.dataTransfer?.files[0] ?? null;
+    file = event.dataTransfer?.files[0];
   }
   validateAndSetMetadataFile(file);
 }
 
 async function handleUpload(event: Event) {
   onUploadError.value = undefined;
-  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
+  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? undefined);
 }
 
-async function validateAndSetMetadataFile(file: File | null) {
+async function validateAndSetMetadataFile(file: File | undefined) {
   try {
     if (!file) {
       throw new NoFileError();
