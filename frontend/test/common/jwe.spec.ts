@@ -144,7 +144,7 @@ describe('JWE', () => {
       const jwe = await JWE.build(orig).encrypt(recipient);
       const token = jwe.compactSerialization();
 
-      expect(token).not.to.be.null;
+      expect(token).to.not.be.undefined;
     });
 
     it('decrypt PBES2-HS512+A256KW', async () => {

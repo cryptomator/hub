@@ -49,7 +49,7 @@ describe('Vault Format 8', () => {
   it('create()', async () => {
     const orig = await VaultFormat8.create();
 
-    expect(orig).to.be.not.null;
+    expect(orig).to.not.be.undefined;
   });
 
   it('recover() succeeds for valid actual key', async () => {
@@ -122,7 +122,7 @@ describe('Vault Format 8', () => {
   it('encryptForUser()', async () => {
     const encrypted = await testVault.encryptForUser(alice.ecdhKeyPair.publicKey);
 
-    expect(encrypted).to.be.not.null;
+    expect(encrypted).to.not.be.undefined;
   });
 
   it('createRecoveryKey()', async () => {

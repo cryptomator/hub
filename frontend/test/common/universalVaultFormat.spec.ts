@@ -39,7 +39,7 @@ describe('UVF', () => {
 
       const encrypted = await memberKey.serializeKey();
 
-      expect(encrypted).to.be.not.null;
+      expect(encrypted).to.not.be.undefined;
     });
 
     it('load(userKeyPair.decryptAccessToken(...))', async () => {
@@ -48,7 +48,7 @@ describe('UVF', () => {
       const payload = await alice.decryptAccessToken(jwe);
       const decrypted = await MemberKey.load(payload.key);
 
-      expect(decrypted).to.be.not.null;
+      expect(decrypted).to.not.be.undefined;
       await expect(decrypted.serializeKey()).resolves.toBe('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
     });
   });
@@ -56,7 +56,7 @@ describe('UVF', () => {
   describe('VaultMetadata', () => {
     it('create()', async () => {
       const orig = await VaultMetadata.create({ enabled: true, trustThreshold: 1 });
-      expect(orig).to.be.not.null;
+      expect(orig).to.not.be.undefined;
       expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined;
       expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32);
       expect(orig.initialSeedId).to.eq(orig.latestSeedId);
@@ -77,7 +77,7 @@ describe('UVF', () => {
         const recoveryKey = await RecoveryKey.create();
 
         const uvfFile: string = await original.encrypt('https://example.com/api/', dto, vaultMemberKey, recoveryKey);
-        expect(uvfFile).to.be.not.null;
+        expect(uvfFile).to.not.be.undefined;
         const json = JSON.parse(uvfFile);
         expect(json).to.have.property('protected');
         expect(json).to.have.property('recipients');
@@ -100,7 +100,7 @@ describe('UVF', () => {
   describe('RecoveryKey', () => {
     it('create()', async () => {
       const recoveryKey = await RecoveryKey.create();
-      expect(recoveryKey).to.be.not.null;
+      expect(recoveryKey).to.not.be.undefined;
     });
 
     it('recover() succeeds for valid recovery key', async () => {
@@ -168,10 +168,10 @@ describe('UVF', () => {
   describe('UniversalVaultFormat', () => {
     it('create()', async () => {
       const uvf = await UniversalVaultFormat.create({ enabled: true, trustThreshold: 1 });
-      expect(uvf).to.be.not.null;
-      expect(uvf.metadata).to.be.not.null;
-      expect(uvf.memberKey).to.be.not.null;
-      expect(uvf.recoveryKey).to.be.not.null;
+      expect(uvf).to.not.be.undefined;
+      expect(uvf.metadata).to.not.be.undefined;
+      expect(uvf.memberKey).to.not.be.undefined;
+      expect(uvf.recoveryKey).to.not.be.undefined;
     });
 
     it('decrypt()', async () => {
@@ -188,15 +188,15 @@ describe('UVF', () => {
       const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4Ijoia3VWU3FSSEVYbC1DbzhLRkhQTDRtN1FSWTd6NkMxcHlvRWNFVkw3X0VXY3N6ZDZmSWxyWEFyZ29Fbl9yejU0ZSIsInkiOiJ5RlBUNjN1VWdTVVo0VUxYcUtSWl9LMjBOZy1kZUh3WkFyU29xLU91RTFEcHF2czY3THpGNlAtZXk2Ykl5T0o5IiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.23s1IkwjWpjpzUxr_wZjyXjPwM-D19m0ONQI_naq6bURT2DSHnwe7g.iuH5sI2eL9Qumb_a.TVjVWBOQJAR-9Pu_Ke702hjww9JUZzg9sLyhjAj2o7aYgJtixKw.iQq2B6qQr4ZddqS7-__fhTAF3CteL73IpbJZNBabWLE';
       const uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
 
-      expect(uvf).to.be.not.null;
-      expect(uvf.metadata).to.be.not.null;
+      expect(uvf).to.not.be.undefined;
+      expect(uvf.metadata).to.not.be.undefined;
       expect(uvf.metadata.initialSeedId).to.eq(473544690);
       expect(uvf.metadata.latestSeedId).to.eq(1075513622);
       expect(base64urlnopad.encode(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
       expect(base64urlnopad.encode(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
       expect(base64urlnopad.encode(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
-      expect(uvf.memberKey).to.be.not.null;
-      expect(uvf.recoveryKey).to.be.not.null;
+      expect(uvf.memberKey).to.not.be.undefined;
+      expect(uvf.recoveryKey).to.not.be.undefined;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
     });
 
@@ -206,17 +206,17 @@ describe('UVF', () => {
 
       const uvf = await UniversalVaultFormat.recover(vaultUvfFileContents, recoveryKey);
 
-      expect(uvf).to.be.not.null;
-      expect(uvf.metadata).to.be.not.null;
+      expect(uvf).to.not.be.undefined;
+      expect(uvf.metadata).to.not.be.undefined;
       expect(uvf.metadata.initialSeedId).to.eq(473544690);
       expect(uvf.metadata.latestSeedId).to.eq(1075513622);
       expect(base64urlnopad.encode(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
       expect(base64urlnopad.encode(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
       expect(base64urlnopad.encode(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
-      expect(uvf.memberKey).to.be.not.null;
-      expect(uvf.recoveryKey).to.be.not.null;
-      expect(uvf.recoveryKey.privateKey).to.be.not.null;
-      expect(uvf.recoveryKey.publicKey).to.be.not.null;
+      expect(uvf.memberKey).to.not.be.undefined;
+      expect(uvf.recoveryKey).to.not.be.undefined;
+      expect(uvf.recoveryKey.privateKey).to.not.be.undefined;
+      expect(uvf.recoveryKey.publicKey).to.not.be.undefined;
     });
 
     describe('instance methods', () => {
@@ -243,7 +243,7 @@ describe('UVF', () => {
 
       it('encryptForUser() creates an access token', async () => {
         const token = await uvf.encryptForUser(alice.ecdhKeyPair.publicKey);
-        expect(token).to.be.not.null;
+        expect(token).to.not.be.undefined;
       });
 
       it('create recovery key', async () => {
@@ -253,7 +253,7 @@ describe('UVF', () => {
 
       it('createMetadataFile() creates a vault.uvf file', async () => {
         const json = await uvf.createMetadataFile('https.//example.com/api/', { id: '123', name: 'test', archived: false, creationTime: new Date(), requiredEmergencyKeyShares: 0, emergencyKeyShares: {} });
-        expect(json).to.be.not.null;
+        expect(json).to.not.be.undefined;
         const jwe = JSON.parse(json) as JsonJWE;
         expect(jwe.protected).to.not.be.empty;
         expect(jwe.recipients).to.have.lengthOf(2);
@@ -264,7 +264,7 @@ describe('UVF', () => {
 
       it('serializePublicKey() creates a JWK-encoded representation', async () => {
         const json = await uvf.recoveryKey.serializePublicKey();
-        expect(json).to.be.not.null;
+        expect(json).to.not.be.undefined;
         const jwk = JSON.parse(json) as JsonWebKey & { kid: string };
         expect(jwk.kty).to.eq('EC');
         expect(jwk.crv).to.eq('P-384');

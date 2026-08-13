@@ -56,7 +56,7 @@ describe('crypto', () => {
 
       const result = await UserKeys.recover(jwe, 'foo', aliceEcdh.publicKey, aliceEcdsa.publicKey);
 
-      expect(result).to.be.not.null;
+      expect(result).to.not.be.undefined;
     });
 
     it('recover() with incorrect password', async () => {
@@ -71,9 +71,9 @@ describe('crypto', () => {
       const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi5kZXZpY2VLZXkiLCJhbGciOiJFQ0RILUVTK0EyNTZLVyIsImVwayI6eyJrZXlfb3BzIjpbXSwiZXh0Ijp0cnVlLCJrdHkiOiJFQyIsIngiOiJETTNILXV2TDB2VnMwNDFCTUU2LWM5ZW1BN1NCellDSGI1czJTV1NsM05nWDM2azhPTWVyVlR6VUx4N185bDU4IiwieSI6InBERXk4WnpqXzNNZldtamt5YlpjV3oyVVBJdGhnVWEwSGk3Yks3QVBXTHFSRnFwZmh1eWx4MTdadFhnNnBPZUoiLCJjcnYiOiJQLTM4NCJ9LCJhcHUiOiIiLCJhcHYiOiIifQ.ppy4wTaFZPxHxq1s4LPbHHkC1EFCWq_i0uvvEE9tuO9shzpazi9f7w.fEMTO_2ueYtRd9F0.TjVy520PvstERopn4qhpQB9chotb80_vV3Zj78veWQdzg49a6MH51TVqKKqX1n-6_HyS_chDNR9P0kdLF2ZzrWUJ0x5aenmG7ALeLjrOrxMEf0Fsboxn04q1bRDBq-Gse7Iwhk8NZvVMs_xXDL3wTeIzff_YeeNZcJS_xXHzMpbLbWjQs_x60t56uP2_fF8Wm4Fr5srBOuB5-E3VPYhm_LVOYvBOYKJDl9awWw809UvZwotorI7jG_TwLqYCIgrdkvQxS5Sz05gWdM6yMrYcL5VInxJGSt-dL_0nomN0btmHOv51qD_dyxvFknPkESWD_l4.pWlTbfYgQ_rWI0AY8HXcirJ9pIg7Oh0AvjwR0mdM42Y';
       const deviceKey = bobEcdh;
 
-      const result = UserKeys.decryptOnBrowser(jwe, deviceKey.privateKey, aliceEcdh.publicKey, aliceEcdsa.publicKey);
+      const result = await UserKeys.decryptOnBrowser(jwe, deviceKey.privateKey, aliceEcdh.publicKey, aliceEcdsa.publicKey);
 
-      expect(result).to.be.not.null;
+      expect(result).to.not.be.undefined;
     });
 
     it('decryptOnBrowser() with incorrect device key', async () => {
