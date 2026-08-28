@@ -2,6 +2,8 @@
 
 # Cryptomator Hub
 
+Looking for a way to run Hub? See the [deployment options](deploy/README.md) — a self-contained Docker Compose file for local testing and a Helm chart for production.
+
 Hub consists of these components:
 
 ## Web Frontend

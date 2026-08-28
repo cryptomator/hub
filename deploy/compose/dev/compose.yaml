@@ -1,0 +1,93 @@
+# DEVELOPMENT ONLY — for a standalone, self-contained setup see ../local/compose.yaml.
+#
+# Runs Cryptomator Hub from pre-built images, wired up like the Quarkus dev services (`./mvnw quarkus:dev`):
+# Keycloak on http://localhost:8180 (bootstrap admin `admin:admin`, realm seeded from backend/src/main/resources/cryptomator-realm.json),
+# Hub on http://localhost:8080 (dev users e.g. `admin:admin`, `alice:asd` come from the seeded realm).
+# The `hub` service expects a locally built image tagged `ghcr.io/cryptomator/hub:native`, see README.md.
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: hub
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+    configs:
+      - source: create-keycloak-db
+        target: /docker-entrypoint-initdb.d/create-keycloak-db.sql
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  keycloak:
+    image: ghcr.io/cryptomator/keycloak:26.6.4
+    command: start --optimized --import-realm
+    environment:
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      # issuer/discovery URLs advertise the browser-facing origin; Hub's backchannel requests via http://keycloak:8080 still work:
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "8180:8080"
+    volumes:
+      # relative to this file's directory (compose resolves bind mounts against the project directory, not the cwd):
+      - ../../../backend/src/main/resources/cryptomator-realm.json:/opt/keycloak/data/import/cryptomator-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  hub:
+    image: ghcr.io/cryptomator/hub:native
+    # override the image's fixed `-Xmx24m`: size the heap against the container memory limit instead
+    command: ["./application", "-XX:MaximumHeapSizePercent=70", "-XX:+PrintGC"]
+    mem_limit: 48m
+    environment:
+      MALLOC_ARENA_MAX: 24  # override the image's baked-in 1 to measure glibc arena overhead
+      HUB_KEYCLOAK_PUBLIC_URL: http://localhost:8180
+      HUB_KEYCLOAK_LOCAL_URL: http://keycloak:8080
+      HUB_KEYCLOAK_SYSTEM_CLIENT_ID: cryptomatorhub-system
+      HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET: top-secret
+      HUB_KEYCLOAK_SYNCER_PERIOD: 1m
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/cryptomator
+      QUARKUS_OIDC_TOKEN_ISSUER: http://localhost:8180/realms/cryptomator
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/hub
+      QUARKUS_DATASOURCE_USERNAME: hub
+      QUARKUS_DATASOURCE_PASSWORD: hub
+      # the image's default CSP only allows same-origin connections, but the SPA must reach Keycloak's OIDC endpoints on localhost:8180:
+      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self'; connect-src 'self' api.cryptomator.org localhost:8180; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/q/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+configs:
+  # Hub and Keycloak share the postgres instance but use separate databases (same layout as the Helm chart):
+  create-keycloak-db:
+    content: |
+      CREATE USER keycloak WITH PASSWORD 'keycloak';
+      CREATE DATABASE keycloak OWNER keycloak;
+
+volumes:
+  postgres-data:
