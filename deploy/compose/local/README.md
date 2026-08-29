@@ -42,7 +42,7 @@ This file is meant for evaluation only:
 - Everything runs on plain HTTP on `localhost`; no TLS is configured. Hub's crypto happens in the browser and requires a secure context, which browsers grant to `localhost` but not to other plain-HTTP hosts.
 - No backups, resource limits or upgrade strategy.
 
-For real deployments use the [Helm chart](../../../chart/README.md), which generates secrets, supports external PostgreSQL/Keycloak and terminates TLS at the ingress.
+For real deployments use the Helm chart, see [`../../helm/prod/`](../../helm/prod/README.md) — it generates secrets, supports external PostgreSQL/Keycloak and terminates TLS at the ingress.
 
 ## Upgrading
 

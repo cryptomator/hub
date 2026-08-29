@@ -53,6 +53,28 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- end -}}
 {{- end -}}
 
+{{/*
+
+Ingress certificate: the chart attaches a certificate to the Ingresses only when `ingress.certificate.secretName` or
+`ingress.certificate.clusterIssuer` is set. Otherwise the Ingresses stay plain HTTP and TLS termination is left to the
+infrastructure (load balancer, controller default certificate, Traefik ACME resolver, ...).
+
+*/}}
+
+{{- define "cryptomator-hub.ingressCertSecretName" -}}
+{{- if .Values.ingress.certificate.secretName -}}
+{{- .Values.ingress.certificate.secretName -}}
+{{- else if .Values.ingress.certificate.clusterIssuer -}}
+{{- printf "%s-tls" (include "cryptomator-hub.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.ingressCertAnnotations" -}}
+{{- if .Values.ingress.certificate.clusterIssuer -}}
+cert-manager.io/cluster-issuer: {{ .Values.ingress.certificate.clusterIssuer | quote }}
+{{- end -}}
+{{- end -}}
+
 {{- define "cryptomator-hub.hubJdbcUrl" -}}
 {{- if .Values.hub.database.jdbcUrl -}}
 {{- .Values.hub.database.jdbcUrl -}}

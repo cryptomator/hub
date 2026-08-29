@@ -7,9 +7,10 @@ If you just want to try Hub, use [`../local/`](../local/README.md) instead — i
 ## Prerequisites
 
 - A checkout of this repository: [`compose.yaml`](compose.yaml) bind-mounts the dev realm from `backend/src/main/resources/cryptomator-realm.json`.
-- A locally built Hub image tagged `ghcr.io/cryptomator/hub:native`. From the repository root (frontend must be built into the backend first, see [`backend/README.md`](../../../backend/README.md)):
+- A locally built Hub image tagged `ghcr.io/cryptomator/hub:native`. The Dockerfile only copies `backend/src`, so the frontend has to be built into `backend/src/main/resources/META-INF/resources` first. From the repository root:
 
   ```bash
+  (cd frontend && pnpm install && pnpm dist)
   docker build -f backend/src/main/docker/Dockerfile.native -t ghcr.io/cryptomator/hub:native backend
   ```
 
