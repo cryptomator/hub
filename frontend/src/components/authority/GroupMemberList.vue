@@ -96,7 +96,7 @@ const members = defineModel<AuthorityDto[]>('members', { required: true });
 
 const deleteGroupMemberDialog = ref<typeof GroupMemberRemoveDialog>();
 const deletingGroupMember = ref<AuthorityDto>();
-const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog> | null>(null);
+const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog>>();
 
 function showDeleteDialog(u: AuthorityDto) {
   deletingGroupMember.value = u;

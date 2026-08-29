@@ -9,8 +9,8 @@
           <code>updated by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedUpdatedBy != null">{{ resolvedUpdatedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUpdatedBy != null}">{{ event.updatedBy }}</code>
+          <span v-if="resolvedUpdatedBy">{{ resolvedUpdatedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedUpdatedBy}">{{ event.updatedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

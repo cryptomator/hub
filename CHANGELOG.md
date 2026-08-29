@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/2.0.0-rc1...HEAD)
+## [unreleased](https://github.com/cryptomator/hub/compare/2.0.0-rc2...HEAD)
+
+### Added
+
+- Grace period after license expiry: vaults stay accessible during this period and a banner prompts to renew the license
+- Added deployment examples to repo
+
+### Changed
+
+- Helm chart now defaults to Postgres 18
+
+## [2.0.0-rc2](https://github.com/cryptomator/hub/compare/2.0.0-rc1...2.0.0-rc2)
 
 ### Added
 
@@ -94,12 +105,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User and group management (#376)
 - Emergency Access: Allow a council to restore access to a orphaned vault (#390)
 - Show pictures of the groups in the Vaults member list (#375)
-- Added helm chart (#406)
+- Published Helm chart (#406, #456)
 
 ### Changed
 
 - Replace the top navigation bar with a sidebar
-- Updated Keycloak to 26.6.4
+- Updated Keycloak to 26.7.2
 - Updated to Java 25
 - Update Quarkus to 3.33.2.1 LTS
 - Improved browser locale detection (#371)

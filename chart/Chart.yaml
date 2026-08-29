@@ -12,3 +12,11 @@ sources:
 keywords:
   - cryptomator
   - cryptomator hub
+annotations:
+  # Rancher catalog metadata, see https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/helm-charts-in-rancher/create-apps
+  catalog.cattle.io/display-name: Cryptomator Hub
+  catalog.cattle.io/kube-version: ">=1.27.0-0"
+  catalog.cattle.io/os: linux
+  # sum of the default resource requests of hub + keycloak + postgres (see values.yaml)
+  catalog.cattle.io/requests-cpu: 450m
+  catalog.cattle.io/requests-memory: 640Mi

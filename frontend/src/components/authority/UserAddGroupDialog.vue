@@ -64,7 +64,7 @@ import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
 import backend, { GroupDto } from '../../common/backend';
 
-const scrollContainer = ref<HTMLElement | null>(null);
+const scrollContainer = ref<HTMLElement>();
 
 const props = defineProps<{ groups: GroupDto[]; userId: string }>();
 const emit = defineEmits<{ saved: [added: GroupDto[]] }>();
@@ -72,7 +72,7 @@ const emit = defineEmits<{ saved: [added: GroupDto[]] }>();
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const newGroups = ref<GroupDto[]>([]);
-const onAddGroupError = ref<Error | null>(null);
+const onAddGroupError = ref<Error>();
 
 const selectedCount = computed(() => newGroups.value.length);
 const sortedNewGroups = computed(() => [...newGroups.value].reverse());
@@ -128,7 +128,7 @@ function removeTempGroup(id: string) {
 }
 
 async function onSubmit() {
-  onAddGroupError.value = null;
+  onAddGroupError.value = undefined;
 
   try {
     for (const group of newGroups.value) {
@@ -145,7 +145,7 @@ async function onSubmit() {
 
 function show() {
   newGroups.value = [];
-  onAddGroupError.value = null;
+  onAddGroupError.value = undefined;
   open.value = true;
 }
 

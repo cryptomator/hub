@@ -319,7 +319,7 @@ const grantEmergencyAccessDialog = ref<typeof GrantEmergencyAccessDialog>();
 const vaultRecoveryRequired = ref<boolean>(false);
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey !== undefined);
-const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
+const licenseViolated = computed(() => license.value?.isViolated() ?? false);
 
 const emergencyKeyShareAuthorities = ref<Record<string, AuthorityDto>>({});
 

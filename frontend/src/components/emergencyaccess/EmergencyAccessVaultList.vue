@@ -2,8 +2,8 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
-  <div v-else-if="onFetchError == null">
-    <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
+  <div v-else-if="!onFetchError">
+    <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
     <ContentBanner v-if="entitlements.emergencyAccessEnabled && entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
       {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
@@ -270,13 +270,6 @@ const isAdmin = ref<boolean>(false);
 const entitlements = config.get().entitlements;
 const licenseStatus = ref<LicenseUserInfoDto>();
 const settings = ref<SettingsDto>();
-const isLicenseViolated = computed(() => {
-  if (licenseStatus.value) {
-    return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
-  } else {
-    return false;
-  }
-});
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
 const filterOptions = computed(() => ({

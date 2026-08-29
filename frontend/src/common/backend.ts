@@ -229,16 +229,21 @@ export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
-    public expiresAt: Date | null) {
+    public expiresAt: Date | undefined,
+    public gracePeriodEndsAt: Date | undefined) {
   }
 
-  public isExpired(): boolean {
-    const now = new Date();
-    return now > (this.expiresAt ?? now); //if expired is null, the license cannot expire
+  public isExpired(mode?: 'allowGracePeriod'): boolean {
+    const deadline = mode === 'allowGracePeriod' ? this.gracePeriodEndsAt : this.expiresAt;
+    return deadline !== undefined && new Date() > deadline; // no deadline means no expiration date, i.e. the license cannot expire
   }
 
   public isExceeded(): boolean {
     return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
+  }
+
+  public isViolated(): boolean {
+    return this.isExpired('allowGracePeriod') || this.isExceeded();
   }
 
 }
@@ -350,13 +355,13 @@ class VaultService {
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     const queryParams = role ? { role: role } : {};
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { params: queryParams })
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, undefined, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     const queryParams = role ? { role: role } : {};
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { params: queryParams })
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, undefined, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
@@ -652,13 +657,15 @@ class LicenseService {
 
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
-      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
+      const expiresAt = response.data.expiresAt ? new Date(response.data.expiresAt) : undefined;
+      const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : undefined;
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, gracePeriodEndsAt);
     });
   }
 
   public async installTrial(hubId: string, licenseKey: string): Promise<void> {
     return axiosAuth.put('/license/trial', { hubId: hubId, licenseKey: licenseKey })
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 409));
   }
 
@@ -770,14 +777,14 @@ function convertExpectedToBackendError(status: number, errorMessage?: string): B
 }
 
 export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
-  if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
+  if (AxiosStatic.isAxiosError(error) && error.response && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status, typeof error.response.data === 'string' ? error.response.data : undefined);
   }
   throw error;
 }
 
 export function asError(error: unknown): Error {
-  if (AxiosStatic.isAxiosError(error) && error.response != null) {
+  if (AxiosStatic.isAxiosError(error) && error.response) {
     if (error.response.status === 404) {
       return new NotFoundError();
     }

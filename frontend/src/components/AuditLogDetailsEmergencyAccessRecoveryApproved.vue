@@ -17,8 +17,8 @@
           <code>councilMember</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedCouncilMember != null">{{ resolvedCouncilMember.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedCouncilMember != null}">{{ event.councilMemberId }}</code>
+          <span v-if="resolvedCouncilMember">{{ resolvedCouncilMember.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedCouncilMember}">{{ event.councilMemberId }}</code>
         </dd>
       </div>
       <div v-if="event.ipAddress" class="flex items-baseline gap-2">

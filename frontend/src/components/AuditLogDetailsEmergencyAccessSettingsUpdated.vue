@@ -9,7 +9,7 @@
           <code>admin</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedAdmin != null">{{ resolvedAdmin.name }}</span>
+          <span v-if="resolvedAdmin">{{ resolvedAdmin.name }}</span>
           <code class="text-xs" :class="resolvedAdmin ? 'text-gray-600' : ''">{{ event.adminId }}</code>
         </dd>
       </div>
@@ -74,7 +74,7 @@ const props = defineProps<{
   event: AuditEventEmergencyAccessSettingsChangedDto
 }>();
 
-const resolvedAdmin = ref<AuthorityDto | undefined>();
+const resolvedAdmin = ref<AuthorityDto>();
 const councilMembersExpanded = ref(false);
 
 const councilMembers = computed<unknown>(() => {

@@ -33,7 +33,7 @@
                 {{ t('common.close') }}
               </button>
             </div>
-            <p v-if="onAbortError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+            <p v-if="onAbortError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
               {{ t('common.unexpectedError', [onAbortError.message]) }}
             </p>
           </DialogPanel>
@@ -61,12 +61,12 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
-const onAbortError = ref<Error | null>();
+const onAbortError = ref<Error>();
 
 defineExpose({ show });
 
 function show() {
-  onAbortError.value = null;
+  onAbortError.value = undefined;
   open.value = true;
 }
 
@@ -75,7 +75,7 @@ function close() {
 }
 
 function abortProcess() {
-  onAbortError.value = null;
+  onAbortError.value = undefined;
   emit('confirmed');
   open.value = false;
 }

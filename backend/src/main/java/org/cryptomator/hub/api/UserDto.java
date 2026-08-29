@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +12,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class UserDto extends AuthorityDto {
 
 	private final String email;

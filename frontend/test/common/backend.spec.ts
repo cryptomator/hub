@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
-import { asError, NotFoundError } from '../../src/common/backend';
+import { asError, LicenseUserInfoDto, NotFoundError } from '../../src/common/backend';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({}) }));
 vi.mock('../../src/common/config', () => ({ default: {}, backendBaseURL: '/api/' }));
@@ -31,5 +31,81 @@ describe('asError', () => {
 
   it('wraps non-error values', () => {
     expect(asError('boom').message).toEqual('Unknown Error');
+  });
+});
+
+describe('LicenseUserInfoDto', () => {
+  const hour = 60 * 60 * 1000;
+  const gracePeriod = 3 * 24 * hour; // arbitrary — the actual grace period is determined server-side
+
+  function licenseExpiringAt(expiresAt: Date | undefined): LicenseUserInfoDto {
+    const gracePeriodEndsAt = expiresAt !== undefined ? new Date(expiresAt.getTime() + gracePeriod) : undefined;
+    return new LicenseUserInfoDto(5, 3, expiresAt, gracePeriodEndsAt);
+  }
+
+  it('license expiring in the future is not expired', () => {
+    const license = licenseExpiringAt(new Date(Date.now() + hour));
+
+    expect(license.isExpired()).toBe(false);
+  });
+
+  it('license past its expiration date is expired', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isExpired()).toBe(true);
+  });
+
+  it('license without expiration date cannot expire', () => {
+    const license = licenseExpiringAt(undefined);
+
+    expect(license.isExpired()).toBe(false);
+  });
+
+  it('license expiring in the future is not expired when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() + hour));
+
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
+  });
+
+  it('license expired within the grace period is not expired when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
+  });
+
+  it('license expired almost beyond the grace period is not expired when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod + hour));
+
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
+  });
+
+  it('license expired beyond the grace period is expired even when allowing the grace period', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod - hour));
+
+    expect(license.isExpired('allowGracePeriod')).toBe(true);
+  });
+
+  it('license without expiration date cannot expire even when allowing the grace period', () => {
+    const license = licenseExpiringAt(undefined);
+
+    expect(license.isExpired('allowGracePeriod')).toBe(false);
+  });
+
+  it('license expired beyond the grace period is violated', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - gracePeriod - hour));
+
+    expect(license.isViolated()).toBe(true);
+  });
+
+  it('license with more used than licensed seats is violated', () => {
+    const license = new LicenseUserInfoDto(5, 6, new Date(Date.now() + hour), new Date(Date.now() + gracePeriod + hour));
+
+    expect(license.isViolated()).toBe(true);
+  });
+
+  it('license expired within the grace period is not violated', () => {
+    const license = licenseExpiringAt(new Date(Date.now() - hour));
+
+    expect(license.isViolated()).toBe(false);
   });
 });
