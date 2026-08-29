@@ -124,7 +124,7 @@ postgres:
   enabled: true
   imagePullPolicy: IfNotPresent
   image:
-    tag: ""
+    tag: "" # defaults to 18-alpine; the volume layout requires postgres >= 18 (PGDATA in /var/lib/postgresql/<major>/docker)
   service:
     type: ClusterIP
     port: 5432

@@ -23,7 +23,7 @@ On first login Hub asks for a license. Any Hub license works for testing; see <h
 
 ## What the stack contains
 
-- `postgres:17.11-alpine` with two databases (`hub`, `keycloak`), persisted in the named volume `postgres-data`.
+- `postgres` with two databases (`hub`, `keycloak`), persisted in the named volume `postgres-data`.
 - `ghcr.io/cryptomator/keycloak` — the stock Keycloak image plus the Cryptomator login theme and `curl` for the health check. A minimal `cryptomator` realm (one admin user, the OIDC clients `cryptomatorhub`, `cryptomator` and `cryptomatorhub-system`) is embedded in the compose file and imported on first boot. It matches what the Helm chart renders in `chart/templates/_realm.tpl`.
 - `ghcr.io/cryptomator/hub` — the Hub application, configured through environment variables; the same settings the Helm chart uses.
 
@@ -47,3 +47,5 @@ For real deployments use the Helm chart, see [`../../helm/prod/`](../../helm/pro
 ## Upgrading
 
 Image versions are pinned in `compose.yaml`. To upgrade, change the tags and run `docker compose up -d`. Hub applies database migrations automatically at start; Keycloak upgrades follow the [Keycloak upgrade guide](https://www.keycloak.org/docs/latest/upgrading/). Always back up the `postgres-data` volume first.
+
+PostgreSQL minor updates (e.g. `18.6` → `18.7`) are drop-in. A major update (`18` → `19`) is not: the data directory must be migrated with `pg_upgrade` or a dump/restore, see the [PostgreSQL upgrade notes](https://www.postgresql.org/docs/current/upgrading.html). The same applies to a `postgres-data` volume created by an earlier version of this stack that still ran PostgreSQL 17 — either dump it before switching images, or start fresh with `docker compose down -v`.
