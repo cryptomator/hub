@@ -16,17 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.7.2
+- Updated Keycloak to 26.7.2 (including Helm chart)
 - Helm chart now defaults to Postgres 18
-- Helm chart now defaults to Keycloak image 26.7.2
-- Helm chart always sets `QUARKUS_OTEL_SDK_DISABLED`
 - Added `@NotNull` annotations to improve the generated OpenAPI type definitions
 
 ### Fixed
 
 - Fixed "Claim Vault Ownership" failed for vaults created with Hub 1.4.x or older (#403)
-- Fixed frontend `TypeError: Y is not a function` caused by the Emergency Access chunk split
-- Fixed Keycloak container image build using a single-arch instead of the multi-arch digest
 
 ## [2.0.0-rc2](https://github.com/cryptomator/hub/compare/2.0.0-rc1...2.0.0-rc2) (2026-07-20)
 
