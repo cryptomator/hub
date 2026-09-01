@@ -5,18 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased](https://github.com/cryptomator/hub/compare/2.0.0-rc2...HEAD)
+## [2.0.0-rc3](https://github.com/cryptomator/hub/compare/2.0.0-rc2...2.0.0-rc3) (2026-08-29)
 
 ### Added
 
-- Grace period after license expiry: vaults stay accessible during this period and a banner prompts to renew the license
-- Added deployment examples to repo
+- Grace period of 9 days after license expiry: vaults stay accessible during this period and a banner prompts to renew the license (#485)
+- Added `DELETE /api/vaults/{vaultId}` api endpoint
+- Deployment examples for Docker Compose and Helm in `deploy/`
+- Helm chart now ships a values schema (`values.schema.json`) and Rancher app questions
 
 ### Changed
 
+- Updated Keycloak to 26.7.2
 - Helm chart now defaults to Postgres 18
+- Helm chart now defaults to Keycloak image 26.7.2
+- Helm chart always sets `QUARKUS_OTEL_SDK_DISABLED`
+- Added `@NotNull` annotations to improve the generated OpenAPI type definitions
 
-## [2.0.0-rc2](https://github.com/cryptomator/hub/compare/2.0.0-rc1...2.0.0-rc2)
+### Fixed
+
+- Fixed "Claim Vault Ownership" failed for vaults created with Hub 1.4.x or older (#403)
+- Fixed frontend `TypeError: Y is not a function` caused by the Emergency Access chunk split
+- Fixed Keycloak container image build using a single-arch instead of the multi-arch digest
+
+## [2.0.0-rc2](https://github.com/cryptomator/hub/compare/2.0.0-rc1...2.0.0-rc2) (2026-07-20)
 
 ### Added
 
