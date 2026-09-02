@@ -48,7 +48,7 @@
 
     <Menu as="div" class="relative inline-block text-left">
       <div>
-        <MenuButton id="addVaultButton" :disabled="isLicenseViolated || !canCreateVaults" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" :title="isLicenseViolated ? t('vaultList.addVault.disabled.licenseViolation') : canCreateVaults ? undefined : t('vaultList.addVault.disabled.missingPermission')">
+        <MenuButton data-tour="addVault" :disabled="isLicenseViolated || !canCreateVaults" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" :title="isLicenseViolated ? t('vaultList.addVault.disabled.licenseViolation') : canCreateVaults ? undefined : t('vaultList.addVault.disabled.missingPermission')">
           {{ t('vaultList.addVault') }}
           <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
         </MenuButton>
@@ -79,63 +79,64 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults && filteredVaults.length > 0" data-tour="vaultList" class="mt-5 bg-white shadow-sm rounded-md">
-    <ul class="divide-y divide-gray-200">
-      <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
-        <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
-          <div class="px-4 py-4 flex items-center sm:px-6">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-3">
-                <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
-                <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
-                <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+  <div v-if="filteredVaults" data-tour="vaultList">
+    <div v-if="filteredVaults.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
+      <ul class="divide-y divide-gray-200">
+        <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
+          <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
+            <div class="px-4 py-4 flex items-center sm:px-6">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-3">
+                  <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+                  <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
+                  <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+                </div>
+                <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
               </div>
-              <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
+              <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
+                <EmergencyBadge
+                  v-if="vault.requiredEmergencyKeyShares == 0"
+                  type="warning"
+                  :title="t('emergencyAccess.badge.notConfigured.title')"
+                  :message="t('emergencyAccess.badge.notConfigured.message')"
+                />
+                <EmergencyBadge
+                  v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
+                  type="error"
+                  :title="t('emergencyAccess.badge.broken.title')"
+                  :message="t('emergencyAccess.badge.broken.message')"
+                />
+                <EmergencyBadge
+                  v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                  type="warning"
+                  :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                  :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+                />
+              </div>
+              <div class="ml-5 shrink-0">
+                <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+              </div>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
-              <EmergencyBadge
-                v-if="vault.requiredEmergencyKeyShares == 0"
-                type="warning"
-                :title="t('emergencyAccess.badge.notConfigured.title')"
-                :message="t('emergencyAccess.badge.notConfigured.message')"
-              />
-              <EmergencyBadge
-                v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
-                type="error"
-                :title="t('emergencyAccess.badge.broken.title')"
-                :message="t('emergencyAccess.badge.broken.message')"
-              />
-              <EmergencyBadge
-                v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
-                type="warning"
-                :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
-                :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
-              />
+          </a>
+        </li>
+      </ul>
+    </div>
 
-            </div>
-            <div class="ml-5 shrink-0">
-              <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            </div>
-          </div>
-        </a>
-      </li>
-    </ul>
-  </div>
+    <div v-else-if="query === ''" class="mt-3 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.empty.title') }}</h3>
+      <p v-if="canCreateVaults" class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
+    </div>
 
-  <div v-else-if="query === '' && filteredVaults && filteredVaults.length == 0" data-tour="vaultList" class="mt-3 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.empty.title') }}</h3>
-    <p v-if="canCreateVaults" class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
-  </div>
-
-  <div v-else-if="query !== '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.filter.result.empty.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description') }}</p>
+    <div v-else class="mt-3 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.filter.result.empty.title') }}</h3>
+      <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description') }}</p>
+    </div>
   </div>
 
   <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">

@@ -9,14 +9,20 @@ type TourStep = {
   descriptionKey: string;
 };
 
-const tourSteps: TourStep[] = [
-  { titleKey: 'onboarding.welcome.title', descriptionKey: 'onboarding.welcome.description' },
-  { target: '[data-tour="vaultList"]', titleKey: 'onboarding.vaultList.title', descriptionKey: 'onboarding.vaultList.description' },
-  { target: '[data-tour="appCard"]', titleKey: 'onboarding.appCard.title', descriptionKey: 'onboarding.appCard.description' },
-  { target: '[data-tour="profile"]', titleKey: 'onboarding.profile.title', descriptionKey: 'onboarding.profile.description' }
-];
+const vaultListTarget = '[data-tour="vaultList"]';
 
-const createVaultStep: TourStep = { target: '#addVaultButton', titleKey: 'onboarding.addVault.title', descriptionKey: 'onboarding.addVault.description' };
+// adminNav needs no role check: its target only exists for admins and invisible steps are skipped
+// addVault must be gated explicitly: the button is always rendered, merely disabled
+export function tourSteps(canCreateVaults: boolean): TourStep[] {
+  return [
+    { titleKey: 'onboarding.welcome.title', descriptionKey: 'onboarding.welcome.description' },
+    { target: vaultListTarget, titleKey: 'onboarding.vaultList.title', descriptionKey: canCreateVaults ? 'onboarding.vaultList.description' : 'onboarding.vaultList.description.shared' },
+    { target: '[data-tour="appCard"]', titleKey: 'onboarding.appCard.title', descriptionKey: 'onboarding.appCard.description' },
+    { target: '[data-tour="adminNav"]', titleKey: 'onboarding.adminNav.title', descriptionKey: 'onboarding.adminNav.description' },
+    { target: '[data-tour="profile"]', titleKey: 'onboarding.profile.title', descriptionKey: 'onboarding.profile.description' },
+    ...(canCreateVaults ? [{ target: '[data-tour="addVault"]', titleKey: 'onboarding.addVault.title', descriptionKey: 'onboarding.addVault.description' }] : [])
+  ];
+}
 
 function storageKey(userId: string): string {
   return `hub.onboardingCompleted.${userId}`;
@@ -99,15 +105,14 @@ function findVisibleElement(selector: string): Element | undefined {
   return Array.from(document.querySelectorAll<HTMLElement>(selector)).find(element => element.offsetParent != null);
 }
 
-async function waitForElement(selector: string) {
-  for (let attempt = 0; attempt < 80 && !document.querySelector(selector); attempt++) {
+async function waitForVisibleElement(selector: string) {
+  for (let attempt = 0; attempt < 80 && !findVisibleElement(selector); attempt++) {
     await new Promise(resolve => setTimeout(resolve, 50));
   }
 }
 
 /**
  * Starts the onboarding tour unless the user has already completed or dismissed it.
- * Steps whose target element is not visible (e.g. the sidebar on mobile) are skipped.
  * @param userId the id of the currently logged in user
  */
 export async function startOnboardingIfNeeded(userId: string) {
@@ -118,16 +123,14 @@ export async function startOnboardingIfNeeded(userId: string) {
 
 /**
  * Starts the onboarding tour on the vault list and marks it as completed once it is finished or dismissed.
+ * Steps whose target element is not visible (e.g. the sidebar on mobile) are skipped.
  * @param userId the id of the currently logged in user
  */
 export async function startOnboarding(userId: string) {
   const { t } = i18n.global;
-  await waitForElement('#addVaultButton');
+  await waitForVisibleElement(vaultListTarget);
 
-  const includedSteps = [...tourSteps];
-  if ((await auth).hasRole('create-vaults')) {
-    includedSteps.push(createVaultStep);
-  }
+  const includedSteps = tourSteps((await auth).hasRole('create-vaults'));
 
   const steps: DriveStep[] = [];
   for (const step of includedSteps) {

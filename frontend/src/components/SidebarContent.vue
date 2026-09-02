@@ -20,7 +20,7 @@
         </li>
       </ul>
 
-      <div v-if="isAdmin">
+      <div v-if="isAdmin" data-tour="adminNav">
         <hr class="border-white/10" />
         <ul role="list" class="mt-3 space-y-1">
           <li v-for="item in adminNav" :key="item.name">
@@ -76,7 +76,7 @@
             <ul v-if="index === profileDropdown.length - 2" class="py-1.5">
               <li>
                 <MenuItem v-slot="{ active }">
-                  <button type="button" class="w-full" @click="replayTour()">
+                  <button type="button" class="w-full" @click="emit('replayTour')">
                     <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
                       <QuestionMarkCircleIcon :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
                       {{ t('nav.profile.showTour') }}
@@ -97,16 +97,15 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { QuestionMarkCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { computed, FunctionalComponent, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { UserDto } from '../common/backend';
-import { appDownloadUrl, dismissAppHint, isAppHintDismissed, startOnboarding } from '../common/onboarding';
+import { appDownloadUrl, dismissAppHint, isAppHintDismissed } from '../common/onboarding';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
 export type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
-const router = useRouter();
 
 const props = defineProps<{
   me: UserDto,
@@ -119,7 +118,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   navigate: [],
-  close: []
+  close: [],
+  replayTour: []
 }>();
 
 const appDownloadLink = appDownloadUrl();
@@ -129,12 +129,6 @@ const showAppCard = computed(() => !appCardDismissed.value && !props.me.devices.
 function dismissAppCard() {
   dismissAppHint(props.me.id);
   appCardDismissed.value = true;
-}
-
-async function replayTour() {
-  emit('navigate');
-  await router.push('/app/vaults');
-  await startOnboarding(props.me.id);
 }
 
 function itemClasses(to: string) {
