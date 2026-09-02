@@ -59,6 +59,7 @@
     "@scure/base": "^2.2.0",
     "altcha": "^3.2.1",
     "axios": "^1.18.1",
+    "driver.js": "^1.8.0",
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",
     "jszip": "^3.10.1",

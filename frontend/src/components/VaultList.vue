@@ -48,7 +48,7 @@
 
     <Menu as="div" class="relative inline-block text-left">
       <div>
-        <MenuButton :disabled="isLicenseViolated || !canCreateVaults" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" :title="isLicenseViolated ? t('vaultList.addVault.disabled.licenseViolation') : canCreateVaults ? undefined : t('vaultList.addVault.disabled.missingPermission')">
+        <MenuButton id="addVaultButton" :disabled="isLicenseViolated || !canCreateVaults" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" :title="isLicenseViolated ? t('vaultList.addVault.disabled.licenseViolation') : canCreateVaults ? undefined : t('vaultList.addVault.disabled.missingPermission')">
           {{ t('vaultList.addVault') }}
           <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
         </MenuButton>
@@ -79,7 +79,7 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
+  <div v-if="filteredVaults && filteredVaults.length > 0" data-tour="vaultList" class="mt-5 bg-white shadow-sm rounded-md">
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
@@ -122,7 +122,7 @@
     </ul>
   </div>
 
-  <div v-else-if="query === '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
+  <div v-else-if="query === '' && filteredVaults && filteredVaults.length == 0" data-tour="vaultList" class="mt-3 text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
@@ -152,6 +152,7 @@ import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import config from '../common/config';
+import { startOnboardingIfNeeded } from '../common/onboarding';
 import userdata from '../common/userdata';
 import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
@@ -206,7 +207,13 @@ const filteredVaults = computed(() =>
     })
 );
 
-onMounted(fetchData);
+onMounted(async () => {
+  await fetchData();
+  if (me.value) {
+    await nextTick();
+    await startOnboardingIfNeeded(me.value.id);
+  }
+});
 
 async function fetchData() {
   onFetchError.value = undefined;
