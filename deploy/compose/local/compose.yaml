@@ -60,7 +60,7 @@ services:
       retries: 30
 
   hub:
-    image: ghcr.io/cryptomator/hub:2.0.0
+    image: ghcr.io/cryptomator/hub:2.0.1
     environment:
       HUB_PUBLIC_ROOT_PATH: /
       HUB_KEYCLOAK_PUBLIC_URL: http://localhost:8180

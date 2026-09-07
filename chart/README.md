@@ -37,13 +37,13 @@ All values are documented in `values.yaml` and validated against `values.schema.
 
 ## Verify Published Chart
 
-This chart contains a OCI chart signature, which can be verified as follows (assuming chart version `2.0.0`):
+This chart contains a OCI chart signature, which can be verified as follows (assuming chart version `2.0.1`):
 
 ```bash
 cosign verify \
   --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart.yml@refs/(heads|tags)/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/cryptomator/charts/cryptomator-hub:2.0.0
+  ghcr.io/cryptomator/charts/cryptomator-hub:2.0.1
 ```
 
 You can additionally inspect provenance attestations:
@@ -53,5 +53,5 @@ cosign verify-attestation \
   --type https://slsa.dev/provenance/v1 \
   --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart.yml@refs/(heads|tags)/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/cryptomator/charts/cryptomator-hub:2.0.0
+  ghcr.io/cryptomator/charts/cryptomator-hub:2.0.1
 ```
