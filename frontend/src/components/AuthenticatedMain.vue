@@ -1,21 +1,19 @@
 <template>
-  <div v-if="me == null">
+  <div v-if="me === undefined">
     <!--TODO: beautify loading screen -->
-    <div v-if="onFetchError == null">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
-  <div v-else>
-    <NavigationBar :me="me"/>
-
+  <AppShell v-else :me="me">
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <router-view></router-view>
+      <router-view />
     </div>
-  </div>
+  </AppShell>
 </template>
 
 <script setup lang="ts">
@@ -23,18 +21,18 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../common/backend';
 import userdata from '../common/userdata';
+import AppShell from './AppShell.vue';
 import FetchError from './FetchError.vue';
-import NavigationBar from './NavigationBar.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
   } catch (error) {

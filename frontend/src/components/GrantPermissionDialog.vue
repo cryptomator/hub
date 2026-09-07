@@ -30,7 +30,7 @@
                             <div class="flex items-center whitespace-nowrap w-full">
                               <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                               <p class="ml-4 text-sm font-medium text-gray-900 w-full">{{ member.name }}</p>
-                              <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
+                              <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
                             </div>
                           </li>
                         </template>
@@ -41,14 +41,14 @@
               </div>
               <form novalidate @submit.prevent="grantAccess">
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" >
+                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                     {{ t('grantPermissionDialog.submit', [users.length]) }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onGrantPermissionError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
                 </p>
                 <p v-if="onGrantPermissionError instanceof ConflictError || onGrantPermissionError instanceof NotFoundError" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
@@ -77,7 +77,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const trusts = ref<TrustDto[]>([]);
-const onGrantPermissionError = ref<Error | null>();
+const onGrantPermissionError = ref<Error>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -109,7 +109,7 @@ function show() {
 }
 
 async function grantAccess() {
-  onGrantPermissionError.value = null;
+  onGrantPermissionError.value = undefined;
   try {
     await giveUsersAccess(props.users);
     emit('permissionGranted');
@@ -124,7 +124,7 @@ async function giveUsersAccess(users: UserDto[]) {
   const tokens: AccessGrant[] = [];
   for (const user of users) {
     if (user.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.parse(user.ecdhPublicKey);
+      const publicKey = base64.decode(user.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
       tokens.push({ userId: user.id, token: jwe });
     }

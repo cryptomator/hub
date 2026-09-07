@@ -1,13 +1,13 @@
 <template>
-  <SimpleNavigationBar v-if="me != null" :me="me"/>
+  <SimpleNavigationBar v-if="me !== undefined" :me="me" />
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
     <div v-if="state == State.Preparing">
-      <div v-if="onFetchError == null" class="text-center">
+      <div v-if="!onFetchError" class="text-center">
         {{ t('common.loading') }}
       </div>
       <div v-else>
-        <FetchError :error="onFetchError" :retry="fetchData"/>
+        <FetchError :error="onFetchError" :retry="fetchData" />
       </div>
     </div>
 
@@ -85,7 +85,7 @@
 
               <div class="relative flex justify-center text-left mt-5 sm:mt-6">
                 <div class="flex h-5 items-center">
-                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
+                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required />
                 </div>
                 <div class="ml-3 text-sm">
                   <label for="confirmSetupCode" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmAccountKey') }}</label>
@@ -96,7 +96,7 @@
                 <button type="submit" :disabled="!confirmSetupCode || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('initialSetup.submit') }}
                 </button>
-                <div v-if="onCreateError != null">
+                <div v-if="onCreateError">
                   <p class="text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
                 </div>
               </div>
@@ -138,7 +138,7 @@
                 </button>
                 <div class="text-sm text-red-900 mt-2">
                   <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('initialSetup.recoverUserKey.error.wrongAccountKey') }}</p>
-                  <p v-else-if="onRecoverError != null">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
+                  <p v-else-if="onRecoverError">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
                 </div>
               </div>
             </div>
@@ -147,7 +147,7 @@
       </form>
 
       <i18n-t keypath="initialSetup.recoverUserKey.lostAccountKey" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
-        <a tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
+        <a tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900 cursor-pointer" @click="showResetUserAccountDialog()">
           {{ t('initialSetup.recoverUserKey.lostAccountKey.resetUserAccount') }}
         </a>
       </i18n-t>
@@ -215,9 +215,9 @@ const vFocus = {
   }
 };
 
-const onFetchError = ref<Error | null>(null);
-const onCreateError = ref<Error | null >(null);
-const onRecoverError = ref<Error | null >(null);
+const onFetchError = ref<Error>();
+const onCreateError = ref<Error>();
+const onRecoverError = ref<Error>();
 
 const state = ref(State.Preparing);
 const processing = ref(false);
@@ -237,7 +237,7 @@ const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     if (!me.value.setupCode) {
@@ -255,7 +255,7 @@ async function fetchData() {
 }
 
 async function createUserKey() {
-  onCreateError.value = null;
+  onCreateError.value = undefined;
   try {
     processing.value = true;
     const me = await userdata.me;
@@ -278,7 +278,7 @@ async function createUserKey() {
 }
 
 async function recoverUserKey() {
-  onRecoverError.value = null;
+  onRecoverError.value = undefined;
   try {
     processing.value = true;
     setupCode.value = setupCode.value.trim();
@@ -333,7 +333,7 @@ function editBrowserName() {
     span.focus();
     const range = document.createRange();
     range.selectNodeContents(span);
-    const sel = window.getSelection() as Selection;
+    const sel = globalThis.getSelection() as Selection;
     sel.removeAllRanges();
     sel.addRange(range);
   });

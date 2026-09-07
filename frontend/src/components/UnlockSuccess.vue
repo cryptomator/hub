@@ -1,79 +1,21 @@
 <template>
-  <NavigationBar v-if="accountState == AccountState.Ready && hasBrowserKeys" :me="me!"/>
-  <SimpleNavigationBar v-else-if="me" :me="me"/>
+  <AppShell v-if="showSidebar" :me="me!">
+    <UnlockSuccessContent :status="status" :error="onFetchError" :retry="fetchData" :has-browser-keys="hasBrowserKeys" />
+  </AppShell>
 
-  <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
-    <div v-if="me == null">
-      <div v-if="onFetchError == null">
-        {{ t('common.loading') }}
-      </div>
-      <div v-else>
-        <FetchError :error="onFetchError" :retry="fetchData"/>
-      </div>
-    </div>
-
-    <div v-else class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
-      <div class="flex justify-center mb-3 sm:mb-5">
-        <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
-      </div>
-
-      <!-- ACCOUNT SETUP -->
-      <div v-if="accountState == AccountState.RequiresSetup" class="text-sm text-gray-500">
-        <h1 class="text-2xl leading-6 font-medium text-gray-900">
-          {{ t('unlockSuccess.accountSetup.title') }}
-        </h1>
-        <p class="my-3">
-          {{ t('unlockSuccess.accountSetup.description') }}
-        </p>
-        <router-link to="/app/setup" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">{{ t('unlockSuccess.accountSetup.goToSetup') }}</router-link>
-      </div>
-
-      <!-- DEVICE SETUP -->
-      <div v-else-if="deviceState == DeviceState.NoSuchDevice" class="text-sm text-gray-500">
-        <h1 class="text-2xl leading-6 font-medium text-gray-900">
-          {{ t('unlockSuccess.deviceSetup.title') }}
-        </h1>
-        <p class="my-3">
-          {{ t('unlockSuccess.deviceSetup.description') }}
-        </p>
-        <router-link v-if="hasBrowserKeys" to="/app/profile" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-          {{ t('unlockSuccess.deviceSetup.goToProfile') }}
-        </router-link>
-      </div>
-
-      <!-- NO VAULT ACCESS -->
-      <div v-else-if="vaultAccess == VaultAccess.Denied" class="text-sm text-gray-500">
-        <h1 class="text-2xl leading-6 font-medium text-gray-900">
-          {{ t('unlockSuccess.noVaultAccess.title') }}
-        </h1>
-        <p class="mt-2">
-          {{ t('unlockSuccess.noVaultAccess.description') }}
-        </p>
-      </div>
-
-      <!-- SUCCESS -->
-      <div v-else class="text-sm text-gray-500">
-        <h1 class="text-2xl leading-6 font-medium text-gray-900">
-          {{ t('unlockSuccess.title') }}
-        </h1>
-        <p class="mt-2">
-          {{ t('unlockSuccess.description') }}
-        </p>
-      </div>
-    </div>
+  <div v-else>
+    <SimpleNavigationBar v-if="me" :me="me" />
+    <UnlockSuccessContent :status="status" :error="onFetchError" :retry="fetchData" :has-browser-keys="hasBrowserKeys" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ComputedRef, computed, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
 import userdata from '../common/userdata';
-import FetchError from './FetchError.vue';
-import NavigationBar from './NavigationBar.vue';
+import AppShell from './AppShell.vue';
 import SimpleNavigationBar from './SimpleNavigationBar.vue';
-
-const { t } = useI18n({ useScope: 'global' });
+import UnlockSuccessContent, { UnlockStatus } from './UnlockSuccessContent.vue';
 
 const props = defineProps<{
   vaultId: string
@@ -98,9 +40,10 @@ const deviceState : ComputedRef<DeviceState> = computed(() => {
 });
 
 const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
-  return accessibleVaults.value?.find(v => v.id === props.vaultId)
-    ? VaultAccess.Allowed
-    : VaultAccess.Denied;
+  const vault = accessibleVaults.value?.find(v => v.id === props.vaultId);
+  if (!vault) return VaultAccess.Denied;
+  if (vault.archived) return VaultAccess.Archived;
+  return VaultAccess.Allowed;
 });
 
 enum AccountState {
@@ -115,18 +58,41 @@ enum DeviceState {
 
 enum VaultAccess {
   Allowed,
+  Archived,
   Denied
 }
 
 const me = ref<UserDto>();
 const hasBrowserKeys = ref<boolean>(false);
 const accessibleVaults = ref<VaultDto[]>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
+
+// Only the fully set-up state shows the full app navigation; everything else uses the minimal nav.
+const showSidebar = computed(() => me.value !== undefined && accountState.value === AccountState.Ready && hasBrowserKeys.value);
+
+const status : ComputedRef<UnlockStatus> = computed(() => {
+  if (me.value === undefined) {
+    return onFetchError.value ? 'error' : 'loading';
+  }
+  if (accountState.value === AccountState.RequiresSetup) {
+    return 'accountSetup';
+  }
+  if (deviceState.value === DeviceState.NoSuchDevice) {
+    return 'deviceSetup';
+  }
+  if (vaultAccess.value === VaultAccess.Archived) {
+    return 'archived';
+  }
+  if (vaultAccess.value === VaultAccess.Denied) {
+    return 'denied';
+  }
+  return 'allowed';
+});
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     hasBrowserKeys.value = await userdata.browserKeys.then(keys => keys !== undefined);

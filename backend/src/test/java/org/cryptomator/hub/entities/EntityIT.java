@@ -25,7 +25,7 @@ public class EntityIT {
 	@Test
 	@TestTransaction
 	@DisplayName("Removing a User cascades to Access")
-	public void removingUserCascadesToAccess() throws SQLException {
+	void removingUserCascadesToAccess() throws SQLException {
 		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 			// test data will be removed via @TestTransaction
 			s.execute("""
@@ -44,7 +44,7 @@ public class EntityIT {
 	@Test
 	@TestTransaction
 	@DisplayName("Retrieve the correct token when a user has access to multiple vaults")
-	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() {
+	void testGetCorrectTokenForDeviceWithAccessToMultipleVaults() {
 		var token = accessTokenRepo.unlock(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), "user1");
 		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.getVault().getId());
 		Assertions.assertEquals("user1", token.getUser().getId());

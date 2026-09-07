@@ -4,7 +4,12 @@
 
 UPDATE "settings"
 SET "hub_id" = '42',
-	"license_key"  = 'eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA0OTM2MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6MjUzNDAyMjE0NDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AKyoZ0WQ8xhs8vPymWPHCsc6ch6pZpfxBcrF5QjVLSQVnYz2s5QF3nnkwn4AGR7V14TuhkJMZLUZxMdQAYLyL95sAV2Fu0E4-e1v3IVKlNKtze89eqYvEs6Ak9jWjtecOgPWNWjz2itI4MfJBDmbFtTnehOtqRqUdsDoC9NFik2C7tHm'
+	-- valid x5c-signed test license (jti 42, 5 seats, exp 3000-01-01), issued by "Hub License Issuer CA (Test)" (see %test.hub.license.chain.required-cn), rooted in the production License Root CA
+	"license_key"  = 'eyJ4NWMiOlsiTUlJQ0FUQ0NBYk9nQXdJQkFnSVVSc1ZlYUM5cDI5amhKelB4TXExSk13MVR6UWN3QlFZREsyVndNRDh4Q3pBSkJnTlZCQVlUQWtSRk1SWXdGQVlEVlFRS0RBMVRhM2x0WVhScFl5QkhiV0pJTVJnd0ZnWURWUVFEREE5TWFXTmxibk5sSUZKdmIzUWdRMEV3SGhjTk1qWXdOekE1TURnMU9USTVXaGNOTXpZd056QTJNRGcxT1RJNVdqQk1NUXN3Q1FZRFZRUUdFd0pFUlRFV01CUUdBMVVFQ2d3TlUydDViV0YwYVdNZ1IyMWlTREVsTUNNR0ExVUVBd3djU0hWaUlFeHBZMlZ1YzJVZ1NYTnpkV1Z5SUVOQklDaFVaWE4wS1RDQm16QVFCZ2NxaGtqT1BRSUJCZ1VyZ1FRQUl3T0JoZ0FFQVJOQlc5QjZIZ3EzQzRKd1FvbXNJTEhlU0lLN0c3TXBpR1M5Qm45bFluVDBEYmNBQ3RPUCtGVWFEaWhUQnZERHhaTUxxNDNjbXdIaFp2SmUwY0VVZk5iekFMZ0R6UmtneWtCWEpCNTFkcVlEYUtcL0JWMXMxVnRUY0lSa1wvOWxqdEY2a2txcE1lVWYwUDd2U0hYWGFNMlwvT3R2SmZXN2lKRXpycjN6MHRtWEg3UHpLSFRvMEl3UURBZEJnTlZIUTRFRmdRVW1idlI4KytmZ3B5OGV5SVZ6NGlcL0ljemRMd2t3SHdZRFZSMGpCQmd3Rm9BVWFFcFNIU01LMXJiQmZQR3RTVjBnR29IZ0hQY3dCUVlESzJWd0EwRUFNU3hlS2tpRHBpUkVnNmtFTkw5MUhSdUNsWHNCMWZ1MjlIYW5BYVVTSVd0Ynh3cnE5MnJPbE1BazRZejhtTEh5VzhVNTJtRllKRWZ5WkR5UXlQVDBDdz09Il0sImFsZyI6IkVTNTEyIn0.eyJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAZXhhbXBsZS5jb20iLCJyZWZyZXNoVXJsIjoiaHR0cDpcL1wvbG9jYWxob3N0OjgwODFcL1wvaHViXC9yZWZyZXNoIiwia2lkIjoiRV9rU2xTOG5tR0wza0oxeHl6UG5TdG1fdVl1NndRX1h4VFFoN2h6T0k2USIsIm9yZy5jcnlwdG9tYXRvci5odWIuZW50aXRsZW1lbnRzIjp7InNlYXRzIjo1LCJzaG93VHJpYWxIaW50IjpmYWxzZSwiYXVkaXRMb2dSZXRlbnRpb25EYXlzIjowLCJlbWVyZ2VuY3lBY2Nlc3NFbmFibGVkIjpmYWxzZSwia2V5Y2xvYWtBY2Nlc3NFbmFibGVkIjp0cnVlfSwiaXNzIjoiaHR0cDpcL1wvbG9jYWxob3N0OjgwODFcLyIsImV4cCI6MzI1MDM2ODAwMDAsImlhdCI6MTc4MzU4ODY0NCwic2VhdHMiOjUsImp0aSI6IjQyIn0.AZrb7lULe-bvea6LyFsTq7dZZBozgXuqEnr8M5nua-3KyM6gZw_hygBVkmAZw-u4NMlG8u0GEpKlK9rmLUPOpF36AaTa3h9WCQIzmiqn30Rm_zRd9T3WrmWXjkmWKnv7YpfufZI_zT-lpcKGasGm1w3YVWu_nSa9gQd_0Pm1r3QSQWTX',
+	"default_required_emergency_key_shares" = 2,
+    "default_min_members" = 3,
+	"allow_choosing_emergency_council" = FALSE,
+    "enable_emergency_access" = FALSE
 WHERE "id" = 0;
 
 INSERT INTO "authority" ("id", "type", "name")
@@ -29,6 +34,11 @@ VALUES
 	('group1', 'user1'),
 	('group2', 'user2');
 
+INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
+VALUES
+    ('group1', ARRAY['group1'], 'user1'),
+    ('group2', ARRAY['group2'], 'user2');
+
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 42, 'masterkey1',
@@ -52,17 +62,32 @@ VALUES
 	('7E57C0DE-0000-4000-8000-000100002222', 'group2', 'OWNER'),
 	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekeys")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekeys", "last_access_time", "last_ip_address")
 VALUES
-	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
-	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
-	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3');
+	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1', '2020-02-20T20:20:24.242Z', '1.2.3.4'),
+	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2', NULL, NULL),
+	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3', NULL, NULL);
 
 INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
 VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
 	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
-	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1
+	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'), -- access via group1
+	('user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'jwe.jwe.jwe.vaultAAA.user1'); -- direct access to archived vault
+
+-- Emergency access: user1 is a member of vault 1's emergency access council (user2 is not)
+INSERT INTO "emergency_key_shares" ("vault_id", "council_member_id", "emergency_key_share")
+VALUES
+	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'jwe.jwe.jwe.emergency.user1');
+
+-- A pre-existing recovery process on vault 1, started by council member user1
+INSERT INTO "emergency_recovery_processes" ("id", "vault_id", "type", "details", "required_key_shares", "process_public_key")
+VALUES
+	('7E57C0DE-0000-4000-8000-000200000001', '7E57C0DE-0000-4000-8000-000100001111', 'COUNCIL_CHANGE', NULL, 2, 'processPublicKey');
+
+INSERT INTO "recovered_emergency_key_shares" ("recovery_process_id", "council_member_id", "process_private_key", "unrecovered_key_share", "recovered_key_share", "signed_process_info")
+VALUES
+	('7E57C0DE-0000-4000-8000-000200000001', 'user1', 'jwe.jwe.jwe.process.privatekey', 'jwe.jwe.jwe.unrecovered.share', NULL, NULL);
 
 -- DEPRECATED:
 INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")

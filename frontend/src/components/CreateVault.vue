@@ -4,7 +4,7 @@
   </div>
 
   <div v-else-if="state == State.EnterRecoveryKey">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterRecoveryKey.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterRecoveryKey.title') } ]" />
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -29,7 +29,7 @@
             <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
               {{ t('createVault.enterRecoveryKey.submit') }}
             </button>
-            <div v-if="onRecoverError != null">
+            <div v-if="onRecoverError">
               <p v-if="(onRecoverError instanceof FormValidationFailedError)" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
               <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
             </div>
@@ -40,8 +40,8 @@
   </div>
 
   <div v-else-if="state == State.EnterVaultDetails">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
+    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form ref="form" class="space-y-6" novalidate @submit.prevent="validateVaultDetails()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:w-full sm:max-w-lg">
@@ -60,25 +60,28 @@
           <div class="mt-6 px-4 space-y-6">
             <div>
               <label for="vaultName" class="block text-sm font-medium text-gray-700 text-left">{{ t('createVault.enterVaultDetails.vaultName') }}</label>
-              <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
+              <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?&quot;<>\|])+(?<![ \.])$" required />
               <p v-if="(onCreateError instanceof FormValidationFailedError)" class="text-sm text-red-900 text-left mt-2">
-                {{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, >, |
+                {{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, &gt;, |
               </p>
             </div>
 
             <div>
-              <label for="vaultDescription" class="block text-sm font-medium text-gray-700  text-left">
+              <label for="vaultDescription" class="block text-sm font-medium text-gray-700 text-left">
                 {{ t('createVault.enterVaultDetails.vaultDescription') }}
                 <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
               </label>
-              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="[^*<>&quot;]*" />
+              <p v-if="(onCreateError instanceof FormValidationFailedError)" class="text-sm text-red-900 text-left mt-2">
+                {{ t('createVault.error.illegalVaultDescription') }} *, &lt;, &gt;, "
+              </p>
             </div>
           </div>
 
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
               <div class="text-sm text-red-900 text-right sm:flex-1 sm:min-w-0">
-                <template v-if="onCreateError !== null">
+                <template v-if="onCreateError">
                   <p v-if="(onCreateError instanceof FormValidationFailedError)">
                     {{ t('createVault.error.formValidationFailed','') }} 
                   </p>
@@ -103,9 +106,63 @@
     </form>
   </div>
 
+  <div v-else-if="state == State.DefineEmergencyAccess && vaultKeys">
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
+    <form @submit.prevent="validateVaultEmergencyAccess()">
+      <div class="flex justify-center">
+        <div class="bg-white shadow-sm rounded-lg sm:w-full sm:max-w-lg">
+          <div class="mx-auto mt-5 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
+            <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+          </div>
+          <div class="mt-3 mb-3 px-4 sm:mt-5">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">
+              {{ t('createVault.emergencyAccessDetails.title') }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 text-center">
+                {{ settings?.allowChoosingEmergencyCouncil
+                  ? t('createVault.emergencyAccessDetails.description')
+                  : t('createVault.emergencyAccessDetails.description.adminDefined') }}
+              </p>
+            </div>
+            <EmergencyAccessSetup v-if="settings" ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil" />
+          </div>
+          <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
+              <div class="text-sm text-red-900 sm:flex-1 sm:min-w-0">
+                <template v-if="onCreateError">
+                  <p v-if="!(onCreateError instanceof PaymentRequiredError)">
+                    {{ t('common.unexpectedError', [onCreateError.message]) }}
+                  </p>
+                </template>
+              </div>
+              <div class="flex flex-col-reverse sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 shrink-0 mt-4 sm:mt-0">
+                <button
+                  type="submit"
+                  :disabled="!emergencyAccessSetup || emergencyAccessSetup.hasValidationErrors || processing"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                >
+                  {{ t('common.next') }}
+                </button>
+                <button
+                  type="button"
+                  class="mt-3 sm:mt-0 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm"
+                  @click="backToEnterVaultDetails()" 
+                >
+                  {{ t('common.previous') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
   <div v-else-if="state == State.ShowRecoveryKey">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="createVault()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:max-w-lg">
@@ -146,7 +203,7 @@
             </div>
             <div class="relative flex items-start text-left mt-5 sm:mt-6">
               <div class="flex h-5 items-center">
-                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
+                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required />
               </div>
               <div class="ml-3 text-sm">
                 <label for="confirmRecoveryKey" class="font-medium text-gray-700">{{ t('createVault.showRecoveryKey.confirmRecoveryKey') }}</label>
@@ -156,7 +213,7 @@
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
               <div class="text-sm text-red-900 sm:flex-1 sm:min-w-0">
-                <template v-if="onCreateError !== null">
+                <template v-if="onCreateError">
                   <p v-if="!(onCreateError instanceof PaymentRequiredError)">
                     {{ t('common.unexpectedError', [onCreateError.message]) }}
                   </p>
@@ -176,7 +233,7 @@
                 <button
                   type="button"
                   class="mt-3 sm:mt-0 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm"
-                  @click="backToEnterVaultDetails()" 
+                  @click="backToDefineEmergencyAccess()" 
                 >
                   {{ t('common.previous') }}
                 </button>
@@ -189,8 +246,8 @@
   </div>
 
   <div v-else-if="state == State.Finished">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <div class="flex justify-center">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
@@ -211,7 +268,7 @@
             <ArrowDownTrayIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('createVault.success.download') }}
           </button>
-          <p v-if="onDownloadTemplateError != null " class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
+          <p v-if="onDownloadTemplateError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
         </div>
         <div class="mt-2">
           <router-link to="/app/vaults" class="text-sm text-gray-500">
@@ -228,60 +285,75 @@ import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, CheckIcon, KeyIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
-import { onMounted, ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { PaymentRequiredError } from '../common/backend';
+import backend, { LicenseUserInfoDto, PaymentRequiredError, SettingsDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 import BreadcrumbNav from './BreadcrumbNav.vue';
+import EmergencyAccessSetup from './emergencyaccess/EmergencyAccessSetup.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
 
 enum State {
   Initial,
   EnterRecoveryKey,
   EnterVaultDetails,
+  DefineEmergencyAccess,
   ShowRecoveryKey,
   Finished
 }
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 class EmptyVaultTemplateError extends Error {
+
   constructor() {
     super('Vault template is empty.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
-const onCreateError = ref<Error | null >(null);
-const onRecoverError = ref<Error | null >(null);
-const onDownloadTemplateError = ref<Error | null>(null);
+const onCreateError = ref<Error>();
+const onRecoverError = ref<Error>();
+const onDownloadTemplateError = ref<Error>();
 
 const state = ref(State.Initial);
 const processing = ref(false);
+const settings = ref<SettingsDto>();
 const vaultName = ref('');
-const vaultDescription = ref<string | undefined>();
+const vaultDescription = ref<string>();
+const requiredEmergencyKeyShares = ref<number>(0);
+const emergencyKeyShares = ref<Record<string, string>>({});
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
 const vaultKeys = ref<VaultKeys>();
 const recoveryKey = ref<string>('');
 const vaultConfig = ref<VaultConfig>();
+const emergencyAccessSetup = ref<InstanceType<typeof EmergencyAccessSetup>>();
 
 const props = defineProps<{
   recover: boolean
 }>();
 
 onMounted(initialize);
+const licenseStatus = ref<LicenseUserInfoDto>();
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
 
 async function initialize() {
   if (props.recover) {
@@ -289,12 +361,14 @@ async function initialize() {
   } else {
     vaultKeys.value = await VaultKeys.create();
     recoveryKey.value = await vaultKeys.value.createRecoveryKey();
+    settings.value = await backend.settings.get();
     state.value = State.EnterVaultDetails;
   }
+  licenseStatus.value = await backend.license.getUserInfo();
 }
 
 async function validateRecoveryKey() {
-  onRecoverError.value = null;
+  onRecoverError.value = undefined;
   if (!form.value?.checkValidity()) {
     onRecoverError.value = new FormValidationFailedError();
     return;
@@ -302,14 +376,25 @@ async function validateRecoveryKey() {
   await recoverVault();
 }
 
+const getCurrentStates = computed(() => {
+  return isCommunityLicense.value || !settings.value?.enableEmergencyAccess ? communityCreateStates : allCreateStates;
+});
+
 const allCreateStates = [
+  State.EnterVaultDetails,
+  State.DefineEmergencyAccess,
+  State.ShowRecoveryKey,
+  State.Finished,
+];
+
+const communityCreateStates = [
   State.EnterVaultDetails,
   State.ShowRecoveryKey,
   State.Finished,
 ];
 
 async function recoverVault() {
-  onRecoverError.value = null;
+  onRecoverError.value = undefined;
   try {
     processing.value = true;
     vaultKeys.value = await VaultKeys.recover(recoveryKey.value);
@@ -323,7 +408,7 @@ async function recoverVault() {
 }
 
 async function validateVaultDetails() {
-  onCreateError.value = null;
+  onCreateError.value = undefined;
   if (!form.value?.checkValidity()) {
     onCreateError.value = new FormValidationFailedError();
     return;
@@ -331,7 +416,31 @@ async function validateVaultDetails() {
   if (props.recover) {
     await createVault();
   } else {
+    if (!isCommunityLicense.value && settings.value?.enableEmergencyAccess)
+      state.value = State.DefineEmergencyAccess;
+    else
+      state.value = State.ShowRecoveryKey;
+  }
+}
+
+async function validateVaultEmergencyAccess() {
+  onCreateError.value = undefined;
+  if (!emergencyAccessSetup.value || !vaultKeys.value) {
+    onCreateError.value = new Error('Invalid state.');
+    return;
+  }
+  
+  processing.value = true;
+  try {
+    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(vaultKeys.value);
+    requiredEmergencyKeyShares.value = requiredKeyShares;
+    emergencyKeyShares.value = keyShares;
     state.value = State.ShowRecoveryKey;
+  } catch (error) {
+    console.error('Validating emergency access settings failed.', error);
+    onCreateError.value = error instanceof Error ? error : new Error('Unexpected error');
+  } finally {
+    processing.value = false;
   }
 }
 
@@ -339,8 +448,15 @@ function backToEnterVaultDetails(){
   state.value = State.EnterVaultDetails;
 }
 
+function backToDefineEmergencyAccess(){
+  if (isCommunityLicense.value || !settings.value?.enableEmergencyAccess)
+    state.value = State.EnterVaultDetails;
+  else
+    state.value = State.DefineEmergencyAccess;
+}
+
 async function createVault() {
-  onCreateError.value = null;
+  onCreateError.value = undefined;
   try {
     if (!vaultKeys.value) {
       throw new Error('Invalid state');
@@ -354,6 +470,8 @@ async function createVault() {
       vaultId, 
       vaultName.value, 
       false, 
+      requiredEmergencyKeyShares.value ?? 0, 
+      emergencyKeyShares.value ?? {}, 
       vaultDescription.value);
     await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
     state.value = State.Finished;
@@ -372,10 +490,10 @@ async function copyRecoveryKey() {
 }
 
 async function downloadVaultTemplate() {
-  onDownloadTemplateError.value = null;
+  onDownloadTemplateError.value = undefined;
   try {
     const blob = await vaultConfig.value?.exportTemplate();
-    if (blob != null) {
+    if (blob !== undefined) {
       saveAs(blob, `${vaultName.value}.zip`);
     } else {
       throw new EmptyVaultTemplateError();

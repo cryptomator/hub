@@ -8,9 +8,6 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 @Entity
 @Table(name = "wot")
 public class WotEntry {
@@ -38,52 +35,7 @@ public class WotEntry {
 	}
 
 	@Embeddable
-	public static class Id implements Serializable {
-
-		@Column(name = "user_id")
-		private String userId;
-
-		@Column(name = "signer_id")
-		private String signerId;
-
-		public String getUserId() {
-			return userId;
-		}
-
-		public void setUserId(String userId) {
-			this.userId = userId;
-		}
-
-		public String getSignerId() {
-			return signerId;
-		}
-
-		public void setSignerId(String signerId) {
-			this.signerId = signerId;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o instanceof Id other) {
-				return Objects.equals(userId, other.userId) //
-						&& Objects.equals(signerId, other.signerId);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(userId, signerId);
-		}
-
-		@Override
-		public String toString() {
-			return "WotEntryId{" +
-					"userId='" + userId + '\'' +
-					", signerId='" + signerId + '\'' +
-					'}';
-		}
+	public record Id(@Column(name = "user_id") String userId, @Column(name = "signer_id") String signerId) {
 	}
 
 	@ApplicationScoped

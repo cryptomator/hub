@@ -2,8 +2,8 @@
   <nav class="bg-tertiary2">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 h-16 flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
       <div class="shrink-0 flex items-center">
-        <img src="/logo.svg" class="h-8" alt="Logo"/>
-        <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
+        <img src="/logo.svg" class="h-8" alt="Logo" />
+        <span class="font-headline font-bold text-white ml-2 pb-px">CRYPTOMATOR HUB</span>
       </div>
     </div>
   </nav>

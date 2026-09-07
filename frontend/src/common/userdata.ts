@@ -1,11 +1,11 @@
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import backend, { DeviceDto, UserDto } from './backend';
 import { BrowserKeys, UserKeys } from './crypto';
 import { JWEParser } from './jwe';
 
 class UserData {
+
   #me?: Promise<UserDto>;
-  #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
@@ -19,14 +19,6 @@ class UserData {
       this.#me = backend.users.me(true);
     }
     return this.#me;
-  }
-
-  public get meWithLastAccess(): Promise<UserDto> {
-    if (!this.#meWithLastAccess) {
-      this.#meWithLastAccess = backend.users.me(true, true);
-      this.#me = this.#meWithLastAccess;
-    }
-    return this.#meWithLastAccess;
   }
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
@@ -65,12 +57,12 @@ class UserData {
    * 
    * @see UserDto.ecdhPublicKey
    */
-  public get ecdhPublicKey(): Promise<Uint8Array> {
+  public get ecdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
     return this.me.then(me => {
       if (!me.ecdhPublicKey) {
         throw new Error('User not initialized.');
       }
-      return base64.parse(me.ecdhPublicKey);
+      return base64.decode(me.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
     });
   }
 
@@ -79,9 +71,9 @@ class UserData {
    * 
    * @see UserDto.ecdsaPublicKey
    */
-  public get ecdsaPublicKey(): Promise<Uint8Array | undefined> {
+  public get ecdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
     return this.me.then(me => {
-      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
+      return me.ecdsaPublicKey ? base64.decode(me.ecdsaPublicKey) as Uint8Array<ArrayBuffer> : undefined;
     });
   }
 
@@ -91,13 +83,6 @@ class UserData {
   public async reload() {
     this.#me = backend.users.me(true);
     this.#browserKeys = undefined;
-  }
-
-  /**
-   * Invalidates the cached user data with devices and last access and reloads it in the backend.
-   */
-  public async reloadAccess() {
-    this.#meWithLastAccess = backend.users.me(true, true);
   }
 
   /**
@@ -140,12 +125,14 @@ class UserData {
    * Decrypts the user keys using the device key stored in the currently used browser.
    * @returns The user's key pairs
    */
-  public async decryptUserKeysWithBrowser(): Promise<UserKeys> {
-    const browserKeys = await this.browserKeys;
+  public async decryptUserKeysWithBrowser(): Promise<UserKeys>;
+  public async decryptUserKeysWithBrowser(browserKeys: BrowserKeys, browser: DeviceDto): Promise<UserKeys>;
+  public async decryptUserKeysWithBrowser(browserKeys?: BrowserKeys, browser?: DeviceDto): Promise<UserKeys> {
+    browserKeys ??= await this.browserKeys;
     if (!browserKeys) {
       throw new Error('Browser keys not found.');
     }
-    const browser = await this.browser;
+    browser ??= await this.browser;
     if (!browser) {
       throw new Error('Device not initialized.');
     }
@@ -165,11 +152,12 @@ class UserData {
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKeys = await userKeys.encryptWithSetupCode(payload.setupCode);
       for (const device of me.devices) {
-        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
+        device.userPrivateKey = await userKeys.encryptForDevice(base64.decode(device.publicKey) as Uint8Array<ArrayBuffer>);
       }
       await backend.users.putMe(me);
     }
   }
+
 }
 
 const instance = new UserData();

@@ -1,14 +1,18 @@
 <template>
+  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mb-12">
+    {{ t('trial.paidFeature.description') }} <!-- TODO: link to feature comparison? -->
+  </ContentBanner>
+
   <div v-if="state == State.Loading">
-    <div v-if="onFetchError == null">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
-  <div v-else-if="state == State.ShowAuditLog">
+  <div v-else>
     <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-5 border-b border-gray-200 w-full">
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('auditLog.title') }}
@@ -63,7 +67,7 @@
                     <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
-                    <label class="block text-sm font-medium text-gray-700 flex items-center">
+                    <label for="event-type-filter" class="block text-sm font-medium text-gray-700 flex items-center">
                       {{ t('auditLog.type') }}
                       <button 
                         type="button" 
@@ -76,7 +80,7 @@
                       </button>
                     </label>
                   </div>
-                  <Listbox v-model="selectedEventTypes" as="div" multiple>
+                  <Listbox id="event-type-filter" v-model="selectedEventTypes" as="div" multiple>
                     <div class="relative w-88">
                       <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
                         <div class="flex flex-wrap gap-2">
@@ -159,6 +163,12 @@
                   </td>
                   <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="auditEvent" />
                   <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessSetup v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_SETUP'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessSettingsUpdated v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_SETTINGS_UPDATED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryStarted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_STARTED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryApproved v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_APPROVED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryCompleted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_COMPLETED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryAborted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_ABORTED'" :event="auditEvent" />
                   <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
@@ -177,7 +187,7 @@
               <tfoot class="bg-gray-50">
                 <tr>
                   <td colspan="3">
-                    <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+                    <nav v-if="state == State.ShowAuditLog" class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
                       <div class="hidden sm:block">
                         <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
                           <span class="font-medium">{{ paginationBegin }}</span>
@@ -193,42 +203,37 @@
                         </button>
                       </div>
                     </nav>
+                    <div v-else-if="state == State.PaymentRequired" class="items-center justify-between px-4 py-6 sm:px-6">
+                      <UpgradeLicenseBanner />
+                    </div>
                   </td>
                 </tr>
               </tfoot>
             </table>
           </div>
-          <p v-if="onFetchError != null" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
+          <p v-if="onFetchError" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
         </div>
       </div>
     </div>
-  </div>
-
-  <div v-else-if="state == State.PaymentRequired" class="flex flex-col justify-center items-center text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.paymentRequired.message') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.paymentRequired.description') }}</p>
-    <router-link v-slot="{ navigate }" to="/app/admin/settings" custom>
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
-        <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-        {{ t('auditLog.paymentRequired.openAdminSection') }}
-      </button>
-    </router-link>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon, TrashIcon, WrenchIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsEmergencyAccessSetup from './AuditLogDetailsEmergencyAccessSetup.vue';
+import AuditLogDetailsEmergencyAccessSettingsUpdated from './AuditLogDetailsEmergencyAccessSettingsUpdated.vue';
+import AuditLogDetailsEmergencyAccessRecoveryStarted from './AuditLogDetailsEmergencyAccessRecoveryStarted.vue';
+import AuditLogDetailsEmergencyAccessRecoveryApproved from './AuditLogDetailsEmergencyAccessRecoveryApproved.vue';
+import AuditLogDetailsEmergencyAccessRecoveryCompleted from './AuditLogDetailsEmergencyAccessRecoveryCompleted.vue';
+import AuditLogDetailsEmergencyAccessRecoveryAborted from './AuditLogDetailsEmergencyAccessRecoveryAborted.vue';
 import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
 import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
@@ -243,6 +248,9 @@ import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
+import config, { ConfigDto } from '../common/config';
+import ContentBanner from './ContentBanner.vue';
+import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 
 enum State {
   Loading,
@@ -252,9 +260,10 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
+const cfg = ref<ConfigDto>(config.get());
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 const startDate = ref(beginOfDate(new Date(new Date().setMonth(new Date().getMonth() - 1))));
 const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
@@ -262,16 +271,16 @@ const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
 const filterIsReset = computed(() =>
-  startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
-  endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
-  selectedEventTypes.value.length == 0
+  startDateFilter.value == startDate.value.toISOString().split('T')[0]
+  && endDateFilter.value == endDate.value.toISOString().split('T')[0]
+  && selectedEventTypes.value.length == 0
 );
-const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
+const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) !== undefined);
 const endDateFilterIsValid = computed(() => {
   const endDate = validateDateFilterValue(endDateFilter.value);
-  if (endDate == null) {
+  if (endDate === undefined) {
     return false;
-  } else if (endDate != null && startDateFilterIsValid.value) {
+  } else if (startDateFilterIsValid.value) {
     const startDate = new Date(startDateFilter.value);
     return startDate <= endDate;
   } else {
@@ -299,6 +308,12 @@ const eventTypeOptions = Object.fromEntries(
   Object.entries({
     DEVICE_REGISTER: t('auditLog.details.device.register'),
     DEVICE_REMOVE: t('auditLog.details.device.remove'),
+    EMERGENCY_ACCESS_SETUP: t('auditLog.details.emergencyaccess.setup'),
+    EMERGENCY_ACCESS_SETTINGS_UPDATED: t('auditLog.details.emergencyaccess.settingsUpdated'),
+    EMERGENCY_ACCESS_RECOVERY_STARTED: t('auditLog.details.emergencyaccess.recoveryStarted'),
+    EMERGENCY_ACCESS_RECOVERY_APPROVED: t('auditLog.details.emergencyaccess.recoveryApproved'),
+    EMERGENCY_ACCESS_RECOVERY_COMPLETED: t('auditLog.details.emergencyaccess.recoveryCompleted'),
+    EMERGENCY_ACCESS_RECOVERY_ABORTED: t('auditLog.details.emergencyaccess.recoveryAborted'),
     SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
     SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
     USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),
@@ -330,7 +345,7 @@ watch(selectedEventTypes, (newSelection, oldSelection) => {
 });
 
 async function fetchData(page: number = 0) {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     // Fetch one more event than the page size to determine if there is a next page
     const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
@@ -396,13 +411,13 @@ function endOfDate(date: Date): Date {
   return date;
 }
 
-function validateDateFilterValue(dateFilterValue: string): Date | null {
+function validateDateFilterValue(dateFilterValue: string): Date | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFilterValue)) {
-    return null;
+    return undefined;
   }
   const date = new Date(dateFilterValue);
-  if (isNaN(date.getTime())) {
-    return null;
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
   } else {
     return date;
   }

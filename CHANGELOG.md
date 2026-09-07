@@ -5,6 +5,211 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/cryptomator/hub/compare/1.4.7...2.0.0) (2026-09-07)
+
+### Added
+
+- User and group management (#376)
+- Emergency Access: Allow a council to restore access to a orphaned vault (#390)
+- Initial setup flow: fresh installations now show a setup screen on first start (#480)
+- Admins can enter and update the license key directly in the UI (#479)
+- Grace period of 9 days after license expiry: vaults stay accessible during this period and a banner prompts to renew the license (#485)
+- Allow admins to archive and unarchive any vault (#283, #430)
+- Disable users to exclude them from license seat count (#427, #428)
+- Emergency Access warning badge in the vault list
+- Archived badge for vaults in the user detail view
+- Display a banner to indicate that legacy devices are still in use (#420)
+- Show pictures of the groups in the Vaults member list (#375)
+- Published Helm chart, including a values schema (`values.schema.json`) and Rancher app questions (#406, #456)
+- Deployment examples for Docker Compose and Helm in `deploy/`
+- Added `DELETE /api/vaults/{vaultId}` api endpoint
+- Container image digests are published for reproducibility
+
+### Changed
+
+- Replaced the top navigation bar with a sidebar (#464)
+- Updated logo and favicon to the new Hub branding
+- Updated to Java 25 and Quarkus 3.33.2.1 LTS (#469)
+- Updated Keycloak to 26.7.3 (including Helm chart)
+- Helm chart now defaults to Postgres 18
+- Migrated from Micrometer to OpenTelemetry (#443)
+- OpenTelemetry SDK is now disabled by default (set `QUARKUS_OTEL_SDK_DISABLED=false` to enable)
+- Moved health check to separate service port (configurable via `QUARKUS_MANAGEMENT_PORT`) (#443)
+- Migrated frontend package management from npm to pnpm (#446)
+- Updated frontend toolchain to TypeScript 6, Vite 8 (Rolldown) and Node 26 (#482)
+- New Flyway base migration B28 plus incremental migration to align existing databases, including a migration path for Hub 1.3.4 (#467, #468)
+- Device "last access" is now stored as a column instead of being derived from audit log events (#466)
+- Keycloak realm roles are no longer persisted in Hub's database (#465)
+- Merged KeycloakAdminService into KeycloakAuthorityPuller (#463)
+- Audit log events containing raw JSON are now rendered as prettified details (#484)
+- Audit logs are now presented as a paid feature instead of an enterprise feature
+- Setting the license via `?token=` callback URL is no longer supported, use the new license dialog instead
+- License refresh is now session-based
+- Improved browser locale detection (#371)
+- Improved efficiency of keycloak-to-hub data sync (#377)
+- Improved efficiency of group-based access permission checks (#372)
+- Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
+- Improved user search
+- New users' initial passwords are now always temporary
+- Added `@NotNull` annotations to improve the generated OpenAPI type definitions
+- Updated translations
+
+### Fixed
+
+- Fixed "Claim Vault Ownership" failed for vaults created with Hub 1.4.x or older (#403)
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
+- Fixed "Last Access" field (user detail page or admin device listing) was last date of any unlock attempt (#466)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fix disabling users via user and group management
+- Admins can no longer delete or disable their own account or revoke their own `admin` role
+- Fixed Web of Trust setup
+- Fixed false "unsaved changes" indicator after saving Emergency Access settings (#425)
+- Fixed misplaced validation tooltip in the Emergency Access settings (#439)
+- Improved Emergency Access UX on mobile and touch devices (#424, #440, #442, #454)
+- Truncate long names in detail cards and breadcrumbs (#437)
+- Added client-side form validation during vault creation
+
+### Security
+
+- Fixed [Emergency Access Authorization Bypass](https://github.com/cryptomator/hub/security/advisories/GHSA-99p9-vhhj-2x98)
+- Fixed [Unauthorized Read/Delete of Recovery Process State](https://github.com/cryptomator/hub/security/advisories/GHSA-p94x-9592-5r73)
+- Fixed [Endpoints Accepts Invalid / non-JWE Key Material](https://github.com/cryptomator/hub/security/advisories/GHSA-hq3g-4c59-cgg7)
+- CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
+- CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
+
+## [2.0.0-rc3](https://github.com/cryptomator/hub/compare/2.0.0-rc2...2.0.0-rc3) (2026-08-29)
+
+### Added
+
+- Grace period of 9 days after license expiry: vaults stay accessible during this period and a banner prompts to renew the license (#485)
+- Added `DELETE /api/vaults/{vaultId}` api endpoint
+- Deployment examples for Docker Compose and Helm in `deploy/`
+- Helm chart now ships a values schema (`values.schema.json`) and Rancher app questions
+
+### Changed
+
+- Updated Keycloak to 26.7.2 (including Helm chart)
+- Helm chart now defaults to Postgres 18
+- Added `@NotNull` annotations to improve the generated OpenAPI type definitions
+
+### Fixed
+
+- Fixed "Claim Vault Ownership" failed for vaults created with Hub 1.4.x or older (#403)
+
+## [2.0.0-rc2](https://github.com/cryptomator/hub/compare/2.0.0-rc1...2.0.0-rc2) (2026-07-20)
+
+### Added
+
+- Initial setup flow: fresh installations now show a setup screen on first start (#480)
+- Admins can enter and update the license key directly in the UI (#479)
+
+### Changed
+
+- Updated logo and favicon to the new Hub branding
+- Audit log events containing raw JSON are now rendered as prettified details (#484)
+- Audit logs are now presented as a paid feature instead of an enterprise feature
+- OpenTelemetry SDK is now disabled by default (set `QUARKUS_OTEL_SDK_DISABLED=false` to enable)
+- Setting the license via `?token=` callback URL is no longer supported, use the new license dialog instead
+- Updated frontend toolchain to TypeScript 6, Vite 8 (Rolldown) and Node 26 (#482)
+
+## [2.0.0-rc1](https://github.com/cryptomator/hub/compare/1.5.0-beta4...2.0.0-rc1) (2026-07-07)
+
+### Added
+
+- Emergency Access warning badge in the vault list
+- Archived badge for vaults in the user detail view
+- Container image digests are published for reproducibility
+
+### Changed
+
+- Updated to Java 25 and Quarkus 3.33.2.1 LTS (#469)
+- Updated Keycloak to 26.6.4
+- Replaced the top navigation bar with a sidebar (#464)
+- Migrated from Micrometer to OpenTelemetry (#443)
+- Moved health check to separate service port (configurable via `QUARKUS_MANAGEMENT_PORT`) (#443)
+- Migrated frontend package management from npm to pnpm (#446)
+- New Flyway base migration B28 plus incremental migration to align existing databases, including a migration path for Hub 1.3.4 (#467, #468)
+- Device "last access" is now stored as a column instead of being derived from audit log events (#466)
+- Keycloak realm roles are no longer persisted in Hub's database (#465)
+- Merged KeycloakAdminService into KeycloakAuthorityPuller (#463)
+- Improved Helm chart and CI publishing workflow (#456)
+- License refresh is now session-based
+- Improved user search
+- New users' initial passwords are now always temporary
+- Updated translations
+
+### Fixed
+
+- "Claim Vault Ownership" failed with `Unknown letter: "="` for vaults created with Hub 1.4.x or older (#403)
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fix disabling users via user and group management
+- Admins can no longer delete or disable their own account or revoke their own `admin` role
+- Fixed Web of Trust setup
+- Fixed false "unsaved changes" indicator after saving Emergency Access settings (#425)
+- Fixed misplaced validation tooltip in the Emergency Access settings (#439)
+- Improved Emergency Access UX on mobile and touch devices (#424, #440, #442, #454)
+- Truncate long names in detail cards and breadcrumbs (#437)
+- Added client-side form validation during vault creation
+
+## [1.5.0-beta4](https://github.com/cryptomator/hub/compare/1.5.0-beta3...1.5.0-beta4)
+
+### Security
+
+- Fixed [Emergency Access Authorization Bypass](https://github.com/cryptomator/hub/security/advisories/GHSA-99p9-vhhj-2x98)
+- Fixed [Unauthorized Read/Delete of Recovery Process State](https://github.com/cryptomator/hub/security/advisories/GHSA-p94x-9592-5r73)
+- Fixed [Endpoints Accepts Invalid / non-JWE Key Material](https://github.com/cryptomator/hub/security/advisories/GHSA-hq3g-4c59-cgg7)
+
+## [1.5.0-beta3](https://github.com/cryptomator/hub/compare/1.5.0-beta2...1.5.0-beta3)
+
+### Fixed
+
+- Update Quarkus to 3.27.3.1 to address the authentication and authorisation bypass vulnerability (CVE-2026-39852)
+
+## [1.5.0-beta2](https://github.com/cryptomator/hub/compare/1.5.0-beta1...1.5.0-beta2)
+
+### Added
+
+- Allow admins to archive and unarchive any vault (#283, #430)
+- Disable users to exclude them from license seat count (#427, #428)
+- Display a banner to indicate that legacy devices are still in use, since these will be removed in the next major release (#420)
+
+### Fixed
+
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+
+## [1.5.0-beta1](https://github.com/cryptomator/hub/compare/1.4.6...1.5.0-beta1)
+
+### Added
+
+- User and group management (#376)
+- Emergency Access: Allow a council to restore access to a orphaned vault (#390)
+- Show pictures of the groups in the Vaults member list (#375)
+- Published Helm chart (#406, #456)
+
+### Changed
+
+- Replace the top navigation bar with a sidebar
+- Updated Keycloak to 26.7.2
+- Updated to Java 25
+- Update Quarkus to 3.33.2.1 LTS
+- Improved browser locale detection (#371)
+- Improved efficiency of keycloak-to-hub data sync (#377)
+- Improved efficiency of group-based access permission checks (#372)
+- Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
+- Move health check to separate service port (configurable via `QUARKUS_MANAGEMENT_PORT`)
+- New Flyway base migration B28 (https://github.com/cryptomator/hub/pull/467)
+
+### Security
+
+- CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
+- CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
+
+### Fixed
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fixed "Last Access" field (user detail page or admin device listing) was last date of any unlock attempt (https://github.com/cryptomator/hub/pull/466)
+
 ## [1.4.7](https://github.com/cryptomator/hub/compare/1.4.6...1.4.7)
 
 ### Fixed

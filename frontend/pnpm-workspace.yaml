@@ -1,0 +1,24 @@
+# pnpm workspace configuration.
+# explicit allowlist of dependencies running scripts on install.
+# only entries set to `true` here are permitted. Entries set to `false`
+# record an intentional review decision and silence a warning for that package.
+allowBuilds:
+  # esbuild's postinstall downloads the platform-specific native binary used
+  # by Vite (build/dev server) and Vitest (test transformer). Two versions
+  # are present transitively: 0.25.12 via @intlify/unplugin-vue-i18n, 0.27.7
+  # via vite/vitest. Publisher @evanw is the project maintainer.
+  esbuild: true
+
+# fail if any not allow-listed dependency executes a build script
+strictDepBuilds: true
+
+# refuse to install package versions younger than 3 days (=4320minutes).
+# exemptions go through `minimumReleaseAgeExclude`
+# with justification in the PR.
+minimumReleaseAge: 4320
+
+# refuse any *transitive* dependency resolved from a non-registry source
+# (git, tarball, github:, file:, link:, workspace:). Direct dependencies in
+# package.json may still use those protocols when intentional, but a
+# sub-dependency cannot smuggle one in.
+blockExoticSubdeps: true

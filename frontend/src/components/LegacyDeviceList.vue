@@ -1,14 +1,18 @@
 <template>
-  <div v-if="me == null">
-    <div v-if="onFetchError == null">
+  <div v-if="me === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
   <div v-if="me?.devices && me.devices.length > 0">
+    <ContentBanner type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+      {{ t('legacyDeviceBanner.user.description') }}
+    </ContentBanner>
+
     <h2 id="legacyDeviceListTitle" class="text-base font-semibold leading-6 text-gray-900">
       {{ t('legacyDeviceList.title') }}
     </h2>
@@ -39,7 +43,7 @@
                     <span class="inline-flex items-center gap-1">
                       {{ t('legacyDeviceList.lastAccess') }}
                       <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400" />
                       </div>
                     </span>
                   </th>
@@ -53,7 +57,7 @@
                   <tr>
                     <td class="py-4 text-sm text-gray-500">
                       <div class="grid place-items-center h-12 aspect-square">
-                        <span v-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                        <span v-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                           <ComputerDesktopIcon class="size-5" aria-hidden="true" />
                         </span>
                       </div>
@@ -79,7 +83,7 @@
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
-                  <tr v-if="onRemoveDeviceError[device.id] != null" class="bg-red-50">
+                  <tr v-if="onRemoveDeviceError[device.id]" class="bg-red-50">
                     <td colspan="5" class="px-6 py-3 text-center text-xs font-medium text-red-500 uppercase tracking-wider">
                       {{ t('common.unexpectedError', [onRemoveDeviceError[device.id].message]) }}
                     </td>
@@ -100,20 +104,21 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import userdata from '../common/userdata';
+import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const onFetchError = ref<Error | null>();
-const onRemoveDeviceError = ref< {[id: string]: Error} >({});
+const onFetchError = ref<Error>();
+const onRemoveDeviceError = ref<Record<string, Error>>({});
 
 onMounted(async () => {
   await fetchData();
 });
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.meWithLegacyDevicesAndLastAccess;
   } catch (error) {

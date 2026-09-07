@@ -23,9 +23,23 @@ export type ConfigDto = {
   keycloakTokenEndpoint: string;
   serverTime: string;
   apiLevel: number;
+  entitlements: {
+    seats: number;
+    showTrialHint: boolean;
+    auditLogRetentionDays: number;
+    emergencyAccessEnabled: boolean;
+    keycloakAccessEnabled: boolean;
+    iosLicense: string;
+    androidLicense: string;
+    desktopLicense: string;
+  };
+  billingUrl: string;
+  licenseApiUrl: string;
+  licenseSetupRequired: boolean;
 };
 
 class ConfigWrapper {
+
   private data: ConfigDto;
   readonly serverTimeDiff: number;
 
@@ -47,9 +61,11 @@ class ConfigWrapper {
     return this.data;
   }
 
-  public async reload(): Promise<void> {
+  public async reload(): Promise<ConfigDto> {
     this.data = await ConfigWrapper.loadConfig();
+    return this.data;
   }
+
 }
 
 const config = await ConfigWrapper.build();

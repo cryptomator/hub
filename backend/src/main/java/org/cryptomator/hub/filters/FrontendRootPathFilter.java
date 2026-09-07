@@ -22,9 +22,12 @@ import java.io.PrintWriter;
  */
 public class FrontendRootPathFilter extends HttpFilter {
 
+	private final Provider<String> publicRootPath;
+
 	@Inject
-	@ConfigProperty(name = "hub.public-root-path", defaultValue = "")
-	Provider<String> publicRootPath;
+	FrontendRootPathFilter(@ConfigProperty(name = "hub.public-root-path", defaultValue = "") Provider<String> publicRootPath) {
+		this.publicRootPath = publicRootPath;
+	}
 
 	@Override
 	protected void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {

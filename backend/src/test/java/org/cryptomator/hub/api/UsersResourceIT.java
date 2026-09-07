@@ -9,9 +9,15 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
+import org.cryptomator.hub.keycloak.RealmRole;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -21,11 +27,13 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -33,13 +41,14 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /users")
-public class UsersResourceIT {
+class UsersResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -47,8 +56,11 @@ public class UsersResourceIT {
 	@InjectMock
 	LicenseHolder licenseHolder;
 
+	@InjectMock
+	KeycloakAuthorityPuller keycloakAuthorityPuller;
+
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -58,18 +70,18 @@ public class UsersResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	public class AsAuthorzedUser1 {
+	class AsAuthorzedUser1 {
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
-		public void testSyncMe() {
+		void testSyncMe() {
 			when().put("/users/me")
 					.then().statusCode(201);
 		}
 
 		@Test
 		@DisplayName("GET /users/me returns 200")
-		public void testGetMe1() {
+		void testGetMe1() {
 			when().get("/users/me")
 					.then().statusCode(200)
 					.body("id", is("user1"))
@@ -78,35 +90,20 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me?withDevices=true returns 200")
-		public void testGetMe2() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30001, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'device1', '1.2.3.4');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'legacyDevice1', '1.2.3.4');
-						""");
-			}
-
+		void testGetMe2() {
 			when().get("/users/me?withDevices=true")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.find { it.id == 'device1' }.lastAccessTime", nullValue())
-					.body("devices.find { it.id == 'device1' }.lastIpAddress", nullValue())
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'device1' }.legacyDevice", equalTo(false))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue())
 					.body("devices.find { it.id == 'legacyDevice1' }", nullValue());
-
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "audit_event" WHERE id=30000;
-						DELETE FROM "audit_event" WHERE id=30001;
-						""");
-			}
 		}
 
 		@Test
 		@DisplayName("GET /users/me-with-legacy-devices-and-access returns 200")
-		public void testGetMe3() throws SQLException {
+		void testGetMe3() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
@@ -132,20 +129,12 @@ public class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users returns 200")
-		public void testGetAll() {
-			when().get("/users")
-					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
-		}
-
-		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200")
-		public void testPostAccessTokens1() {
+		void testPostAccessTokens1() {
 			var body = """
 					{
 						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
-						"7E57C0DE-0000-4000-8000-BADBADBADBAD": "noSuchVault"
+						"7E57C0DE-0000-4000-8000-BADBADBADBAD": "jwe.jwe.jwe.noSuchVault.token"
 					},
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -155,7 +144,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
-		public void testPostAccessTokens2() {
+		void testPostAccessTokens2() {
 			given().contentType(ContentType.JSON).body("{}")
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(200);
@@ -163,8 +152,21 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
-		public void testPostAccessTokens3() {
+		void testPostAccessTokens3() {
 			given().contentType(ContentType.JSON).body("")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 400 for syntactically invalid token (not a JWE)")
+		void testPostAccessTokens4() {
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-000100001111": "not-a-jwe"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(400);
 		}
@@ -173,7 +175,7 @@ public class UsersResourceIT {
 
 	@Nested
 	@DisplayName("As unauthenticated user")
-	public class AsAnonymous {
+	class AsAnonymous {
 
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
@@ -182,7 +184,7 @@ public class UsersResourceIT {
 				"PUT, /users/me",
 				"GET, /users"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
@@ -193,12 +195,12 @@ public class UsersResourceIT {
 	@DisplayName("Test Web of Trust")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class WebOfTrust {
+	class WebOfTrust {
 
 		private Instant testStart;
 
 		@BeforeAll
-		public void setup() throws SQLException {
+		void setup() throws SQLException {
 			testStart = Instant.now();
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -219,7 +221,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Trusts998() {
+		void test997Trusts998() {
 			given().contentType(ContentType.TEXT).body("997 trusts 998")
 					.when().put("/users/trusted/user998")
 					.then().statusCode(204);
@@ -232,7 +234,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts999() {
+		void test998Trusts999() {
 			given().contentType(ContentType.TEXT).body("998 trusts 999")
 					.when().put("/users/trusted/user999")
 					.then().statusCode(204);
@@ -245,7 +247,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts997() {
+		void test998Trusts997() {
 			given().contentType(ContentType.TEXT).body("998 trusts 997")
 					.when().put("/users/trusted/user997")
 					.then().statusCode(204);
@@ -258,7 +260,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void testGetTrustedBy997() {
+		void testGetTrustedBy997() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -274,7 +276,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void testGetTrustedBy998() {
+		void testGetTrustedBy998() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -290,7 +292,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void testGetTrustedBy999() {
+		void testGetTrustedBy999() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(0));
@@ -303,7 +305,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets998() {
+		void test997Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998"));
@@ -316,7 +318,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets999() {
+		void test997Gets999() {
 			given().when().get("/users/trusted/user999")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998", "998 trusts 999"));
@@ -329,7 +331,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void test999Gets998() {
+		void test999Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(404);
 		}
@@ -338,8 +340,9 @@ public class UsersResourceIT {
 		@Order(4)
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
-		public void testGetAuditLogEntries() {
-			Mockito.doReturn(true).when(licenseHolder).isSet();
+		void testGetAuditLogEntries() {
+			var entitlements = HubLicenseEntitlements.create().withAuditLogRetentionDays(7L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
 			given().param("startDate", DateTimeFormatter.ISO_INSTANT.format(testStart))
@@ -352,12 +355,436 @@ public class UsersResourceIT {
 
 
 		@AfterAll
-		public void tearDown() throws SQLException {
+		void tearDown() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE "id" IN ('user997', 'user998', 'user999');
 						""");
 			}
+		}
+
+	}
+
+	@Nested
+	@DisplayName("User CRUD Operations")
+	@TestSecurity(user = "Admin User", roles = {"admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "admin")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	class UserCrudOperations {
+
+		@BeforeEach
+		void resetMocks() {
+			Mockito.reset(keycloakAuthorityPuller);
+		}
+
+		@BeforeAll
+		void setup() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('newUserId123', 'USER', 'newuser');
+						INSERT INTO "user_details" ("id") VALUES ('newUserId123');
+						""");
+			}
+		}
+
+		@AfterAll
+		void tearDown() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "authority" WHERE "id" = 'newUserId123';
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("GET /users returns 200")
+		void testGetAll() {
+			when().get("/users")
+					.then().statusCode(200)
+					.body("id", hasItems("user1", "user2"));
+		}
+
+		@Test
+		@DisplayName("POST /users returns 201 when user created successfully")
+		void testCreateUserSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("newUserId123");
+			userRep.setUsername("newuser");
+			userRep.setEmail("newuser@example.com");
+
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.eq("newuser"),
+					Mockito.eq("newuser@example.com"),
+					Mockito.eq("New"),
+					Mockito.eq("User"),
+					Mockito.eq("password123"),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "newuser@example.com",
+						"firstName": "New",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@DisplayName("POST /users assigns realm roles when provided")
+		void testCreateUserWithRealmRolesSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("newUserId123");
+			userRep.setUsername("newuser");
+			userRep.setEmail("newuser@example.com");
+
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.eq("newuser"),
+					Mockito.eq("newuser@example.com"),
+					Mockito.eq("New"),
+					Mockito.eq("User"),
+					Mockito.eq("password123"),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "newuser@example.com",
+						"firstName": "New",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": ["create-vaults"]
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(201);
+
+			Mockito.verify(keycloakAuthorityPuller).updateUserRoles("newUserId123", Set.of(RealmRole.CREATE_VAULTS));
+		}
+
+		@Test
+		@DisplayName("POST /users returns 409 when user already exists")
+		void testCreateUserConflict() {
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.any()
+			)).thenThrow(new AlreadyExistsException());
+
+			var body = """
+					{
+						"name": "existinguser",
+						"email": "new@example.com",
+						"firstName": "Test",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("POST /users returns 500 when Keycloak user operation fails")
+		void testCreateUserOperationFailed() {
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.any()
+			)).thenThrow(new IllegalStateException());
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "new@example.com",
+						"firstName": "Test",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(500);
+		}
+
+		@Test
+		@DisplayName("POST /users returns 400 for invalid body")
+		void testCreateUserInvalidBody() {
+			var body = """
+					{
+						"username": "newuser"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns 200 for existing user with device last access")
+		void testGetUserSuccess() {
+			when().get("/users/user1")
+					.then().statusCode(200)
+					.body("id", is("user1"))
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue());
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns 404 for non-existing user")
+		void testGetUserNotFound() {
+			when().get("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns realm roles fetched from Keycloak")
+		void testGetUserReturnsRoles() {
+			Mockito.when(keycloakAuthorityPuller.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
+
+			when().get("/users/user1")
+					.then().statusCode(200)
+					.body("realmRoles", containsInAnyOrder("user", "admin"));
+
+			Mockito.verify(keycloakAuthorityPuller).realmRolesOf("user1");
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 200 when update successful")
+		void testUpdateUserSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("user1");
+			userRep.setEmail("email1");
+			userRep.setUsername("User Name 1");
+			userRep.setFirstName("Updated");
+			userRep.setLastName("Name");
+
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("user1"),
+					Mockito.isNull(),
+					Mockito.eq("Updated"),
+					Mockito.eq("Name"),
+					Mockito.isNull(),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/user1")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 404 for non-existing user")
+		void testUpdateUserNotFound() {
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("nonexistent"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new NotFoundException());
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 403 for federated user")
+		void testUpdateUserForbidden() {
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("federatedUser"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new ForbiddenException());
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/federatedUser")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 409 when email already exists")
+		void testUpdateUserConflict() {
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("user1"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new AlreadyExistsException());
+
+			var body = """
+					{
+						"email": "existing@example.com",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/user1")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 409 when revoking own admin role")
+		void testUpdateOwnAdminRoleConflict() {
+			var body = """
+					{
+						"firstName": "Admin",
+						"lastName": "User",
+						"realmRoles": ["user"]
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/admin")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).updateUser(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).updateUserRoles(Mockito.anyString(), Mockito.any());
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} passes the guard when updating own account while keeping admin role")
+		void testUpdateOwnAccountKeepingAdminRole() {
+			var userRep = new UserRepresentation();
+			userRep.setId("admin");
+			userRep.setUsername("Admin User");
+			Mockito.doReturn(userRep).when(keycloakAuthorityPuller).updateUser(Mockito.eq("admin"), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+
+			var body = """
+					{
+						"firstName": "Admin",
+						"lastName": "User",
+						"realmRoles": ["user", "admin"]
+					}
+					""";
+			// the self-guard is not triggered (admin role retained); the request proceeds past it and only 404s
+			// because there is no "admin" user in the test DB, proving the role update was actually attempted.
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/admin")
+					.then().statusCode(404);
+
+			Mockito.verify(keycloakAuthorityPuller).updateUserRoles("admin", Set.of(RealmRole.USER, RealmRole.ADMIN));
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 204 when disabled successfully")
+		void testSetUserEnabledSuccess() {
+			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("user1", false);
+
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/user1/enabled")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAuthorityPuller).setUserEnabled("user1", false);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 409 when disabling own account")
+		void testDisableOwnAccountConflict() {
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/admin/enabled")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).setUserEnabled(Mockito.anyString(), Mockito.anyBoolean());
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 204 when enabling own account")
+		void testEnableOwnAccountSuccess() {
+			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("admin", true);
+
+			given().contentType(ContentType.TEXT).body("true")
+					.when().put("/users/admin/enabled")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAuthorityPuller).setUserEnabled("admin", true);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
+		void testDeleteUserSuccess() {
+			Mockito.doNothing().when(keycloakAuthorityPuller).deleteUser("mockedUserId");
+
+			when().delete("/users/mockedUserId")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAuthorityPuller).deleteUser("mockedUserId");
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
+		void testDeleteUserNotFound() {
+			Mockito.doThrow(new NotFoundException())
+					.when(keycloakAuthorityPuller).deleteUser("nonexistent");
+
+			when().delete("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 403 for federated user")
+		void testDeleteUserForbidden() {
+			Mockito.doThrow(new ForbiddenException())
+					.when(keycloakAuthorityPuller).deleteUser("federatedUser");
+
+			when().delete("/users/federatedUser")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 409 when deleting own account")
+		void testDeleteOwnAccountConflict() {
+			when().delete("/users/admin")
+					.then().statusCode(409);
+
+			Mockito.verify(keycloakAuthorityPuller, Mockito.never()).deleteUser(Mockito.anyString());
 		}
 
 	}

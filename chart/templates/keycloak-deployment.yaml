@@ -1,0 +1,133 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+spec:
+  replicas: {{ .Values.keycloak.replicas }}
+  {{- if eq (int .Values.keycloak.replicas) 1 }}
+  # Single-replica, cache-bearing service: replace the pod outright instead of briefly running two.
+  # Avoids the new pod trying to JGroups-JOIN the old (terminating) one during upgrades (long startup stall).
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak
+  template:
+    metadata:
+      labels:
+        {{- include "cryptomator-hub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak
+      annotations:
+        checksum/keycloak-secret: {{ include (print $.Template.BasePath "/keycloak-secret.yaml") . | sha256sum }}
+        checksum/keycloak-config: {{ include (print $.Template.BasePath "/keycloak-configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eux
+              until nc -zw 10 {{ include "cryptomator-hub.fullname" . }}-service-pg {{ .Values.postgres.service.port }}; do
+                echo "waiting for postgres..."
+              done
+      {{- end }}
+      containers:
+        - name: keycloak
+          image: "ghcr.io/cryptomator/keycloak:{{ .Values.keycloak.image.tag | default "26.7.3" }}"
+          imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
+          command:
+            - /opt/keycloak/bin/kc.sh
+            - start
+            - --optimized
+            - --import-realm
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: management
+              containerPort: 9000
+              protocol: TCP
+          env:
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+                  key: kc_db_password
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+                  key: kc_admin_password
+          envFrom:
+            - configMapRef:
+                name: {{ include "cryptomator-hub.fullname" . }}-config-kc
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: management
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: management
+            periodSeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: management
+            periodSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.keycloak.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+              subPath: tmp
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: realm
+              mountPath: /opt/keycloak/data/import/realm.json
+              subPath: realm.json
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: realm
+          secret:
+            secretName: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+            items:
+              - key: realm.json
+                path: realm.json
+{{- end }}

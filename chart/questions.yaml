@@ -1,0 +1,133 @@
+# Rancher UI form (https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/helm-charts-in-rancher/create-apps).
+# Only the bare minimum to get a working installation is asked here; everything else can be set in the YAML editor (see values.yaml).
+questions:
+  # --- General ---
+  - variable: urls.hub.public
+    label: Hub URL
+    description: "Public URL under which users reach Hub, e.g. https://hub.example.com or https://example.com/hub"
+    type: string
+    required: true
+    group: General
+  - variable: urls.kc.public
+    label: Keycloak URL
+    description: "Public URL of Keycloak (the bundled one, or your existing server), e.g. https://kc.example.com or https://example.com/kc"
+    type: string
+    required: true
+    group: General
+  - variable: ingress.controller
+    label: Ingress controller
+    description: "nginx (RKE/RKE2 default) or traefik (K3s default)"
+    type: enum
+    options:
+      - nginx
+      - traefik
+    default: nginx
+    required: true
+    group: General
+  # Rancher has no "optional secret" input, so the checkbox only toggles the two text fields; the chart acts on the fields alone.
+  - variable: ingress.certificate.attach
+    label: Attach a certificate to the Ingress
+    description: "Leave off if your ingress controller or load balancer already terminates TLS (e.g. Traefik with a global ACME resolver). Turn on to use cert-manager or an existing TLS secret."
+    type: boolean
+    default: false
+    group: General
+    show_subquestion_if: true
+    subquestions:
+      - variable: ingress.certificate.clusterIssuer
+        label: cert-manager ClusterIssuer
+        description: "Name of a ClusterIssuer, e.g. letsencrypt. cert-manager then obtains a certificate for the hosts above. Leave blank to use an existing secret instead."
+        type: string
+      - variable: ingress.certificate.secretName
+        label: TLS secret name
+        description: "Existing TLS secret in the target namespace covering both hosts. With a ClusterIssuer this is optional and names the secret cert-manager creates."
+        type: string
+  - variable: hub.admin.password
+    label: Hub admin password
+    description: "Initial password of the Hub \"admin\" user (must be changed on first login). Leave blank to auto-generate; the notes shown after install explain how to retrieve it."
+    type: password
+    group: General
+    show_if: "keycloak.enabled=true"
+
+  # --- PostgreSQL ---
+  - variable: postgres.enabled
+    label: Deploy bundled PostgreSQL
+    description: "Uncheck to use an existing PostgreSQL server instead."
+    type: boolean
+    default: true
+    group: PostgreSQL
+    show_subquestion_if: false
+    subquestions:
+      - variable: hub.database.jdbcUrl
+        label: Hub database JDBC URL
+        description: "e.g. jdbc:postgresql://db.example.com:5432/hub"
+        type: string
+        required: true
+      - variable: hub.database.username
+        label: Hub database user
+        type: string
+        default: hub
+        required: true
+      - variable: hub.database.password
+        label: Hub database password
+        type: password
+        required: true
+      # The bundled Keycloak needs a second, separate database on the external server.
+      - variable: keycloak.database.jdbcUrl
+        label: Keycloak database JDBC URL
+        description: "Second, separate database for the bundled Keycloak, e.g. jdbc:postgresql://db.example.com:5432/keycloak"
+        type: string
+        required: true
+        show_if: "keycloak.enabled=true"
+      - variable: keycloak.database.username
+        label: Keycloak database user
+        type: string
+        default: keycloak
+        required: true
+        show_if: "keycloak.enabled=true"
+      - variable: keycloak.database.password
+        label: Keycloak database password
+        type: password
+        required: true
+        show_if: "keycloak.enabled=true"
+  - variable: postgres.storage.storageClassName
+    label: Storage class
+    description: "Leave blank for the cluster default"
+    type: storageclass
+    group: PostgreSQL
+    show_if: "postgres.enabled=true"
+  - variable: postgres.storage.size
+    label: Volume size
+    type: string
+    default: 10Gi
+    group: PostgreSQL
+    show_if: "postgres.enabled=true"
+
+  # --- Keycloak ---
+  - variable: keycloak.enabled
+    label: Deploy bundled Keycloak
+    description: "Uncheck to use an existing Keycloak. You then need to import Hub's realm into it manually (see README)."
+    type: boolean
+    default: true
+    group: Keycloak
+    show_subquestion_if: false
+    subquestions:
+      - variable: hub.config.keycloakRealm
+        label: Realm name
+        type: string
+        default: cryptomator
+        required: true
+      - variable: hub.secrets.systemClientSecret
+        label: System client secret
+        description: "Client secret of the \"cryptomatorhub-system\" client in your realm"
+        type: password
+        required: true
+      - variable: urls.kc.clusterInternal
+        label: In-cluster Keycloak URL (optional)
+        description: "URL Hub uses to reach Keycloak from inside the cluster, if different from the public URL"
+        type: string
+  - variable: keycloak.admin.password
+    label: Keycloak admin password
+    description: "Leave blank to auto-generate"
+    type: password
+    group: Keycloak
+    show_if: "keycloak.enabled=true"

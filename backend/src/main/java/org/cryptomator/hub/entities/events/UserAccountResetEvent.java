@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -15,13 +16,13 @@ public class UserAccountResetEvent extends AuditEvent {
 	public static final String TYPE = "USER_ACCOUNT_RESET";
 
 	@Column(name = "reset_by")
-	private String resetBy;
+	private @Nullable String resetBy;
 
-	public String getResetBy() {
+	public @Nullable String getResetBy() {
 		return resetBy;
 	}
 
-	public void setResetBy(String resetBy) {
+	public void setResetBy(@Nullable String resetBy) {
 		this.resetBy = resetBy;
 	}
 

@@ -1,19 +1,23 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
 import org.hibernate.annotations.Immutable;
+import org.jspecify.annotations.Nullable;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -22,13 +26,16 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -45,6 +52,17 @@ import java.util.stream.Stream;
 				FROM Vault v
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
 				WHERE a.id.role = :role
+				""")
+@NamedQuery(name = "Vault.recoverableByUser",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				WHERE KEY(v.emergencyKeyShares) = :councilMemberId
+				UNION
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN EmergencyRecoveryProcess process ON v.id = process.vaultId
+				WHERE KEY(process.recoveredKeyShares) = :councilMemberId
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
@@ -67,14 +85,6 @@ public class Vault {
 	)
 	private Set<Authority> directMembers = new HashSet<>();
 
-	@ManyToMany
-	@Immutable
-	@JoinTable(name = "effective_vault_access",
-			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
-	)
-	private Set<Authority> effectiveMembers = new HashSet<>();
-
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
 	private Set<AccessToken> accessTokens = new HashSet<>();
 
@@ -82,28 +92,40 @@ public class Vault {
 	private String name;
 
 	@Column(name = "salt")
-	private String salt;
+	private @Nullable String salt;
 
 	@Column(name = "iterations")
-	private Integer iterations;
+	private @Nullable Integer iterations;
 
 	@Column(name = "masterkey")
-	private String masterkey;
+	private @Nullable String masterkey;
 
 	@Column(name = "auth_pubkey")
-	private String authenticationPublicKey;
+	private @Nullable String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	private String authenticationPrivateKey;
+	private @Nullable String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
 
 	@Column(name = "description")
-	private String description;
+	private @Nullable String description;
 
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
+
+	@Column(name = "required_emergency_key_shares", nullable = false)
+	private int requiredEmergencyKeyShares;
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(
+			name = "emergency_key_shares",
+			joinColumns = @JoinColumn(name = "vault_id")
+	)
+	@MapKeyColumn(name = "council_member_id")
+	@Column(name = "emergency_key_share")
+	private Map<String, String> emergencyKeyShares = new HashMap<>();
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
@@ -119,7 +141,7 @@ public class Vault {
 			} else {
 				return Optional.empty();
 			}
-		} catch (InvalidKeySpecException e) {
+		} catch (InvalidKeySpecException _) {
 			return Optional.empty();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
@@ -138,18 +160,6 @@ public class Vault {
 		return directMembers;
 	}
 
-	public void setDirectMembers(Set<Authority> directMembers) {
-		this.directMembers = directMembers;
-	}
-
-	public Set<Authority> getEffectiveMembers() {
-		return effectiveMembers;
-	}
-
-	public void setEffectiveMembers(Set<Authority> effectiveMembers) {
-		this.effectiveMembers = effectiveMembers;
-	}
-
 	public Set<AccessToken> getAccessTokens() {
 		return accessTokens;
 	}
@@ -166,43 +176,43 @@ public class Vault {
 		this.name = name;
 	}
 
-	public String getSalt() {
+	public @Nullable String getSalt() {
 		return salt;
 	}
 
-	public void setSalt(String salt) {
+	public void setSalt(@Nullable String salt) {
 		this.salt = salt;
 	}
 
-	public Integer getIterations() {
+	public @Nullable Integer getIterations() {
 		return iterations;
 	}
 
-	public void setIterations(Integer iterations) {
+	public void setIterations(@Nullable Integer iterations) {
 		this.iterations = iterations;
 	}
 
-	public String getMasterkey() {
+	public @Nullable String getMasterkey() {
 		return masterkey;
 	}
 
-	public void setMasterkey(String masterkey) {
+	public void setMasterkey(@Nullable String masterkey) {
 		this.masterkey = masterkey;
 	}
 
-	public void setAuthenticationPublicKey(String authenticationPublicKey) {
+	public void setAuthenticationPublicKey(@Nullable String authenticationPublicKey) {
 		this.authenticationPublicKey = authenticationPublicKey;
 	}
 
-	public String getAuthenticationPrivateKey() {
+	public @Nullable String getAuthenticationPrivateKey() {
 		return authenticationPrivateKey;
 	}
 
-	public String getAuthenticationPublicKey() {
+	public @Nullable String getAuthenticationPublicKey() {
 		return authenticationPublicKey;
 	}
 
-	public void setAuthenticationPrivateKey(String authenticationPrivateKey) {
+	public void setAuthenticationPrivateKey(@Nullable String authenticationPrivateKey) {
 		this.authenticationPrivateKey = authenticationPrivateKey;
 	}
 
@@ -214,11 +224,11 @@ public class Vault {
 		this.creationTime = creationTime;
 	}
 
-	public String getDescription() {
+	public @Nullable String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
@@ -228,6 +238,23 @@ public class Vault {
 
 	public void setArchived(boolean archived) {
 		this.archived = archived;
+	}
+
+	public int getRequiredEmergencyKeyShares() {
+		return requiredEmergencyKeyShares;
+	}
+
+	public void setRequiredEmergencyKeyShares(int requiredEmergencyKeyShares) {
+		this.requiredEmergencyKeyShares = requiredEmergencyKeyShares;
+	}
+
+	public Map<String, String> getEmergencyKeyShares() {
+		return Map.copyOf(emergencyKeyShares);
+	}
+
+	public void setEmergencyKeyShares(Map<String, String> emergencyKeyShares) {
+		this.emergencyKeyShares.clear();
+		this.emergencyKeyShares.putAll(emergencyKeyShares);
 	}
 
 	@Override
@@ -240,12 +267,14 @@ public class Vault {
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
 				&& Objects.equals(masterkey, vault.masterkey)
-				&& Objects.equals(archived, vault.archived);
+				&& Objects.equals(archived, vault.archived)
+				&& Objects.equals(requiredEmergencyKeyShares, vault.requiredEmergencyKeyShares)
+				&& Objects.equals(emergencyKeyShares, vault.emergencyKeyShares);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived, requiredEmergencyKeyShares, emergencyKeyShares);
 	}
 
 	@Override
@@ -261,6 +290,8 @@ public class Vault {
 				", masterkey='" + masterkey + '\'' +
 				", authenticationPublicKey='" + authenticationPublicKey + '\'' +
 				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
+				", requiredEmergencyKeyShares='" + requiredEmergencyKeyShares + '\'' +
+				", emergencyKeyShares=" + emergencyKeyShares.keySet().stream().collect(Collectors.joining(", ")) +
 				'}';
 	}
 
@@ -268,15 +299,30 @@ public class Vault {
 	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
 
 		public Stream<Vault> findAccessibleByUser(String userId) {
-			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+			return find("#Vault.accessibleByUser", Map.of("userId", userId)).stream();
+		}
+
+		public Stream<Vault> findRecoverable(String userId) {
+			return find("#Vault.recoverableByUser", Map.of("councilMemberId", userId)).stream();
 		}
 
 		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+			return find("#Vault.accessibleByUserAndRole", Map.of("userId", userId, "role", role)).stream();
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Vault.allInList", Map.of("ids", batch)).stream());
+		}
+
+		@Transactional(Transactional.TxType.REQUIRED)
+		public void deleteEmergencyKeySharesForUser(String userId) {
+			var adjustedVaults = findRecoverable(userId).map(v -> {
+				v.emergencyKeyShares.remove(userId);
+				return v;
+			});
+			persist(adjustedVaults);
 		}
 	}
 }

@@ -35,7 +35,7 @@
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
-                  <div v-if="onAuthenticationError != null">
+                  <div v-if="onAuthenticationError">
                     <p v-if="onAuthenticationError instanceof FormValidationFailedError" class="text-sm text-red-900">
                       {{ t('claimVaultOwnershipDialog.error.formValidationFailed') }}
                     </p>
@@ -65,16 +65,18 @@ import { VaultDto } from '../common/backend';
 import { UnwrapKeyError, VaultKeys } from '../common/crypto';
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
-const onAuthenticationError = ref<Error|null>();
+const onAuthenticationError = ref<Error>();
 
 const open = ref(false);
 const password = ref('');
@@ -97,7 +99,7 @@ function show() {
 }
 
 async function authenticateVaultAdmin() {
-  onAuthenticationError.value = null;
+  onAuthenticationError.value = undefined;
   try {
     if (!form.value?.checkValidity()) {
       throw new FormValidationFailedError();

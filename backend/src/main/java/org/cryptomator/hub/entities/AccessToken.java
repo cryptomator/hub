@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,7 +14,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
-import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -35,7 +34,7 @@ import java.util.UUID;
 public class AccessToken {
 
 	@EmbeddedId
-	private AccessId id = new AccessId();
+	private AccessId id;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("userId")
@@ -109,56 +108,7 @@ public class AccessToken {
 	}
 
 	@Embeddable
-	public static class AccessId implements Serializable {
-
-		String userId;
-		UUID vaultId;
-
-		public String getUserId() {
-			return userId;
-		}
-
-		public void setUserId(String userId) {
-			this.userId = userId;
-		}
-
-		public UUID getVaultId() {
-			return vaultId;
-		}
-
-		public void setVaultId(UUID vaultId) {
-			this.vaultId = vaultId;
-		}
-
-		public AccessId(String userId, UUID vaultId) {
-			this.userId = userId;
-			this.vaultId = vaultId;
-		}
-
-		public AccessId() {
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			AccessId other = (AccessId) o;
-			return Objects.equals(userId, other.userId) //
-					&& Objects.equals(vaultId, other.vaultId);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(userId, vaultId);
-		}
-
-		@Override
-		public String toString() {
-			return "AccessId{" +
-					"userId='" + userId + '\'' +
-					", vaultId='" + vaultId + '\'' +
-					'}';
-		}
+	public record AccessId(String userId, UUID vaultId) {
 	}
 
 	@ApplicationScoped
@@ -166,14 +116,14 @@ public class AccessToken {
 
 		public AccessToken unlock(UUID vaultId, String userId) {
 			try {
-				return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
-			} catch (NoResultException e) {
+				return find("#AccessToken.get", Map.of("vaultId", vaultId, "userId", userId)).firstResult();
+			} catch (NoResultException _) {
 				return null;
 			}
 		}
 
 		public void deleteByUser(String userId) {
-			delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
+			delete("#AccessToken.deleteByUser", Map.of("userId", userId));
 		}
 	}
 }

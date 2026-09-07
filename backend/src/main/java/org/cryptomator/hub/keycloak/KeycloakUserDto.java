@@ -1,3 +1,6 @@
 package org.cryptomator.hub.keycloak;
 
-public record KeycloakUserDto(String id, String name, String email, String pictureUrl) { }
+import org.jspecify.annotations.Nullable;
+
+public record KeycloakUserDto(String id, String name, @Nullable String email, @Nullable String firstName, @Nullable String lastName, @Nullable String pictureUrl, boolean enabled) {
+}

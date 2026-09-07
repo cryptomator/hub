@@ -2,8 +2,8 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
@@ -22,7 +22,6 @@ import org.mockito.Mockito;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
 @DisplayName("Resource /billing")
@@ -32,7 +31,7 @@ public class BillingResourceIT {
 	LicenseHolder licenseHolder;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -52,24 +51,9 @@ public class BillingResourceIT {
 		private static final String MALFORMED_TOKEN = "hello world";
 
 		@Test
-		@DisplayName("GET /billing returns 200 with empty license self-hosted")
-		public void testGetEmptySelfHosted() {
-			Mockito.when(licenseHolder.get()).thenReturn(null);
-			Mockito.when(licenseHolder.getSeats()).thenReturn(5L);
-			when().get("/billing")
-					.then().statusCode(200)
-					.body("hubId", is("42"))
-					.body("hasLicense", is(false))
-					.body("email", nullValue())
-					.body("licensedSeats", is(5)) //community license
-					.body("usedSeats", is(2)) //depends on the flyway test data migration
-					.body("issuedAt", nullValue())
-					.body("expiresAt", nullValue());
-		}
-
-		@Test
+		@Order(2)
 		@DisplayName("PUT /billing/token returns 204 for initial token")
-		public void testPutInitialToken() {
+		void testPutInitialToken() {
 			given().contentType(ContentType.TEXT).body(INITIAL_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(204);
@@ -78,12 +62,11 @@ public class BillingResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("GET /billing returns 200 with initial license")
-		public void testGetInitial() {
+		void testGetInitial() {
 			Mockito.when(licenseHolder.get()).thenReturn(JWT.decode(INITIAL_TOKEN));
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
-					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
 					.body("licensedSeats", is(5))
 					.body("usedSeats", is(2))
@@ -93,7 +76,7 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("PUT /billing/token returns 204 for updated token")
-		public void testPutUpdatedToken() {
+		void testPutUpdatedToken() {
 			given().contentType(ContentType.TEXT).body(UPDATED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(204);
@@ -101,12 +84,11 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("GET /billing returns 200 with updated license")
-		public void testGetUpdated() {
+		void testGetUpdated() {
 			Mockito.when(licenseHolder.get()).thenReturn(JWT.decode(UPDATED_TOKEN));
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
-					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
 					.body("licensedSeats", is(5))
 					.body("usedSeats", is(2))
@@ -116,8 +98,8 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("PUT /billing/token returns 400 due to expired token")
-		public void testPutExpiredToken() {
-			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(EXPIRED_TOKEN);
+		void testPutExpiredToken() {
+			Mockito.doThrow(new JWTVerificationException("expired")).when(licenseHolder).set(EXPIRED_TOKEN);
 			given().contentType(ContentType.TEXT).body(EXPIRED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
@@ -125,8 +107,8 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("PUT /billing/token returns 400 due to invalid signature")
-		public void testPutTokenWithInvalidSignature() {
-			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(TOKEN_WITH_INVALID_SIGNATURE);
+		void testPutTokenWithInvalidSignature() {
+			Mockito.doThrow(new JWTVerificationException("invalid signature")).when(licenseHolder).set(TOKEN_WITH_INVALID_SIGNATURE);
 			given().contentType(ContentType.TEXT).body(TOKEN_WITH_INVALID_SIGNATURE)
 					.when().put("/billing/token")
 					.then().statusCode(400);
@@ -135,7 +117,7 @@ public class BillingResourceIT {
 		@Test
 		@Order(8)
 		@DisplayName("PUT /billing/token returns 400 due to malformed token")
-		public void testPutMalformedToken() {
+		void testPutMalformedToken() {
 			given().contentType(ContentType.TEXT).body(MALFORMED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
@@ -153,14 +135,14 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("GET /billing returns 403 Forbidden")
-		public void testGet() {
+		void testGet() {
 			when().get("/billing")
 					.then().statusCode(403);
 		}
 
 		@Test
 		@DisplayName("PUT /billing/token returns 403 Forbidden")
-		public void testPut() {
+		void testPut() {
 			given().contentType(ContentType.TEXT).body("")
 					.when().put("/billing/token")
 					.then().statusCode(403);
@@ -174,14 +156,14 @@ public class BillingResourceIT {
 
 		@Test
 		@DisplayName("GET /billing returns 401 Unauthorized")
-		public void testGet() {
+		void testGet() {
 			when().get("/billing")
 					.then().statusCode(401);
 		}
 
 		@Test
 		@DisplayName("PUT /billing/token returns 401 Unauthorized")
-		public void testPut() {
+		void testPut() {
 			given().contentType(ContentType.TEXT).body("")
 					.when().put("/billing/token")
 					.then().statusCode(401);

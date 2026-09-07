@@ -1,0 +1,144 @@
+# yaml-language-server: $schema=values.schema.json
+urls:
+  hub:
+    public: ""
+  kc:
+    public: ""
+    clusterInternal: ""
+    authServerUrl: ""
+    tokenIssuer: ""
+  billing:
+    public: ""
+
+notes:
+  useColor: true
+
+secrets:
+  # When true, all chart-managed Secrets are annotated `helm.sh/resource-policy: keep` so they survive `helm uninstall`.
+  # Convenient for development (passwords stay stable across reinstalls) but a security risk in production
+  keepOnUninstall: false
+
+ingress:
+  # supported: nginx, traefik
+  controller: ""
+  className: ""
+  annotations: {}
+  # Certificate to attach to both Ingresses (`spec.tls`). Leave both empty when TLS is terminated elsewhere — a cloud load balancer,
+  # the controller's default certificate, or a Traefik ACME resolver on the entrypoint. `urls.*.public` may still be https:// in that
+  # case; Hub and Keycloak honor the X-Forwarded-* headers the controller sets.
+  certificate:
+    # Existing TLS secret in the release namespace. Must cover both hosts (wildcard / SAN cert, or one host with `/hub` + `/kc` paths).
+    secretName: ""
+    # cert-manager ClusterIssuer. The chart adds the `cert-manager.io/cluster-issuer` annotation and cert-manager creates the
+    # certificate in `secretName` (defaults to `<release>-tls` when only the issuer is set).
+    clusterIssuer: ""
+
+hub:
+  replicas: 1
+  imagePullPolicy: IfNotPresent
+  image:
+    tag: "" # defaults to chart appVersion
+  service:
+    type: ClusterIP
+    port: 8080
+    managementPort: 9000
+  # Hub is a GraalVM native binary: no JVM, small footprint, fast start. No CPU limit on purpose (avoids throttling latency spikes).
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      memory: 64Mi
+  config:
+    keycloakRealm: cryptomator
+    keycloakSyncerPeriod: 5m
+    contentSecurityPolicy: ""
+  metrics:
+    # Hub ships metrics, traces and logs via OpenTelemetry / OTLP.
+    enabled: false
+    endpoint: "https://otel-collector:443"
+    protocol: "http/protobuf"
+    # Extra resource attributes merged into the defaults (service.name, service.version).
+    # Example: { deployment.environment: production, team: platform }
+    resourceAttributes: {}
+    otlp: # Optional Basic Authentication for OTLP endpoint
+      username: ""
+      password: ""
+  oidc:
+    clientId: cryptomatorhub
+  database:
+    jdbcUrl: ""
+    name: hub
+    username: hub
+    password: ""
+  admin:
+    username: admin
+    password: ""
+    passwordTemporary: true
+  secrets:
+    create: true
+    systemClientSecret: "" # optional; auto-generated when chart manages Hub secret
+    initialId: ""
+    initialLicense: ""
+  license:
+    chain:
+      requiredCn: ""
+    managedApi:
+      username: ""
+      password: ""
+    apiUrl: ""
+
+keycloak:
+  enabled: true
+  replicas: 1
+  imagePullPolicy: IfNotPresent
+  image:
+    tag: ""
+  service:
+    type: ClusterIP
+    httpPort: 8080
+    managementPort: 9000
+  # Keycloak is a JVM; its heap defaults to 70% of the memory limit (JAVA_OPTS_KC_HEAP), the rest is metaspace/native memory.
+  # 1Gi is a sensible floor for small installations; Keycloak's own sizing guide suggests 1250Mi+ for production loads.
+  # No CPU limit on purpose — startup and realm import are CPU-heavy and throttling them trips the startup probe.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  admin:
+    username: admin
+    password: ""
+  config:
+    proxyHeaders: xforwarded
+  database:
+    jdbcUrl: ""
+    name: keycloak
+    username: keycloak
+    password: ""
+  realmBootstrap:
+    realmId: ""
+
+postgres:
+  enabled: true
+  imagePullPolicy: IfNotPresent
+  image:
+    tag: "" # defaults to 18-alpine; the volume layout requires postgres >= 18 (PGDATA in /var/lib/postgresql/<major>/docker)
+  service:
+    type: ClusterIP
+    port: 5432
+  storage:
+    size: 10Gi
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+  # Sized for a PostgreSQL that serves only Hub and Keycloak (shared_buffers defaults to 128MB).
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  auth:
+    adminUsername: postgres
+    adminPassword: ""

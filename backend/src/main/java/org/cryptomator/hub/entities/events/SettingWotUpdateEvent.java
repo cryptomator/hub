@@ -4,8 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
-import java.time.Instant;
 import java.util.Objects;
 
 @Entity
@@ -16,7 +16,7 @@ public class SettingWotUpdateEvent extends AuditEvent {
 	public static final String TYPE = "SETTING_WOT_UPDATE";
 
 	@Column(name = "updated_by")
-	private String updatedBy;
+	private @Nullable String updatedBy;
 
 	@Column(name = "wot_max_depth")
 	private int wotMaxDepth;
@@ -24,11 +24,11 @@ public class SettingWotUpdateEvent extends AuditEvent {
 	@Column(name = "wot_id_verify_len")
 	private int wotIdVerifyLen;
 
-	public String getUpdatedBy() {
+	public @Nullable String getUpdatedBy() {
 		return updatedBy;
 	}
 
-	public void setUpdatedBy(String updatedBy) {
+	public void setUpdatedBy(@Nullable String updatedBy) {
 		this.updatedBy = updatedBy;
 	}
 

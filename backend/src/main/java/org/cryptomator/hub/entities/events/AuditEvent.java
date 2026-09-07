@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities.events;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -18,6 +17,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -124,11 +124,7 @@ public class AuditEvent {
 		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, List<String> type, long paginationId, boolean ascending, int pageSize) {
 			var allTypes = type.isEmpty();
 
-			var parameters = Parameters.with("startDate", startDate)
-					.and("endDate", endDate)
-					.and("paginationId", paginationId)
-					.and("types", type)
-					.and("allTypes", allTypes);
+			var parameters = Map.of("startDate", startDate, "endDate", endDate, "paginationId", paginationId, "types", type, "allTypes", allTypes);
 
 			final PanacheQuery<AuditEvent> query;
 			if (ascending) {
@@ -141,7 +137,7 @@ public class AuditEvent {
 		}
 
 		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(Set<String> deviceIds) {
-			return find("#AuditEvent.lastVaultKeyRetrieve", Parameters.with("deviceIds", deviceIds)).stream();
+			return find("#AuditEvent.lastVaultKeyRetrieve", Map.of("deviceIds", deviceIds)).stream();
 		}
 	}
 }

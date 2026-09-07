@@ -8,7 +8,7 @@ on:
         required: true
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 26
 
 defaults:
   run:
@@ -19,36 +19,43 @@ jobs:
     name: Build Custom Keycloak Image
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      attestations: write
-      packages: write
+      contents: read # Required for checkout
+      id-token: write # Required for the attestations step
+      attestations: write # Required for the attestations step
+      artifact-metadata: write # Required for the attestations step
+      packages: write # Required for pushing the image to GHCR
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          package_json_file: keycloak/themes/cryptomator/common/resources/package.json
+      - name: Check lockfile integrity
+        working-directory: keycloak/themes/cryptomator/common/resources
+        run: bash scripts/check-lockfile.sh
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: keycloak/themes/cryptomator/common/resources/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: keycloak/themes/cryptomator/common/resources/pnpm-lock.yaml
       - name: Install Dependencies
         working-directory: keycloak/themes/cryptomator/common/resources
-        run: npm install
+        run: pnpm install --frozen-lockfile
       - name: Build Theme
         working-directory: keycloak/themes/cryptomator/common/resources
-        run: npm run build
+        run: pnpm run build
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Container Image
         id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: keycloak
           platforms: linux/amd64,linux/arm64
@@ -56,7 +63,7 @@ jobs:
           tags: |
             ghcr.io/cryptomator/keycloak:${{ github.event.inputs.tag }}
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-name: ghcr.io/cryptomator/keycloak
           subject-digest: ${{ steps.push.outputs.digest }}

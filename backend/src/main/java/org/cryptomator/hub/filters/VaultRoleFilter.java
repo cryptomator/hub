@@ -7,14 +7,16 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,17 +29,20 @@ import java.util.stream.Collectors;
 @VaultRole
 public class VaultRoleFilter implements ContainerRequestFilter {
 
-	@Inject
-	JsonWebToken jwt;
+	private final JsonWebToken jwt;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	private final EmergencyRecoveryProcess.Repository recoveryRepo;
+	private final Vault.Repository vaultRepo;
+	private final ResourceInfo resourceInfo; // @RequestScoped bean, injected as a client proxy resolving against the current request
 
 	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-
-	@Inject
-	Vault.Repository vaultRepo;
-
-	@Context
-	ResourceInfo resourceInfo;
+	VaultRoleFilter(JsonWebToken jwt, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, EmergencyRecoveryProcess.Repository recoveryRepo, Vault.Repository vaultRepo, ResourceInfo resourceInfo) {
+		this.jwt = jwt;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+		this.recoveryRepo = recoveryRepo;
+		this.vaultRepo = vaultRepo;
+		this.resourceInfo = resourceInfo;
+	}
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws NotFoundException, ForbiddenException, NotAuthorizedException {
@@ -47,7 +52,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		try {
 			vaultId = UUID.fromString(vaultIdStr);
 		} catch (NullPointerException | IllegalArgumentException e) {
-			throw new ForbiddenException("@VaultRole not set up correctly (unknown vault id)", e);
+			throw new NotFoundException("@VaultRole not set up correctly (unknown vault id)", e);
 		}
 
 		var userId = jwt.getSubject();
@@ -55,25 +60,49 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			throw new NotAuthorizedException("No JWT supplied in request header");
 		}
 
-		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
-		if (vaultRepo.findByIdOptional(vaultId).isPresent()) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault != null) {
+			if (Arrays.stream(annotation.bypassForRealmRole()).anyMatch(realmRole -> requestContext.getSecurityContext().isUserInRole(realmRole.kcName()))) {
+				// user has required realm role, so we skip the vault role check:
+				return;
+			}
+			if (annotation.bypassForEmergencyAccess() && isEmergencyAccessCouncilMember(userId, vault)) {
+				// user is a member of the emergency access council, so we skip the role check:
+				return;
+			}
 			// check permissions for existing vault:
 			var effectiveRoles = effectiveVaultAccessRepo.listRoles(vaultId, userId);
-			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
-				throw new ForbiddenException(forbiddenMsg);
+			var requiredRoles = annotation.value();
+			if (Arrays.stream(requiredRoles).noneMatch(effectiveRoles::contains)) {
+				throw new ForbiddenException("Vault role required: " + Arrays.stream(requiredRoles).map(VaultAccess.Role::name).collect(Collectors.joining(", ")));
 			}
 		} else {
 			// how to treat non-existing vault:
-			switch (annotation.onMissingVault()) {
-				case FORBIDDEN -> throw new ForbiddenException(forbiddenMsg);
+			switch (annotation.onMissingVault().value()) {
+				case FORBIDDEN -> throw new ForbiddenException("Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", ")));
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
-				case PASS -> {}
+				case PASS -> {
+				}
 				case REQUIRE_REALM_ROLE -> {
-					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
-						throw new ForbiddenException("Missing role " + annotation.realmRole());
+					if (!requestContext.getSecurityContext().isUserInRole(annotation.onMissingVault().realmRole().kcName())) {
+						throw new ForbiddenException("Missing role " + annotation.onMissingVault().realmRole());
 					}
 				}
 			}
+		}
+	}
+
+	private boolean isEmergencyAccessCouncilMember(String userId, Vault vault) {
+		if (vault.getEmergencyKeyShares().containsKey(userId)) {
+			// member of current emergency access council:
+			return true;
+		} else {
+			// check if member of an ongoing recovery process:
+			return recoveryRepo.findByVaultId(vault.getId()) // processes
+					.map(EmergencyRecoveryProcess::getRecoveredKeyShares) // map of member IDs to key shares
+					.map(Map::keySet) // set of process member IDs
+					.flatMap(Set::stream) // steam of process member IDs
+					.anyMatch(userId::equals);
 		}
 	}
 }

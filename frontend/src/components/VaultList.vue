@@ -1,21 +1,29 @@
 <template>
-  <div v-if="vaults == null">
-    <div v-if="onFetchError == null">
+  <div v-if="!vaults">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
-  <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
+  <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
-  <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+  <ContentBanner v-if="anyUserHasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+    {{ t('legacyDeviceBanner.admin.description') }}
+  </ContentBanner>
+
+  <ContentBanner v-else-if="hasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+    {{ t('legacyDeviceBanner.user.description') }}
+  </ContentBanner>
+
+  <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
   </h2>
 
   <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
-    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
 
     <Listbox v-model="selectedFilter" as="div">
       <div class="relative w-auto whitespace-nowrap">
@@ -71,7 +79,7 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm overflow-hidden rounded-md">
+  <div v-if="filteredVaults && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
@@ -84,6 +92,27 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
+              <EmergencyBadge
+                v-if="vault.requiredEmergencyKeyShares == 0"
+                type="warning"
+                :title="t('emergencyAccess.badge.notConfigured.title')"
+                :message="t('emergencyAccess.badge.notConfigured.message')"
+              />
+              <EmergencyBadge
+                v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
+                type="error"
+                :title="t('emergencyAccess.badge.broken.title')"
+                :message="t('emergencyAccess.badge.broken.message')"
+              />
+              <EmergencyBadge
+                v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                type="warning"
+                :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+              />
+
+            </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
             </div>
@@ -93,7 +122,7 @@
     </ul>
   </div>
 
-  <div v-else-if="query === '' && filteredVaults != null && filteredVaults.length == 0" class="mt-3 text-center">
+  <div v-else-if="query === '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
@@ -101,7 +130,7 @@
     <p v-if="canCreateVaults" class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
   </div>
 
-  <div v-else-if="query !== '' && filteredVaults != null && filteredVaults.length == 0" class="mt-3 text-center">
+  <div v-else-if="query !== '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
@@ -109,8 +138,8 @@
     <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description') }}</p>
   </div>
 
-  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
+  <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
+    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)" />
   </SlideOver>
 </template>
 
@@ -121,21 +150,29 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import config from '../common/config';
+import userdata from '../common/userdata';
+import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
+import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
+const me = ref<UserDto>();
+const cfg = config.get();
+
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 const vaults = ref<VaultDto[]>();
+const settings = ref<SettingsDto>();
 const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
-const selectedVault = ref<VaultDto | null>(null);
+const selectedVault = ref<VaultDto>();
 
 const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
   if (ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id)) {
@@ -149,14 +186,10 @@ const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
 
 const isAdmin = ref<boolean>(false);
 const canCreateVaults = ref<boolean>(false);
+const hasLegacyDevices = ref<boolean>(false);
+const anyUserHasLegacyDevices = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
-const isLicenseViolated = computed(() => {
-  if (licenseStatus.value) {
-    return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
-  } else {
-    return false;
-  }
-});
+const isLicenseViolated = computed(() => licenseStatus.value?.isViolated() ?? false);
 
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
@@ -176,13 +209,19 @@ const filteredVaults = computed(() =>
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
+    me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
+    const meWithLegacy = await userdata.meWithLegacyDevicesAndLastAccess;
+    hasLegacyDevices.value = (meWithLegacy.devices?.length ?? 0) > 0;
     canCreateVaults.value = (await auth).hasRole('create-vaults');
+
+    settings.value = await backend.settings.get();
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
+      anyUserHasLegacyDevices.value = await backend.devices.hasLegacyDevices();
     }
     accessibleVaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
@@ -211,9 +250,13 @@ function showVaultDetails(vault: VaultDto) {
   nextTick(() => vaultDetailsSlideOver.value?.show());
 }
 
+function emergencyAccessMembers(vault: VaultDto): string[] {
+  return Object.keys(vault.emergencyKeyShares);
+}
+
 async function onSelectedVaultUpdate(vault: VaultDto) {
   await fetchData();
-  if (vaults.value == null || vault.id !== selectedVault.value?.id) {
+  if (vaults.value === undefined || vault.id !== selectedVault.value?.id) {
     return;
   }
   const index = vaults.value?.findIndex(v => v.id === vault.id);

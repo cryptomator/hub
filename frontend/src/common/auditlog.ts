@@ -6,27 +6,27 @@ import { Deferred, debounce } from './util';
 type AuditEventDtoBase = {
   id: number;
   timestamp: Date;
-}
+};
 export type AuditEventDeviceRegisterDto = AuditEventDtoBase & {
   type: 'DEVICE_REGISTER',
   registeredBy: string;
   deviceId: string;
   deviceName: string;
   deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
-}
+};
 
 export type AuditEventDeviceRemoveDto = AuditEventDtoBase & {
   type: 'DEVICE_REMOVE',
   removedBy: string;
   deviceId: string;
-}
+};
 
 export type AuditEventSettingWotUpdateDto = AuditEventDtoBase & {
   type: 'SETTING_WOT_UPDATE',
   updatedBy: string;
   wotMaxDepth: number;
   wotIdVerifyLen: number;
-}
+};
 
 export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   type: 'SIGN_WOT_ID',
@@ -34,23 +34,23 @@ export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   signerId: string;
   signerKey: string;
   signature: string;
-}
+};
 
 export type AuditEventUserAccountResetDto = AuditEventDtoBase & {
   type: 'USER_ACCOUNT_RESET',
   resetBy: string;
-}
+};
 
 export type AuditEventUserKeysChangeDto = AuditEventDtoBase & {
   type: 'USER_KEYS_CHANGE',
   changedBy: string,
   userName: string;
-}
+};
 
 export type AuditEventUserSetupCodeChangeDto = AuditEventDtoBase & {
   type: 'USER_SETUP_CODE_CHANGE',
   changedBy: string;
-}
+};
 
 export type AuditEventVaultCreateDto = AuditEventDtoBase & {
   type: 'VAULT_CREATE',
@@ -58,7 +58,7 @@ export type AuditEventVaultCreateDto = AuditEventDtoBase & {
   vaultId: string;
   vaultName: string;
   vaultDescription: string;
-}
+};
 
 export type AuditEventVaultUpdateDto = AuditEventDtoBase & {
   type: 'VAULT_UPDATE',
@@ -67,14 +67,14 @@ export type AuditEventVaultUpdateDto = AuditEventDtoBase & {
   vaultName: string;
   vaultDescription: string;
   vaultArchived: boolean;
-}
+};
 
 export type AuditEventVaultAccessGrantDto = AuditEventDtoBase & {
   type: 'VAULT_ACCESS_GRANT',
   grantedBy: string;
   vaultId: string;
   authorityId: string;
-}
+};
 
 export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
   type: 'VAULT_KEY_RETRIEVE',
@@ -83,7 +83,7 @@ export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
   result: 'SUCCESS' | 'UNAUTHORIZED';
   ipAddress?: string;
   deviceId?: string;
-}
+};
 
 export type AuditEventVaultMemberAddDto = AuditEventDtoBase & {
   type: 'VAULT_MEMBER_ADD',
@@ -91,14 +91,14 @@ export type AuditEventVaultMemberAddDto = AuditEventDtoBase & {
   vaultId: string;
   authorityId: string;
   role: 'MEMBER' | 'OWNER';
-}
+};
 
 export type AuditEventVaultMemberRemoveDto = AuditEventDtoBase & {
   type: 'VAULT_MEMBER_REMOVE',
   removedBy: string;
   vaultId: string;
   authorityId: string;
-}
+};
 
 export type AuditEventVaultMemberUpdateDto = AuditEventDtoBase & {
   type: 'VAULT_MEMBER_UPDATE',
@@ -106,22 +106,79 @@ export type AuditEventVaultMemberUpdateDto = AuditEventDtoBase & {
   vaultId: string;
   authorityId: string;
   role: 'MEMBER' | 'OWNER';
-}
+};
 
 export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
   type: 'VAULT_OWNERSHIP_CLAIM',
   claimedBy: string;
   vaultId: string;
-}
+};
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
+export type AuditEventEmergencyAccessSetupDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_SETUP',
+  vaultId: string;
+  ownerId: string;
+  settings: string; // contains stringified JSON
+  ipAddress: string;
+};
+
+export type AuditEventEmergencyAccessSettingsChangedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_SETTINGS_UPDATED',
+  adminId: string;
+  enableEmergencyAccess: boolean;
+  councilMemberIds: string;
+  requiredKeyShares: number;
+  minMembers: number;
+  allowChoosingCouncil: boolean;
+};
+
+export type AuditEventEmergencyAccessRecoveryStartedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_RECOVERY_STARTED',
+  vaultId: string;
+  processId: string;
+  councilMemberId: string;
+  recoveryType: string;
+  details: string;
+};
+
+export type AuditEventEmergencyAccessRecoveryApprovedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_RECOVERY_APPROVED',
+  processId: string;
+  councilMemberId: string;
+  ipAddress: string;
+};
+
+export type AuditEventEmergencyAccessRecoveryCompletedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_RECOVERY_COMPLETED',
+  processId: string;
+  councilMemberId: string;
+  ipAddress: string;
+};
+
+export type AuditEventEmergencyAccessRecoveryAbortedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_RECOVERY_ABORTED';
+  processId: string;
+  councilMemberId: string;
+  ipAddress: string;
+};
+
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto | AuditEventEmergencyAccessRecoveryAbortedDto;
+
+/* Authority-ID resolution */
+
+/**
+ * Keys within a raw-JSON audit event payload (e.g. the `details` of an emergency access event)
+ * whose value(s) are authority ids that should be resolved to names in the audit log UI.
+ */
+export const AUTHORITY_ID_KEYS: ReadonlySet<string> = new Set(['newOwnerIds', 'newMemberIds', 'emergencyCouncilMemberIds']);
 
 /* Entity Cache */
 
 export class AuditLogEntityCache {
-  private vaults: Map<string, Deferred<VaultDto>>;
-  private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;
+
+  private readonly vaults: Map<string, Deferred<VaultDto>>;
+  private readonly authorities: Map<string, Deferred<AuthorityDto>>;
+  private readonly devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -153,9 +210,9 @@ export class AuditLogEntityCache {
     }
   }
 
-  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
-  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
-  private debouncedResolvePendingDevices = debounce(async () => {
+  private readonly debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
+  private readonly debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
+  private readonly debouncedResolvePendingDevices = debounce(async () => {
     await this.resolvePendingEntities<DeviceDto>(
       this.devices,
       (deviceIds: string[]) =>
@@ -187,11 +244,13 @@ export class AuditLogEntityCache {
     this.authorities.clear();
     this.devices.clear();
   }
+
 }
 
 /* Service */
 
 class AuditLogService {
+
   public async getAllEvents(startDate: Date, endDate: Date, type: string[], paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
     const typeQuery = type.length > 0 ? `&type=${type.join('&type=')}` : '';
     return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}${typeQuery}&order=${order}&pageSize=${pageSize}`)
@@ -201,6 +260,7 @@ class AuditLogService {
       }))
       .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
+
 }
 
 /* Export */

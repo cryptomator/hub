@@ -1,4 +1,4 @@
-import { base64, base64url } from 'rfc4648';
+import { base64, base64urlnopad } from '@scure/base';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UnwrapKeyError, UserKeys, VaultKeys, getJwkThumbprint } from '../../src/common/crypto';
 
@@ -89,7 +89,7 @@ describe('crypto', () => {
         wrappedMasterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
         wrappedOwnerPrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
         ownerPublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
-        salt: 'IdXyKICznXKm41gSb5OqfQ',
+        salt: 'IdXyKICznXKm41gSb5OqfQ==',
         iterations: 1
       };
 
@@ -110,7 +110,7 @@ describe('crypto', () => {
       });
 
       it('encryptForUser()', async () => {
-        const userKey = base64.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR+NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn+mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
+        const userKey = base64.decode('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR+NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn+mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu') as Uint8Array<ArrayBuffer>;
 
         const encrypted = await vaultKeys.encryptForUser(userKey);
         expect(encrypted).not.toBeNull();
@@ -191,25 +191,25 @@ describe('crypto', () => {
   describe('Test Key Pairs', () => {
     it('alice private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', aliceEcdh.privateKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
     });
 
     it('alice public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', aliceEcdh.publicKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
     });
 
     it('bob private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', bobEcdh.privateKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDB2bmFCWy2p+EbAn8NWS5Om+GA7c5LHhRZb8g2pSMSf0fsd7k7dZDVrnyHFiLdd/YGhZANiAAR6bsjTEdXKWIuu1Bvj6Y8wySlIROy7YpmVZTY128ItovCD8pcR4PnFljvAIb2MshCdr1alX4g6cgDOqcTeREiObcSfucOU9Ry1pJ/GnX6KA0eSljrk6rxjSDos8aiZ6Mg=');
     });
 
     it('bob public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', bobEcdh.publicKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEem7I0xHVyliLrtQb4+mPMMkpSETsu2KZlWU2NdvCLaLwg/KXEeD5xZY7wCG9jLIQna9WpV+IOnIAzqnE3kRIjm3En7nDlPUctaSfxp1+igNHkpY65Oq8Y0g6LPGomejI');
     });
   });
@@ -241,7 +241,7 @@ describe('crypto', () => {
 
       const thumbprint = await getJwkThumbprint(input);
 
-      expect(base64url.stringify(thumbprint, { pad: false })).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
+      expect(base64urlnopad.encode(thumbprint)).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
   });
 });
@@ -249,6 +249,7 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestVaultKeys extends VaultKeys {
+
   constructor(key: CryptoKey) {
     super(key);
   }
@@ -270,10 +271,13 @@ class TestVaultKeys extends VaultKeys {
     );
     return new TestVaultKeys(key);
   }
+
 }
 
 class TestUserKeys extends UserKeys {
+
   public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
+
 }

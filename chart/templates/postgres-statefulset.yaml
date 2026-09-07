@@ -1,0 +1,134 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-pg
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  serviceName: {{ include "cryptomator-hub.fullname" . }}-service-pg
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgres
+  template:
+    metadata:
+      labels:
+        {{- include "cryptomator-hub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgres
+      annotations:
+        checksum/postgres-secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eux
+              # Since postgres:18 the volume is /var/lib/postgresql and PGDATA lives in a per-major subdirectory
+              # (/var/lib/postgresql/18/docker) so that pg_upgrade can keep old and new clusters side by side.
+              # The entrypoint creates PGDATA itself; it only needs the volume root to be writable by uid 70.
+              chown 70:70 /var/lib/postgresql /var/run/postgresql
+              chmod 750 /var/lib/postgresql
+              chmod 775 /var/run/postgresql
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: run
+              mountPath: /var/run/postgresql
+      containers:
+        - name: postgres
+          image: "postgres:{{ .Values.postgres.image.tag | default "18-alpine" }}"
+          imagePullPolicy: {{ .Values.postgres.imagePullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_INITDB_ARGS
+              value: --encoding=UTF8
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-pg
+                  key: pg_admin_password
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.auth.adminUsername | quote }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.postgres.auth.adminUsername }}
+            periodSeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.postgres.auth.adminUsername }}
+            periodSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d/initdb.sql
+              subPath: initdb.sql
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: initdb
+          secret:
+            secretName: {{ include "cryptomator-hub.fullname" . }}-secrets-pg
+            items:
+              - key: initdb.sql
+                path: initdb.sql
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.postgres.storage.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}
+        {{- if .Values.postgres.storage.storageClassName }}
+        storageClassName: {{ .Values.postgres.storage.storageClassName }}
+        {{- end }}
+{{- end }}

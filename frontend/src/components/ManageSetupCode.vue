@@ -1,10 +1,10 @@
 <template>
-  <div v-if="setupCode == null">
-    <div v-if="onFetchError == null">
+  <div v-if="setupCode === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
   
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <RegenerateSetupCodeDialog v-if="regeneratingSetupCode && setupCode != null" ref="regenerateSetupCodeDialog" v-model:setup-code="setupCode" @close="regeneratingSetupCode = false" />
+  <RegenerateSetupCodeDialog v-if="regeneratingSetupCode && setupCode !== undefined" ref="regenerateSetupCodeDialog" v-model:setup-code="setupCode" @close="regeneratingSetupCode = false" />
 </template>
 
 <script setup lang="ts">
@@ -61,12 +61,12 @@ const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
 const regeneratingSetupCode = ref(false);
 const regenerateSetupCodeDialog = ref<typeof RegenerateSetupCodeDialog>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     const me = await userdata.me;
     if (!me.setupCode) {
@@ -86,7 +86,7 @@ function toggleSetupCodeVisibility() {
 }
 
 async function copySetupCode() {
-  if (setupCode.value == null) {
+  if (setupCode.value === undefined) {
     throw new Error('Invalid state.');
   }
   await navigator.clipboard.writeText(setupCode.value);

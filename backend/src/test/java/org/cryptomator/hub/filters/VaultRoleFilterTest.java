@@ -9,22 +9,27 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
 
-public class VaultRoleFilterTest {
+class VaultRoleFilterTest {
 
 	private final ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
 	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
@@ -32,47 +37,55 @@ public class VaultRoleFilterTest {
 	private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
 	private final JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
 	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccess.Repository.class);
+	private final EmergencyRecoveryProcess.Repository recoveryRepo = Mockito.mock(EmergencyRecoveryProcess.Repository.class);
 	private final Vault.Repository vaultRepo = Mockito.mock(Vault.Repository.class);
-	private final VaultRoleFilter filter = new VaultRoleFilter();
+	private final VaultRoleFilter filter = new VaultRoleFilter(jwt, effectiveVaultAccessRepo, recoveryRepo, vaultRepo, resourceInfo);
 
 	@BeforeEach
-	public void setup() {
-		filter.resourceInfo = resourceInfo;
-		filter.jwt = jwt;
-		filter.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
-		filter.vaultRepo = vaultRepo;
-
+	void setup() {
 		Mockito.doReturn(uriInfo).when(context).getUriInfo();
 		Mockito.doReturn(securityContext).when(context).getSecurityContext();
 	}
 
 	@Test
-	@DisplayName("error 403 if annotated resource has no vaultId path param")
-	public void testFilterWithMissingVaultId() throws NoSuchMethodException {
+	@DisplayName("error 404 if annotated resource has no vaultId path param")
+	void testFilterWithMissingVaultId() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowMember")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>()).when(uriInfo).getPathParameters();
 
-		Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+		Assertions.assertThrows(NotFoundException.class, () -> filter.filter(context));
 	}
 
 	@Test
 	@DisplayName("error 401 if JWT is missing")
-	public void testFilterWithMissingJWT() throws NoSuchMethodException {
+	void testFilterWithMissingJWT() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowMember")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 
 		Assertions.assertThrows(NotAuthorizedException.class, () -> filter.filter(context));
 	}
 
+	@DisplayName("error 403 if @VaultRole({})")
+	@ParameterizedTest(name = "for user with vault role {0}")
+	@EnumSource(VaultAccess.Role.class)
+	void testFilterWithMissingJWT(VaultAccess.Role role) throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowNobody")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-DEADBEEF0001"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user0").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-DEADBEEF0001"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-DEADBEEF0001"), Mockito.eq("user0"))).thenReturn(Set.of(role));
+
+		Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+	}
+
 	@Test
 	@DisplayName("error 403 if user2 tries to access 7E57C0DE-0000-4000-8000-000100001111")
-	public void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
+	void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
-
-		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
-		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")), Mockito.eq("user2"))).thenReturn(Set.of());
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-000100001111"), Mockito.eq("user2"))).thenReturn(Set.of());
 
 		var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 
@@ -81,53 +94,114 @@ public class VaultRoleFilterTest {
 
 	@Test
 	@DisplayName("pass if user1 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user1 is OWNER of vault)")
-	public void testFilterSuccess1() throws NoSuchMethodException {
+	void testFilterSuccess1() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user1").when(jwt).getSubject();
-
-		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
-		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-000100001111"), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}
 
 	@Test
 	@DisplayName("pass if user2 tries to access 7E57C0DE-0000-4000-8000-000100002222 (user2 is member of group2, which is OWNER of the vault)")
-	public void testFilterSuccess2() throws NoSuchMethodException {
+	void testFilterSuccess2() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100002222"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
-
-		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100002222")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
-		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100002222")), Mockito.eq("user2"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100002222"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-000100002222"), Mockito.eq("user2"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}
 
+	@Test
+	@DisplayName("pass if user3 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user3 is recovery council member)")
+	void testFilterSuccess3() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassRecoveryCouncilMembers")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user3").when(jwt).getSubject();
+		var vault = Mockito.mock(Vault.class);
+		Mockito.doReturn(Map.of("user3", "recovery-key-share-3000")).when(vault).getEmergencyKeyShares();
+		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+
+		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
+	}
+
+	@Test
+	@DisplayName("pass if user4 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user4 is member of started recovery process)")
+	void testFilterSuccess4() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassRecoveryCouncilMembers")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user4").when(jwt).getSubject();
+		var vault = Mockito.mock(Vault.class);
+		Mockito.doReturn(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")).when(vault).getId();
+		Mockito.doReturn(Map.of()).when(vault).getEmergencyKeyShares();
+		var process = Mockito.mock(EmergencyRecoveryProcess.class);
+		Mockito.doReturn(Map.of("user4", "recovery-key-share-3000")).when(process).getRecoveredKeyShares();
+		Mockito.doReturn(Stream.of(process)).when(recoveryRepo).findByVaultId(uuid("7E57C0DE-0000-4000-8000-000100001111"));
+		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+
+		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
+	}
+
+	@Test
+	@DisplayName("pass if admin user tries to access 7E57C0DE-0000-4000-8000-000100001111 (admin bypasses vault role check)")
+	void testFilterBypassForAdmin() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassForRealmRole")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user2").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+
+		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
+	}
+
+	@Test
+	@DisplayName("error 403 if non-admin user tries to access 7E57C0DE-0000-4000-8000-000100001111 (bypassForRealmRole has no effect)")
+	void testFilterNoBypassForNonAdmin() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassForRealmRole")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user2").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-000100001111"), Mockito.eq("user2"))).thenReturn(Set.of());
+		Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
+
+		var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+
+		Assertions.assertEquals("Vault role required: OWNER", e.getMessage());
+	}
+
 	@Nested
 	@DisplayName("when attempting to access archived vault")
-	public class OnArchivedVault {
+	class OnArchivedVault {
 
 		@BeforeEach
-		public void setup() {
+		void setup() {
 			Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-00010000AAAA"))).when(uriInfo).getPathParameters();
 		}
 
 		@Test
 		@DisplayName("pass if user1 tries to access 7E57C0DE-0000-4000-8000-00010000AAAA (user1 is OWNER of vault)")
-		public void testFilterSuccess() throws NoSuchMethodException {
+		void testFilterSuccess() throws NoSuchMethodException {
 			Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 			Mockito.doReturn("user1").when(jwt).getSubject();
-			Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-00010000AAAA")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
-			Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-00010000AAAA")), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
+			Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-00010000AAAA"))).thenReturn(Mockito.mock(Vault.class));
+			Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-00010000AAAA"), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
 
 			Assertions.assertDoesNotThrow(() -> filter.filter(context));
 		}
 
 		@Test
 		@DisplayName("error 403 if user2 tries to access 7E57C0DE-0000-4000-8000-00010000AAAA")
-		public void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
+		void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
 			Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 			Mockito.doReturn("user2").when(jwt).getSubject();
 
@@ -140,17 +214,17 @@ public class VaultRoleFilterTest {
 
 	@Nested
 	@DisplayName("when attempting to access non-existing vault")
-	public class OnMissingVault {
+	class OnMissingVault {
 
 		@BeforeEach
-		public void setup() {
+		void setup() {
 			Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-BADBADBADBAD"))).when(uriInfo).getPathParameters();
 			Mockito.doReturn("user1").when(jwt).getSubject();
 		}
 
 		@Test
-		@DisplayName("error 403 if annotated with @VaultRole(onMissingVault = OnMissingVault.FORBIDDEN)")
-		public void testForbidden() throws NoSuchMethodException {
+		@DisplayName("error 403 if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.FORBIDDEN))")
+		void testForbidden() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("forbidden")).when(resourceInfo).getResourceMethod();
 
 			var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
@@ -159,8 +233,8 @@ public class VaultRoleFilterTest {
 		}
 
 		@Test
-		@DisplayName("error 404 if annotated with @VaultRole(onMissingVault = OnMissingVault.NOT_FOUND)")
-		public void testNotFound() throws NoSuchMethodException {
+		@DisplayName("error 404 if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))")
+		void testNotFound() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("notFound")).when(resourceInfo).getResourceMethod();
 
 			var e = Assertions.assertThrows(NotFoundException.class, () -> filter.filter(context));
@@ -169,35 +243,64 @@ public class VaultRoleFilterTest {
 		}
 
 		@Test
-		@DisplayName("pass if annotated with @VaultRole(onMissingVault = OnMissingVault.PASS)")
-		public void testPass() throws NoSuchMethodException {
+		@DisplayName("pass if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.PASS))")
+		void testPass() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("pass")).when(resourceInfo).getResourceMethod();
 
 			Assertions.assertDoesNotThrow(() -> filter.filter(context));
 		}
 
 		@Nested
-		@DisplayName("if @VaultRole(onMissingVault = OnMissingVault.REQUIRE_REALM_ROLE)")
-		public class RequireRealmRole {
+		@DisplayName("if @VaultRole(onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))")
+		class RequireRealmRole {
 
 			@BeforeEach
-			public void setup() throws NoSuchMethodException {
+			void setup() throws NoSuchMethodException {
 				Mockito.doReturn(NonExistingVault.class.getMethod("requireRealmRole")).when(resourceInfo).getResourceMethod();
 			}
 
 			@Test
-			@DisplayName("error 403 if user lacks realm role required by @VaultRole(realmRole = \"foobar\")")
-			public void testMissesRole() {
-				Mockito.doReturn(false).when(securityContext).isUserInRole("foobar");
+			@DisplayName("error 403 if user lacks create-vaults role")
+			void testMissesRole() {
+				Mockito.doReturn(false).when(securityContext).isUserInRole("create-vaults");
 
 				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 			}
 
 
 			@Test
-			@DisplayName("pass if user has realm role required by @VaultRole(realmRole = \"foobar\")")
-			public void testHasRole() {
-				Mockito.doReturn(true).when(securityContext).isUserInRole("foobar");
+			@DisplayName("pass if user has create-vaults role")
+			void testHasRole() {
+				Mockito.doReturn(true).when(securityContext).isUserInRole("create-vaults");
+
+				Assertions.assertDoesNotThrow(() -> filter.filter(context));
+			}
+
+		}
+
+		@Nested
+		@DisplayName("if @VaultRole(bypassForRealmRole = true, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))")
+		class BypassRealmRoleWithRequireRealmRole {
+
+			@BeforeEach
+			void setup() throws NoSuchMethodException {
+				Mockito.doReturn(NonExistingVault.class.getMethod("bypassRealmRoleWithRequireRealmRole")).when(resourceInfo).getResourceMethod();
+			}
+
+			@Test
+			@DisplayName("error 403 if admin lacks create-vaults role (bypass does not apply for non-existing vault)")
+			void testAdminWithoutCreateVaultsRole() {
+				Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(false).when(securityContext).isUserInRole("create-vaults");
+
+				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+			}
+
+			@Test
+			@DisplayName("pass if user has create-vaults role (onMissingVault checks realmRole, not bypassRealmRole)")
+			void testUserWithCreateVaultsRole() {
+				Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(true).when(securityContext).isUserInRole("create-vaults");
 
 				Assertions.assertDoesNotThrow(() -> filter.filter(context));
 			}
@@ -210,24 +313,54 @@ public class VaultRoleFilterTest {
 	 * "real" methods for testing below, as we can not mock Method.class without breaking Mockito
 	 */
 
+	@VaultRole(value = {}, bypassForEmergencyAccess = true)
+	public void byPassRecoveryCouncilMembers() {
+	}
+
+	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN })
+	public void byPassForRealmRole() {
+	}
+
+	@VaultRole({})
+	public void allowNobody() {
+	}
+
 	@VaultRole({VaultAccess.Role.MEMBER})
-	public void allowMember() {}
+	public void allowMember() {
+	}
 
 	@VaultRole({VaultAccess.Role.OWNER})
-	public void allowOwner() {}
+	public void allowOwner() {
+	}
 
 	public static class NonExistingVault {
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.FORBIDDEN)
-		public void forbidden() {}
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.FORBIDDEN))
+		public void forbidden() {
+		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
-		public void notFound() {}
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
+		public void notFound() {
+		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
-		public void pass() {}
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.PASS))
+		public void pass() {
+		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "foobar")
-		public void requireRealmRole() {}
+		@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))
+		public void bypassRealmRoleWithRequireRealmRole() {
+		}
+
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))
+		public void requireRealmRole() {
+		}
+	}
+
+	/*
+	 * utils
+	 */
+
+	private static UUID uuid(String uuid) {
+		return Mockito.argThat(arg -> arg.toString().equalsIgnoreCase(uuid));
 	}
 
 

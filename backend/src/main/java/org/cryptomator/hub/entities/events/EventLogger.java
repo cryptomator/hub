@@ -11,8 +11,12 @@ import java.util.UUID;
 @ApplicationScoped
 public class EventLogger {
 
+	private final AuditEvent.Repository auditEventRepository;
+
 	@Inject
-	AuditEvent.Repository auditEventRepository;
+	EventLogger(AuditEvent.Repository auditEventRepository) {
+		this.auditEventRepository = auditEventRepository;
+	}
 
 	public void logVaultCreated(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
 		var event = new VaultCreatedEvent();
@@ -35,7 +39,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logDeviceRegisted(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
+	public void logDeviceRegistered(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
 		var event = new DeviceRegisteredEvent();
 		event.setTimestamp(Instant.now());
 		event.setRegisteredBy(registeredBy);
@@ -84,9 +88,9 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultKeyRetrieved(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
+	public void logVaultKeyRetrieved(Instant timestamp, String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
 		var event = new VaultKeyRetrievedEvent();
-		event.setTimestamp(Instant.now());
+		event.setTimestamp(timestamp);
 		event.setRetrievedBy(retrievedBy);
 		event.setVaultId(vaultId);
 		event.setResult(result);
@@ -142,6 +146,71 @@ public class EventLogger {
 		event.setSignature(signature);
 		auditEventRepository.persist(event);
 	}
+
+	//region Emergency Access
+
+	public void logEmergencyAccessSetup(UUID vaultId, String ownerId, String settings, String ipAddress) {
+		var event = new EmergencyAccessSetupEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setOwnerId(ownerId);
+		event.setSettings(settings);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessSettingsUpdated(String adminId, boolean enableEmergencyAccess, String councilMemberIds, int requiredKeyShares, int minMembers, boolean allowChoosingCouncil) {
+		var event = new EmergencyAccessSettingsUpdatedEvent();
+		event.setTimestamp(Instant.now());
+		event.setAdminId(adminId);
+		event.setCouncilMemberIds(councilMemberIds);
+		event.setRequiredKeyShares(requiredKeyShares);
+		event.setMinMembers(minMembers);
+		event.setAllowChoosingCouncil(allowChoosingCouncil);
+		event.setEmergencyAccessEnabled(enableEmergencyAccess);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryStarted(UUID vaultId, UUID processId, String councilMemberId, String type, String details) {
+		var event = new EmergencyAccessRecoveryStartedEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setProcessType(type);
+		event.setDetails(details);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryApproved(UUID processId, String councilMemberId, String ipAddress) {
+		var event = new EmergencyAccessRecoveryApprovedEvent();
+		event.setTimestamp(Instant.now());
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryCompleted(UUID processId, String councilMemberId, String ipAddress) {
+		var event = new EmergencyAccessRecoveryCompletedEvent();
+		event.setTimestamp(Instant.now());
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryAborted(UUID vaultId, UUID processId, String councilMemberId, String ipAddress) {
+		var event = new EmergencyAccessRecoveryAbortedEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	//endregion
 
 	//legacy
 	public void logVaultOwnershipClaimed(String claimedBy, UUID vaultId) {

@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -11,9 +10,12 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -26,12 +28,6 @@ import java.util.stream.Stream;
 				FROM Authority a
 				WHERE LOWER(a.name) LIKE :name
 				""")
-@NamedQuery(name = "Authority.allInList",
-		query = """
-				SELECT a
-				FROM Authority a
-				WHERE a.id IN :ids
-				""")
 public class Authority {
 
 	@Id
@@ -40,6 +36,9 @@ public class Authority {
 
 	@Column(name = "name", nullable = false)
 	private String name;
+
+	@Column(name = "picture_url")
+	private @Nullable String pictureUrl;
 
 	public String getId() {
 		return id;
@@ -57,12 +56,17 @@ public class Authority {
 		this.name = name;
 	}
 
+	public @Nullable String getPictureUrl() {
+		return pictureUrl;
+	}
+
+	public void setPictureUrl(@Nullable String pictureUrl) {
+		this.pictureUrl = pictureUrl;
+	}
+
 	@Override
 	public String toString() {
-		return "Authority{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				'}';
+		return "Authority{id='" + id + "'}";
 	}
 
 	@Override
@@ -70,24 +74,25 @@ public class Authority {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Authority authority = (Authority) o;
-		return Objects.equals(id, authority.id)
-				&& Objects.equals(name, authority.name);
+		return Objects.equals(id, authority.id);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name);
+		return Objects.hash(id);
 	}
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Authority, String> {
 
 		public Stream<Authority> byName(String name) {
-			return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
+			return find("#Authority.byName", Map.of("name", '%' + name.toLowerCase() + '%')).stream();
 		}
 
-		public Stream<Authority> findAllInList(List<String> ids) {
-			return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
+		public Stream<Authority> findAllInList(Collection<String> ids) {
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("WHERE id IN :ids", Map.of("ids", batch)).stream());
 		}
 	}
 }

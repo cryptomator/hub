@@ -1,5 +1,5 @@
 ## Stage 1 : build with maven builder image
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS builder
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25@sha256:1a47e85f8b945cd6819a9551d3e481609ea7fa5a0163d62f666f5e291491837f AS builder
 COPY --chown=quarkus:quarkus --chmod=0755 mvnw /code/mvnw
 COPY --chown=quarkus:quarkus .mvn /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
@@ -10,7 +10,7 @@ COPY src /code/src
 RUN ./mvnw -B package -DskipTests --no-transfer-progress --strict-checksums
 
 ## Stage 2 : create the docker final image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25@sha256:68868d04fa9cfd5f5c6abec0b5cef86d8de2bf9c62c37c7d3e4f0f80f5cfd7ff
 COPY --from=builder /code/target/quarkus-app/ /work/
 WORKDIR /work/
 
@@ -20,5 +20,6 @@ LABEL org.opencontainers.image.vendor="Skymatic GmbH"
 EXPOSE 8080
 USER 1001
 ENV QUARKUS_HTTP_HOST=0.0.0.0
+ENV QUARKUS_MICROMETER_EXPORT_PROMETHEUS_ENABLED=false
 
 CMD ["java", "-jar", "/work/quarkus-run.jar"]

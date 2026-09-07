@@ -15,29 +15,31 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.entities.Settings;
+import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
-import java.util.Optional;
 
 //TODO: redirect ot /license path
 @Path("/billing")
 public class BillingResource {
 
+	private final LicenseHolder licenseHolder;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	@Inject
-	LicenseHolder licenseHolder;
-	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-	@Inject
-	Settings.Repository settingsRepo;
+	BillingResource(LicenseHolder licenseHolder, EffectiveVaultAccess.Repository effectiveVaultAccessRepo) {
+		this.licenseHolder = licenseHolder;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+	}
 
 	@GET
 	@Path("/")
 	@RolesAllowed("admin")
+	@AvailableDuringSetup
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "get the billing information")
@@ -46,17 +48,14 @@ public class BillingResource {
 	public BillingDto get() {
 		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		boolean isManaged = licenseHolder.isManagedInstance();
-		return Optional.ofNullable(licenseHolder.get())
-				.map(jwt -> BillingDto.fromDecodedJwt(jwt, usedSeats, isManaged))
-				.orElseGet(() -> {
-					var hubId = settingsRepo.get().getHubId();
-					return BillingDto.create(hubId, (int) licenseHolder.getSeats(), usedSeats, isManaged);
-				});
+		var licenseToken = licenseHolder.get();
+		return BillingDto.fromDecodedJwt(licenseToken, usedSeats, isManaged);
 	}
 
 	@PUT
 	@Path("/token")
 	@RolesAllowed("admin")
+	@AvailableDuringSetup
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "set the token")
 	@APIResponse(responseCode = "204", description = "token set")
@@ -67,25 +66,23 @@ public class BillingResource {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} catch (JWTVerificationException e) {
-			return Response.status(Response.Status.BAD_REQUEST).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).type(MediaType.TEXT_PLAIN).build();
 		}
 	}
 
-	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
+	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("email") String email,
 							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
-							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
-
-		public static BillingDto create(String hubId, int noLicenseSeatCount, int usedSeats, boolean isManaged) {
-			return new BillingDto(hubId, false, null, noLicenseSeatCount, usedSeats, null, null, isManaged);
-		}
+							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance, 
+							 @JsonProperty("licenseKey") String licenseKey) {
 
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt, int usedSeats, boolean isManaged) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
-			var licensedSeats = jwt.getClaim("seats").asInt();
+			var licensedSeats = jwt.getClaim("seats").asInt(); // TODO eventually replace with "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
+			var licenseKey = jwt.getToken();
+			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged, licenseKey);
 		}
 
 	}

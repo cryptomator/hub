@@ -1,4 +1,4 @@
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import backend, { TrustDto, UserDto } from './backend';
 import { UserKeys, asPublicKey, getJwkThumbprint } from './crypto';
 import { JWT, JWTHeader } from './jwt';
@@ -7,7 +7,7 @@ import userdata from './userdata';
 export type SignedKeys = {
   ecdhPublicKey: string;
   ecdsaPublicKey: string;
-}
+};
 
 function deeplyEqual(a: SignedKeys, b: SignedKeys) {
   return a.ecdhPublicKey === b.ecdhPublicKey
@@ -70,7 +70,7 @@ async function verifyRescursive(signatureChain: string[], signerPublicKey: Crypt
     }
   } else {
     // otherwise, the payload is an intermediate public key used to sign the next element
-    const nextTrustedPublicKey = await asPublicKey(base64.parse(signedKeys.ecdsaPublicKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+    const nextTrustedPublicKey = await asPublicKey(base64.decode(signedKeys.ecdsaPublicKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
     await verifyRescursive(remainingChain, nextTrustedPublicKey, allegedSignedKey);
   }
 }
@@ -84,8 +84,8 @@ async function computeFingerprint(user: { ecdhPublicKey?: string; ecdsaPublicKey
   if (!user.ecdhPublicKey || !user.ecdsaPublicKey) {
     throw new Error('User has no public keys');
   }
-  const ecdhPublicKey = await asPublicKey(base64.parse(user.ecdhPublicKey), UserKeys.ECDH_KEY_DESIGNATION);
-  const ecdsaPublicKey = await asPublicKey(base64.parse(user.ecdsaPublicKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+  const ecdhPublicKey = await asPublicKey(base64.decode(user.ecdhPublicKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDH_KEY_DESIGNATION);
+  const ecdsaPublicKey = await asPublicKey(base64.decode(user.ecdsaPublicKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
   const concatenatedThumbprints = new Uint8Array([
     ...await getJwkThumbprint(ecdhPublicKey),
     ...await getJwkThumbprint(ecdsaPublicKey)

@@ -5,9 +5,11 @@
   "author": "Skymatic GmbH",
   "license": "AGPL-3.0-or-later",
   "private": true,
+  "packageManager": "pnpm@10.33.4",
   "scripts": {
-    "build": "tailwindcss -i ./css/tailwind.css -o ./css/tailwind.min.css --minify",
-    "dev": "tailwindcss -i ./css/tailwind.css -o ./css/tailwind.min.css --watch"
+    "preinstall": "node scripts/check-pm.js",
+    "build": "node scripts/check-pm.js && tailwindcss -i ./css/tailwind.css -o ./css/tailwind.min.css --minify",
+    "dev": "node scripts/check-pm.js && tailwindcss -i ./css/tailwind.css -o ./css/tailwind.min.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.1",

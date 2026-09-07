@@ -3,6 +3,7 @@ import config, { absBackendBaseURL, absFrontendBaseURL } from '../common/config'
 import { VaultConfigHeaderHub, VaultConfigPayload, VaultKeys } from '../common/crypto';
 
 export class VaultConfig {
+
   readonly vaultConfigToken: string;
   private readonly rootDirHash: string;
 
@@ -44,4 +45,5 @@ export class VaultConfig {
     zip.folder('d')?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
     return zip.generateAsync({ type: 'blob' });
   }
+
 }

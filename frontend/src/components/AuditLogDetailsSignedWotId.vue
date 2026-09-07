@@ -10,7 +10,7 @@
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedSigner">{{ resolvedSigner.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedSigner != null}">{{ event.signerId }}</code>
+          <code class="text-xs" :class="{'text-gray-600': resolvedSigner}">{{ event.signerId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -19,7 +19,7 @@
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedUser">{{ resolvedUser.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
+          <code class="text-xs" :class="{'text-gray-600': resolvedUser}">{{ event.userId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventSignedWotIdDto } from '../common/auditlog';
@@ -75,7 +75,7 @@ onMounted(async () => {
   }
 
   try {
-    const signerPublicKey = await asPublicKey(base64.parse(props.event.signerKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+    const signerPublicKey = await asPublicKey(base64.decode(props.event.signerKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
     const [_, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
     signedFingerprint.value = await wot.computeFingerprint({ ecdhPublicKey: signedKeys.ecdhPublicKey, ecdsaPublicKey: signedKeys.ecdsaPublicKey });
     if (props.event.signerKey === signingUser?.ecdsaPublicKey && signedFingerprint.value === currentFingerprint.value) {
