@@ -6,6 +6,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.http.HttpServerRequest;
+import org.jboss.logging.Logger;
 import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -78,6 +79,8 @@ import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
+
+	private static final Logger LOG = Logger.getLogger(VaultResource.class);
 
 	private final EventLogger eventLogger;
 	private final AccessToken.Repository accessTokenRepo;
@@ -437,8 +440,9 @@ public class VaultResource {
 			//for backwards compatibility, we can only validate the deviceId if the header is set
 			try {
 				deviceRepo.findByIdAndUser(deviceId, user.getId());
-			} catch (NoResultException e) {
-				throw new BadRequestException("User has no such device as specified in Header");
+			} catch (NoResultException _) {
+				deviceId = null;
+				LOG.info("Device with id %s does not exists for user %s. Ignoring device id.".formatted(deviceId, user.getId()));
 			}
 		}
 
