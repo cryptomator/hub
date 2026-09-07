@@ -13,6 +13,7 @@
 {{- define "cryptomator-hub.labels" -}}
 app.kubernetes.io/name: {{ include "cryptomator-hub.name" . }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
+app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}

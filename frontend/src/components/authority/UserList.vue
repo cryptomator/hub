@@ -229,6 +229,8 @@ const filteredUsers = computed(() =>
     ? users.value
     : users.value.filter((u: UserDtoWithCounts) =>
       u.name.toLowerCase().includes(query.value.toLowerCase())
+      || u.firstName?.toLowerCase().includes(query.value.toLowerCase())
+      || u.lastName?.toLowerCase().includes(query.value.toLowerCase())
     )
 );
 

@@ -20,5 +20,6 @@ LABEL org.opencontainers.image.vendor="Skymatic GmbH"
 EXPOSE 8080
 USER 1001
 ENV QUARKUS_HTTP_HOST=0.0.0.0
+ENV QUARKUS_MICROMETER_EXPORT_PROMETHEUS_ENABLED=false
 
 CMD ["java", "-jar", "/work/quarkus-run.jar"]

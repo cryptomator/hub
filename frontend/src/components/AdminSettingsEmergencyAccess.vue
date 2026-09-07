@@ -9,9 +9,7 @@
       </a>
     </p>
     <hr class="my-4 border-gray-200" />
-    <ContentBanner v-if="!entitlements.emergencyAccessEnabled" type="info" :title="t('missingEntitlements.title')">
-      {{ t('missingEntitlements.description') }} <!-- TODO: link to feature comparison? -->
-    </ContentBanner>
+    <UpgradeLicenseBanner v-if="!entitlements.emergencyAccessEnabled" />
     <form v-else class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
       <ContentBanner v-if="entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
         {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
@@ -92,6 +90,7 @@
               :error-message="t('admin.emergencyAccess.keyholders.minSelected', [requiredShares])"
               :has-error="!!selectedMembersError"
               :placeholder="t('common.search.placeholder')"
+              :no-results-text="t('emergencyAccess.keyholders.noEligible')"
               @action="selectUser"
               @remove="removeUser"
             />
@@ -157,7 +156,7 @@
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <EmergencyScenarioVisualization
             :selected-users="selectedUsers"
-            :required-key-shares="requiredShares!"
+            :required-key-shares="requiredShares ?? 0"
           />
           <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.example.help') }}</p>
         </div>
@@ -196,6 +195,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import ContentBanner from './ContentBanner.vue';
+import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
 import config from '../common/config';

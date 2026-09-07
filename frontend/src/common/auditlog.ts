@@ -164,6 +164,14 @@ export type AuditEventEmergencyAccessRecoveryAbortedDto = AuditEventDtoBase & {
 
 export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto | AuditEventEmergencyAccessRecoveryAbortedDto;
 
+/* Authority-ID resolution */
+
+/**
+ * Keys within a raw-JSON audit event payload (e.g. the `details` of an emergency access event)
+ * whose value(s) are authority ids that should be resolved to names in the audit log UI.
+ */
+export const AUTHORITY_ID_KEYS: ReadonlySet<string> = new Set(['newOwnerIds', 'newMemberIds', 'emergencyCouncilMemberIds']);
+
 /* Entity Cache */
 
 export class AuditLogEntityCache {

@@ -25,7 +25,7 @@ services:
       retries: 12
 
   keycloak:
-    image: ghcr.io/cryptomator/keycloak:26.7.2
+    image: ghcr.io/cryptomator/keycloak:26.7.3
     command: start --optimized --import-realm
     environment:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak

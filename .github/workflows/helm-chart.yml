@@ -10,7 +10,7 @@ on:
     inputs:
       version:
         description: 'Chart Version'
-        required: true
+        required: false
       appVersion:
         description: 'App Version'
         required: true

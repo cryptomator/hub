@@ -26,10 +26,11 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ArrowRightStartOnRectangleIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon } from '@heroicons/vue/24/outline';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, UserDto } from '../common/backend';
+import backend, { UserDto } from '../common/backend';
+import config from '../common/config';
 import SidebarContent, { NavigationItem, ProfileDropdownItem } from './SidebarContent.vue';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -60,24 +61,15 @@ const profileDropdown: ProfileDropdownItem[][] = [
 ];
 
 const isAdmin = ref(false);
-const licenseStatus = ref<LicenseUserInfoDto>();
-
-const isCommunityLicense = computed(() => !licenseStatus.value?.expiresAt);
 
 onMounted(async () => {
   isAdmin.value = (await auth).hasRole('admin');
 
-  licenseStatus.value = await backend.license.getUserInfo();
+  const entitlements = config.get().entitlements;
   const emergencyAccessEnabled = (await backend.settings.get()).enableEmergencyAccess;
-  if (!isCommunityLicense.value && emergencyAccessEnabled) {
-    try {
-      const recoverable = await backend.vaults.listRecoverable();
-      const unique = Array.from(new Map(recoverable.map(v => [v.id, v])).values());
-      if (unique.length > 0 && !mainNav.value.some(i => i.to === '/app/emergency-access')) {
-        mainNav.value.push({ icon: LifebuoyIcon, name: 'nav.emergencyAccess', to: '/app/emergency-access' });
-      }
-    } catch (e) {
-      console.error('Failed to load emergency-access vaults:', e);
+  if (entitlements.emergencyAccessEnabled && emergencyAccessEnabled) {
+    if (!mainNav.value.some(i => i.to === '/app/emergency-access')) {
+      mainNav.value.push({ icon: LifebuoyIcon, name: 'nav.emergencyAccess', to: '/app/emergency-access' });
     }
   }
 });

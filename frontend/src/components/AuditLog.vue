@@ -12,7 +12,7 @@
     </div>
   </div>
 
-  <div v-else-if="state == State.ShowAuditLog">
+  <div v-else>
     <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-5 border-b border-gray-200 w-full">
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('auditLog.title') }}
@@ -187,7 +187,7 @@
               <tfoot class="bg-gray-50">
                 <tr>
                   <td colspan="3">
-                    <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+                    <nav v-if="state == State.ShowAuditLog" class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
                       <div class="hidden sm:block">
                         <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
                           <span class="font-medium">{{ paginationBegin }}</span>
@@ -203,6 +203,9 @@
                         </button>
                       </div>
                     </nav>
+                    <div v-else-if="state == State.PaymentRequired" class="items-center justify-between px-4 py-6 sm:px-6">
+                      <UpgradeLicenseBanner />
+                    </div>
                   </td>
                 </tr>
               </tfoot>
@@ -213,26 +216,12 @@
       </div>
     </div>
   </div>
-
-  <div v-else-if="state == State.PaymentRequired" class="flex flex-col justify-center items-center text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.paymentRequired.message') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.paymentRequired.description') }}</p>
-    <router-link v-slot="{ navigate }" to="/app/admin/settings" custom>
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
-        <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-        {{ t('auditLog.paymentRequired.openAdminSection') }}
-      </button>
-    </router-link>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon, TrashIcon, WrenchIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
@@ -261,6 +250,7 @@ import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
 import config, { ConfigDto } from '../common/config';
 import ContentBanner from './ContentBanner.vue';
+import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 
 enum State {
   Loading,

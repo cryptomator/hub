@@ -260,10 +260,10 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
-import { PlayIcon, CheckCircleIcon } from '@heroicons/vue/24/solid';
+import { CheckCircleIcon, PlayIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
-import { computed, ref, Ref, toRaw, nextTick } from 'vue';
+import { computed, nextTick, ref, Ref, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
@@ -271,11 +271,11 @@ import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
 import { wordEncoder } from '../../common/util';
+import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import SegmentRing from './SegmentRing.vue';
-import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

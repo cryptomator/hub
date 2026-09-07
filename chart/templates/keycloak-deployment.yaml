@@ -52,7 +52,7 @@ spec:
       {{- end }}
       containers:
         - name: keycloak
-          image: "ghcr.io/cryptomator/keycloak:{{ .Values.keycloak.image.tag | default "26.7.2" }}"
+          image: "ghcr.io/cryptomator/keycloak:{{ .Values.keycloak.image.tag | default "26.7.3" }}"
           imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
           command:
             - /opt/keycloak/bin/kc.sh

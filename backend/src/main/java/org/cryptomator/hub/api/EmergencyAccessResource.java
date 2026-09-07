@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -25,7 +26,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
@@ -44,14 +47,16 @@ public class EmergencyAccessResource {
 	private final EmergencyRecoveryProcess.Repository recoverProcessRepo;
 	private final RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo;
 	private final JsonWebToken jwt;
+	private final Vault.Repository vaultRepo;
 	private final EventLogger eventLogger;
 	private final HttpServerRequest request; // @RequestScoped bean, injected as a client proxy resolving against the current request
 
 	@Inject
-	EmergencyAccessResource(EmergencyRecoveryProcess.Repository recoverProcessRepo, RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo, JsonWebToken jwt, EventLogger eventLogger, HttpServerRequest request) {
+	EmergencyAccessResource(EmergencyRecoveryProcess.Repository recoverProcessRepo, RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo, JsonWebToken jwt, Vault.Repository vaultRepo, EventLogger eventLogger, HttpServerRequest request) {
 		this.recoverProcessRepo = recoverProcessRepo;
 		this.recoveredKeySharesRepo = recoveredKeySharesRepo;
 		this.jwt = jwt;
+		this.vaultRepo = vaultRepo;
 		this.eventLogger = eventLogger;
 		this.request = request;
 	}
@@ -63,9 +68,15 @@ public class EmergencyAccessResource {
 	@Operation(summary = "starts a new recovery process")
 	@APIResponse(responseCode = "204", description = "process created")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
+	@APIResponse(responseCode = "403", description = "current user is not a member of the vault's emergency access council")
 	@Transactional
 	public Response startRecovery(@PathParam("processId") UUID processId, @Valid RecoveryProcessDto dto) {
 		var currentUser = jwt.getSubject();
+		var vault = vaultRepo.findByIdOptional(dto.vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.getEmergencyKeyShares().containsKey(currentUser)) {
+			// only current members of the vault's emergency access council may start a recovery process
+			throw new ForbiddenException("User is not a member of the vault's emergency access council");
+		}
 		if (!dto.recoveredKeyShares.containsKey(currentUser)) {
 			// the council member who starts the process must, by definition, be part of the process
 			throw new BadRequestException("User is not a member of the recovery process");
@@ -138,7 +149,10 @@ public class EmergencyAccessResource {
 	public Response complete(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
 		var ip = request.remoteAddress().hostAddress();
-		if (recoverProcessRepo.deleteById(processId)) {
+		var process = recoverProcessRepo.findByIdOptional(processId).orElseThrow(NotFoundException::new);
+		if (!process.getRecoveredKeyShares().containsKey(currentUserId)) {
+			throw new ForbiddenException();
+		} else if (recoverProcessRepo.deleteById(processId)) {
 			eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
 			return Response.noContent().build();
 		} else {
@@ -155,13 +169,14 @@ public class EmergencyAccessResource {
 	@Transactional
 	public Response abort(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
-		var process = recoverProcessRepo.findByIdOptional(processId)
-				.orElseThrow(NotFoundException::new);
-
-		eventLogger.logEmergencyAccessRecoveryAborted(process.getVaultId(), processId, currentUserId, request.remoteAddress().hostAddress());
-
-		recoverProcessRepo.delete(process);
-		return Response.noContent().build();
+		var process = recoverProcessRepo.findByIdOptional(processId).orElseThrow(NotFoundException::new);
+		if (process.getRecoveredKeyShares().containsKey(currentUserId) || vaultRepo.findById(process.getVaultId()).getEmergencyKeyShares().containsKey(currentUserId)) {
+			eventLogger.logEmergencyAccessRecoveryAborted(process.getVaultId(), processId, currentUserId, request.remoteAddress().hostAddress());
+			recoverProcessRepo.delete(process);
+			return Response.noContent().build();
+		} else {
+			throw new ForbiddenException();
+		}
 	}
 
 	@GET
@@ -178,6 +193,7 @@ public class EmergencyAccessResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
+	@VaultRole(value = {}, bypassForEmergencyAccess = true)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "finds an existing recovery process")
 	@APIResponse(responseCode = "200")
