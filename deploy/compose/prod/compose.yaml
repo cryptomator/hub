@@ -61,7 +61,7 @@ services:
   # `QUARKUS_OIDC_TOKEN_ISSUER` of the `hub` service at your instance and import the realm from the `cryptomator-realm` config there (https://www.keycloak.org/server/importExport).
   # The secret of the `cryptomatorhub-system` client must equal `HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET`, and Keycloak's origin must be in the `connect-src` of Hub's Content Security Policy.
   keycloak:
-    image: ghcr.io/cryptomator/keycloak:26.7.2
+    image: ghcr.io/cryptomator/keycloak:26.7.3
     command: start --optimized --import-realm
     environment:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
