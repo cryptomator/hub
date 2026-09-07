@@ -36,7 +36,7 @@ Prerequisites:
    | Value | Meaning |
    |---|---|
    | `urls.hub.public`, `urls.kc.public` | Both services under one host with path prefixes, so a single forwarded ingress port serves everything. Baked into the Keycloak realm on first boot — see Reset below when changing them |
-   | `hub.image.tag=dev`, `hub.imagePullPolicy=Never` | Use the image loaded in step 1 instead of pulling from the registry. To test a published image instead, set the tag to a release (e.g. `2.0.0`) and drop the pull policy; the committed `Chart.yaml` only carries a baseline `appVersion` that the release workflow overrides |
+   | `hub.image.tag=dev`, `hub.imagePullPolicy=Never` | Use the image loaded in step 1 instead of pulling from the registry. To test a published image instead, set the tag to a release (e.g. `2.0.1`) and drop the pull policy; the committed `Chart.yaml` only carries a baseline `appVersion` that the release workflow overrides |
    | `hub.admin.password`, `hub.admin.passwordTemporary=false` | Fixed `admin` / `admin` login without forced password change. Never in production |
    | `keycloak.admin.password` | Keycloak bootstrap admin `admin` / `admin` |
    | `secrets.keepOnUninstall=true` | Keeps the generated database passwords across `helm uninstall` / `helm install`, so the persisted PostgreSQL volume stays usable. Never in production |

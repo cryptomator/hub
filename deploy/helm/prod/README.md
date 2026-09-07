@@ -7,7 +7,7 @@ Requirements: Kubernetes ≥ 1.27 with the Traefik ingress controller (K3s, for 
 1. Install the chart with your own values:
 
    ```bash
-   helm install hub oci://ghcr.io/cryptomator/charts/cryptomator-hub --version 2.0.0 \
+   helm install hub oci://ghcr.io/cryptomator/charts/cryptomator-hub --version 2.0.1 \
      --namespace cryptomator --create-namespace \
      --set urls.hub.public=https://hub.example.com \
      --set urls.kc.public=https://kc.example.com \
