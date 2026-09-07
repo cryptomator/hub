@@ -354,7 +354,6 @@
   "vaultDetails.actions.reactivateVault": "Reaktywuj sejf",
   "vaultDetails.actions.claimOwnership": "Przejmij rolę właściciela",
   "vaultDetails.actions.recoverVault": "Odzyskaj dostęp do sejfu",
-  "vaultDetails.error.licenseViolated": "Twoja licencja Cryptomator Hub wygasła lub przekroczono liczbę dostępnych stanowisk. Poinformuj administratora Huba o odnowieniu lub uaktualnieniu licencji.",
   "vaultDetails.recoverVault.description": "Aby odzyskać dostęp do sejfu, musisz przywrócić dostęp za pomocą klucza odzyskiwania lub inny właściciel musi zaktualizować uprawnienia dostępu.",
   "vaultList.title": "Sejfy",
   "vaultList.empty.title": "Brak sejfów",
@@ -372,5 +371,6 @@
   "vaultList.filter.result.empty.description": "Brak wyników dla tego hasła lub filtra.",
   "vaultList.search.placeholder": "Szukaj…",
   "vaultList.badge.owner": "Właściciel",
-  "vaultList.badge.archived": "Zarchiwizowany"
+  "vaultList.badge.archived": "Zarchiwizowany",
+  "setupLicense.nonAdmin.title": "Wymagana konfiguracja"
 }

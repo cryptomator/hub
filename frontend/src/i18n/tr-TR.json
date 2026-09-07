@@ -248,6 +248,7 @@
   "licenseAlert.licenseExpired.title": "Lisan süresi doldu",
   "licenseAlert.licenseExpired.admin.description": "Cryptomator Hub lisansınızın süresi doldu. Kasalarınızı tekrar yönetmek ve kilidini açmak için {0}'dan yenileyin.",
   "licenseAlert.licenseExpired.user.description": "Cryptomator Hub lisansınızın süresi doldu. Lisansı yenilemek için lütfen bir Hub yöneticisini bilgilendirin.",
+  "licenseAlert.licenseExpiredGracePeriod.user.description": "Cryptomator Hub lisansınızın vadesi doldu. Kasalarınıza erişebilmek için bir Hub yöneticisini bilgilendirerek lisansınızı yenileyin.",
   "licenseAlert.button": "Yönetici Bölümü",
   "legacyDeviceList.description.information": "Daha fazla bilgi edin.",
   "legacyDeviceList.deviceName": "Cihaz Adı",
@@ -371,7 +372,6 @@
   "vaultDetails.actions.reactivateVault": "Kasayı Yeniden Etkinleştir",
   "vaultDetails.actions.claimOwnership": "Sahiplik Talep Et",
   "vaultDetails.actions.recoverVault": "Kasa Erişimini Kurtar",
-  "vaultDetails.error.licenseViolated": "Cryptomator Hub lisansınızın süresi doldu veya lisanslı koltuk sayısını aştınız. Lütfen bir Hub yöneticisine lisansı yenilemesini veya yükseltmesini bildirin.",
   "vaultDetails.recoverVault.title": "Hesabınızı Sıfırladınız!",
   "vaultDetails.recoverVault.description": "Kasaya yeniden erişim kazanmak için kurtarma anahtarını kullanarak erişiminizi geri yüklemeniz veya başka bir sahibin erişim izinlerini güncellemesi gerekir.",
   "vaultList.title": "Kasalar",
@@ -393,5 +393,6 @@
   "vaultList.badge.archived": "Arşivlenmiş",
   "userList.filter.result.empty.title": "Kullanıcı yok",
   "groupList.empty.title": "Grup yok",
-  "groupList.filter.result.empty.title": "Grup yok"
+  "groupList.filter.result.empty.title": "Grup yok",
+  "setupLicense.nonAdmin.title": "Kurulum Gerekli"
 }

@@ -331,7 +331,6 @@
   "groupEditCreate.invalidImageUrl": "Ongeldige afbeeldings-URL",
   "groupEditCreate.profilePictureUrl": "URL profielafbeelding",
   "groupEditCreate.selectRolesPlaceholder": "Selecteer rol(len)",
-  "groupEditCreate.error.groupNameAlreadyExists": "Een groep met deze naam bestaat al.",
   "trustDetails.trustLevel": "Vertrouwensniveau {0}",
   "trustDetails.trustLevel.untrusted": "Ongeverifieerd",
   "trustDetails.showSignDialogBtn": "Identiteit controleren...",
@@ -454,8 +453,6 @@
   "userEditCreate.invalidImageUrl": "Ongeldige afbeeldings-URL",
   "userEditCreate.validation.required": "Dit veld is verplicht",
   "userEditCreate.validation.passwordMismatch": "Wachtwoorden komen niet overeen",
-  "userEditCreate.error.userAlreadyExists": "Een gebruiker met deze gebruikersnaam bestaat al.",
-  "userEditCreate.error.emailAlreadyExists": "Er bestaat al een gebruiker met dit e-mailadres.",
   "userList.edit.user.button": "Bewerken",
   "userList.userName": "Naam",
   "userList.groups.count": "Groepen",
@@ -502,7 +499,6 @@
   "vaultDetails.actions.recoverVault": "Kluis toegang herstellen",
   "vaultDetails.emergencyAccess.setupCouncil": "Toegangsraad voor noodgevallen instellen",
   "vaultDetails.emergencyAccess.fixCouncil": "Repareer Toegangsraad voor noodgevallen",
-  "vaultDetails.error.licenseViolated": "Uw Cryptomator Hub licentie is verlopen of u heeft het aantal toegestane plaatsen overschreden. Informeer een Hub beheerder of upgrade de licentie.",
   "vaultDetails.error.reactivateFailed": "Je Cryptomator Hub-licentie heeft het aantal beschikbare plaatsen overschreden. Het heractiveren van deze kluis zou de limiet overschrijden. Informeer een Hub-beheerder om de licentie te upgraden.",
   "vaultDetails.recoverVault.title": "U heeft uw account gereset!",
   "vaultDetails.recoverVault.description": "Om de toegang tot de kluis terug te krijgen moet u uw toegang herstellen via de herstelsleutel, of een andere eigenaar moet de toegangsrechten bijwerken.",
@@ -532,5 +528,6 @@
   "missingEntitlements.title": "Upgrade vereist",
   "missingEntitlements.description": "Deze functie maakt geen deel uit van uw huidige licentie.",
   "trial.enterpriseFeature.title": "Enterprise Functie",
-  "trial.enterpriseFeature.description": "Deze functie is alleen permanent beschikbaar met een Enterprise licentie."
+  "trial.enterpriseFeature.description": "Deze functie is alleen permanent beschikbaar met een Enterprise licentie.",
+  "setupLicense.nonAdmin.title": "Installatie vereist"
 }

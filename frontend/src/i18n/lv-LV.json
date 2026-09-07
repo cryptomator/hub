@@ -334,8 +334,6 @@
   "userEditCreate.invalidImageUrl": "Nederīgs attēla URL",
   "userEditCreate.validation.required": "Šis lauks ir nepieciešams",
   "userEditCreate.validation.passwordMismatch": "Paroles nesakrīt",
-  "userEditCreate.error.userAlreadyExists": "Lietotājs ar šādu lietotājvārdu jau pastāv.",
-  "userEditCreate.error.emailAlreadyExists": "Lietotājs ar šādu e-pasta adresi jau pastāv.",
   "userList.edit.user.button": "Labot",
   "userList.userName": "Vārds",
   "userList.device.count": "Ierīces",
@@ -379,7 +377,6 @@
   "vaultDetails.actions.reactivateVault": "Atkārtoti aktivēt glabātavu",
   "vaultDetails.actions.claimOwnership": "Pieteikt īpašumtiesības",
   "vaultDetails.actions.recoverVault": "Atkopt piekļuvi glabātavai",
-  "vaultDetails.error.licenseViolated": "Cryptomator Hub licence ir beigusies vai ir pārsniegts iekļauto vietu skaits. Lūgums ziņot Hub pārvaldtītājam, lai atjaunotu vai uzlabotu licenci.",
   "vaultDetails.recoverVault.title": "Tika atiestatīts konts.",
   "vaultDetails.recoverVault.description": "Lai atgūtu piekļuvi kontam, jāatjauno piekļuve ar atkopes atslēgu vai citam īpašniekam jāatjaunina piekļuves atļaujas.",
   "vaultList.title": "Glabātavas",
@@ -405,5 +402,6 @@
   "missingEntitlements.title": "Nepieciešams uzlabojums",
   "missingEntitlements.description": "Tava pašreizējā licence nenodrošina šo iespēju.",
   "trial.enterpriseFeature.title": "Iespēja uzņēmumiem",
-  "trial.enterpriseFeature.description": "Šī iespēja ir pieejama tikai ar licenci uzņēmumiem."
+  "trial.enterpriseFeature.description": "Šī iespēja ir pieejama tikai ar licenci uzņēmumiem.",
+  "setupLicense.nonAdmin.title": "Nepieciešama uzstādīšana"
 }

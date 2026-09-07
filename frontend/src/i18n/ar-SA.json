@@ -104,6 +104,7 @@
   "initialSetup.createUserKey.details.devicesName": "سيتم إضافة هذا المتصفح إلى هذه القائمة ك: {deviceName}",
   "initialSetup.createUserKey.details.devicesName.label": "اسم المتصفح",
   "initialSetup.recoverUserKey.deviceName": "اسم المتصفح",
+  "initialSetup.recoverUserKey.deviceName.description": "سمِّي هذا المتصفح للحصول على تعريف سهل في قائمة الأجهزة المصرح بها.",
   "initialSetup.setupAlreadyCompleted.goToYourProfile": "اذهب إلى ملفك الشخصي",
   "initialSetup.accountKey": "Account Key",
   "initialSetup.submit": "أنهِ الإعداد",
@@ -162,5 +163,6 @@
   "vaultList.filter.entry.ownedVaults": "ملكي",
   "vaultList.search.placeholder": "بحث…",
   "vaultList.badge.owner": "المالك",
-  "vaultList.badge.archived": "مؤرشف"
+  "vaultList.badge.archived": "مؤرشف",
+  "setupLicense.nonAdmin.title": "الإعداد مطلوب"
 }
