@@ -271,7 +271,6 @@ import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
 import { wordEncoder } from '../../common/util';
-import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
