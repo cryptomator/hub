@@ -51,7 +51,14 @@ export type VaultDto = {
   salt?: string;
   authPublicKey?: string;
   authPrivateKey?: string;
+
+  uvfMetadataFile?: string;
+  uvfKeySet?: string;
 };
+
+export function isUvfVault(v: VaultDto): v is VaultDto & { uvfMetadataFile: string; uvfKeySet: string } {
+  return typeof v.uvfMetadataFile === 'string' && typeof v.uvfKeySet === 'string';
+}
 
 export type DeviceDto = {
   id: string;
@@ -77,6 +84,11 @@ export type AccessGrant = {
   userId: string,
   token: string
 };
+
+/**
+ * Map from vault id to the user ids on that vault who do not yet have a per-user access token.
+ */
+export type PendingAccessGrants = Record<string, string[]>;
 
 export type UserDto = {
   type: 'USER';
@@ -188,7 +200,10 @@ export type SettingsDto = {
   defaultMinMembers: number,
   allowChoosingEmergencyCouncil: boolean,
   emergencyCouncilMemberIds: string[],
-  enableEmergencyAccess: boolean
+  enableEmergencyAccess: boolean,
+  enableAutomaticAccessGrant: boolean,
+  automaticAccessGrantTrustThreshold: number,
+  allowAutomaticAccessGrantOverride: boolean
 };
 
 export type RecoveryProcessSetNewOwner = {
@@ -365,9 +380,22 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
-    const users = await axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<(MemberDto & UserDto)[]> {
+    const users = await axiosAuth.get<(MemberDto & UserDto)[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
+  }
+
+  /**
+   * Long-polling endpoint used by the automatic access grant flow. Returns pending grants as a map from vault id to
+   * the user ids on that vault whose access tokens are missing (limited to vaults the caller is a member of). Blocks
+   * up to `waitSeconds` if there are no pending grants at call time; returns an empty map on timeout. Best effort —
+   * clients should poll on a coarse cadence too.
+   */
+  public async listPendingAccessGrants(waitSeconds = 25): Promise<PendingAccessGrants> {
+    return axiosAuth.get<PendingAccessGrants>('/vaults/users-requiring-access-grant', {
+      params: { wait: waitSeconds },
+      timeout: (waitSeconds + 10) * 1000
+    }).then(response => response.data);
   }
 
   public async setArchived(vaultId: string, archived: boolean): Promise<VaultDto> {
@@ -379,17 +407,8 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
-    const body: VaultDto = {
-      id: vaultId,
-      name: name,
-      creationTime: new Date(),
-      description: description,
-      archived: archived,
-      requiredEmergencyKeyShares: requiredEmergencyKeyShares,
-      emergencyKeyShares: emergencyKeyShares
-    };
-    return axiosAuth.put(`/vaults/${vaultId}`, body)
+  public async createOrUpdateVault(vault: VaultDto): Promise<VaultDto> {
+    return axiosAuth.put(`/vaults/${vault.id}`, vault)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }
@@ -418,6 +437,20 @@ class VaultService {
     }, {});
     await axiosAuth.post(`/vaults/${vaultId}/access-tokens`, body)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404, 409));
+  }
+
+  /**
+   * Grants access via the automatic access grant flow. Recorded in the audit log with the automatic flag set. Callable
+   * by any vault member (not just owners); the backend only accepts tokens for users already awaiting an access grant
+   * on this vault. Used by the automatic access grant agent; manual grants by owners should use {@link grantAccess}.
+   */
+  public async autoGrantAccess(vaultId: string, ...grants: AccessGrant[]) {
+    const body = grants.reduce<Record<string, string>>((accumulator, curr) => {
+      accumulator[curr.userId] = curr.token;
+      return accumulator;
+    }, {});
+    await axiosAuth.post(`/vaults/${vaultId}/access-tokens/auto`, body)
+      .catch((error) => rethrowAndConvertIfExpected(error, 400, 403, 404));
   }
 
   public async removeAuthority(vaultId: string, authorityId: string) {

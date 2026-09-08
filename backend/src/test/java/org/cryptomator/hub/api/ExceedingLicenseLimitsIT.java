@@ -181,7 +181,7 @@ class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", Instant.parse("2222-11-11T11:11:11Z"), "This is a testvault.", false, 0, Map.of(), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", Instant.parse("2222-11-11T11:11:11Z"), "This is a testvault.", false, 0, Map.of(), "doNotUpdate", "doNotUpdate", "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)
@@ -207,7 +207,7 @@ class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
 
 		var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
-		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 		given().contentType(ContentType.JSON).body(vaultDto)
 				.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
 				.then().statusCode(402);
@@ -235,7 +235,7 @@ class ExceedingLicenseLimitsIT {
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA ignores archived flag in createOrUpdate")
 	void createOrUpdateIgnoresArchivedFlag() {
 		var vaultId = "7E57C0DE-0000-4000-8000-00010000AAAA";
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "masterkey3", 42, "salt3", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "salt3", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)

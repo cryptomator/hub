@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Gatherers;
 import java.util.stream.Stream;
@@ -29,14 +28,6 @@ import java.util.stream.Stream;
 @Entity
 @Table(name = "user_details")
 @DiscriminatorValue("USER")
-@NamedQuery(name = "User.requiringAccessGrant",
-		query = """
-				SELECT u
-				FROM User u
-					INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
-					LEFT JOIN u.accessTokens token ON token.id.vaultId = :vaultId AND token.id.userId = u.id
-					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
-				""")
 @NamedQuery(name = "User.getEffectiveGroupUsers", query = """
 				SELECT DISTINCT u
 				FROM User u
@@ -268,10 +259,6 @@ public class User extends Authority {
 
 		public long deleteByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Map.of("ids", batch)));
-		}
-
-		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
-			return find("#User.requiringAccessGrant", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public long countEffectiveGroupUsers(String groupdId) {

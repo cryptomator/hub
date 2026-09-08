@@ -87,14 +87,14 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { SettingsDto, VaultDto } from '../../common/backend';
-import { VaultKeys } from '../../common/crypto';
+import { RecoveryKeyProducing } from '../../common/crypto';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vault: VaultDto,
-  vaultKeys: VaultKeys,
+  vaultKeys: RecoveryKeyProducing
   settings: SettingsDto
 }>();
 
@@ -130,14 +130,11 @@ async function splitRecoveryKey() {
   try {
     const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(props.vaultKeys);
 
-    const updatedVault = await backend.vaults.createOrUpdateVault(
-      props.vault.id,
-      props.vault.name,
-      props.vault.archived,
-      requiredKeyShares,
-      keyShares,
-      props.vault.description
-    );
+    const updatedVault = await backend.vaults.createOrUpdateVault({
+      ...props.vault,
+      requiredEmergencyKeyShares: requiredKeyShares,
+      emergencyKeyShares: keyShares
+    });
 
     emit('updated', updatedVault);
     open.value = false;

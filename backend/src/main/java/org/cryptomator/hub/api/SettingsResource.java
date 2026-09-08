@@ -65,6 +65,9 @@ public class SettingsResource {
 		var oldMinMembers = settings.getDefaultMinMembers();
 		var oldAllowChoosingEmergencyCouncil = settings.isAllowChoosingEmergencyCouncil();
 		var oldEmergencyAccessEnabled = settings.isEmergencyAccessEnabled();
+		var oldAutoGrantEnabled = settings.isAutomaticAccessGrantEnabled();
+		var oldAutoGrantTrustThreshold = settings.getAutomaticAccessGrantTrustThreshold();
+		var oldAutoGrantAllowOverride = settings.isAllowAutomaticAccessGrantOverride();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
@@ -72,6 +75,9 @@ public class SettingsResource {
 		settings.setAllowChoosingEmergencyCouncil(dto.allowChoosingEmergencyCouncil);
 		settings.setEmergencyCouncilMemberIds(dto.emergencyCouncilMemberIds);
 		settings.setEmergencyAccessEnabled(dto.enableEmergencyAccess);
+		settings.setAutomaticAccessGrantEnabled(dto.enableAutomaticAccessGrant);
+		settings.setAutomaticAccessGrantTrustThreshold(dto.automaticAccessGrantTrustThreshold);
+		settings.setAllowAutomaticAccessGrantOverride(dto.allowAutomaticAccessGrantOverride);
 		settingsRepo.persist(settings);
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
@@ -85,6 +91,11 @@ public class SettingsResource {
 			var councilMemberIds = "[" + dto.emergencyCouncilMemberIds.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")) + "]";
 			eventLogger.logEmergencyAccessSettingsUpdated(jwt.getSubject(), dto.enableEmergencyAccess, councilMemberIds, dto.defaultRequiredEmergencyKeyShares, dto.defaultMinMembers, dto.allowChoosingEmergencyCouncil);
 		}
+		if (oldAutoGrantEnabled != dto.enableAutomaticAccessGrant
+				|| oldAutoGrantTrustThreshold != dto.automaticAccessGrantTrustThreshold
+				|| oldAutoGrantAllowOverride != dto.allowAutomaticAccessGrantOverride) {
+			eventLogger.logAutoGrantSettingUpdated(jwt.getSubject(), dto.enableAutomaticAccessGrant, dto.automaticAccessGrantTrustThreshold, dto.allowAutomaticAccessGrantOverride);
+		}
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -95,10 +106,13 @@ public class SettingsResource {
 							  @JsonProperty("defaultRequiredEmergencyKeyShares") @Min(0) int defaultRequiredEmergencyKeyShares,
 							  @JsonProperty("defaultMinMembers") @Min(0) int defaultMinMembers,
 							  @JsonProperty("allowChoosingEmergencyCouncil") boolean allowChoosingEmergencyCouncil,
-							  @JsonProperty("emergencyCouncilMemberIds") @NotNull Set<String> emergencyCouncilMemberIds) {
+							  @JsonProperty("emergencyCouncilMemberIds") @NotNull Set<String> emergencyCouncilMemberIds,
+							  @JsonProperty("enableAutomaticAccessGrant") boolean enableAutomaticAccessGrant,
+							  @JsonProperty("automaticAccessGrantTrustThreshold") @Min(-1) @Max(9) int automaticAccessGrantTrustThreshold,
+							  @JsonProperty("allowAutomaticAccessGrantOverride") boolean allowAutomaticAccessGrantOverride) {
 
 		public static SettingsDto fromEntity(Settings entity) {
-			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.isEmergencyAccessEnabled(), entity.getDefaultRequiredEmergencyKeyShares(), entity.getDefaultMinMembers(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
+			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.isEmergencyAccessEnabled(), entity.getDefaultRequiredEmergencyKeyShares(), entity.getDefaultMinMembers(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds(), entity.isAutomaticAccessGrantEnabled(), entity.getAutomaticAccessGrantTrustThreshold(), entity.isAllowAutomaticAccessGrantOverride());
 		}
 
 	}

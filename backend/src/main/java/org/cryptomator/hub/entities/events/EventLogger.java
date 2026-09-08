@@ -79,12 +79,13 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId) {
+	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId, boolean automatic) {
 		var event = new VaultAccessGrantedEvent();
 		event.setTimestamp(Instant.now());
 		event.setGrantedBy(grantedBy);
 		event.setVaultId(vaultId);
 		event.setAuthorityId(authorityId);
+		event.setAutomatic(automatic);
 		auditEventRepository.persist(event);
 	}
 
@@ -134,6 +135,16 @@ public class EventLogger {
 		event.setWotIdVerifyLen(wotIdVerifyLen);
 		event.setWotMaxDepth(wotMaxDepth);
 		event.setUpdatedBy(updatedBy);
+		auditEventRepository.persist(event);
+	}
+
+	public void logAutoGrantSettingUpdated(String updatedBy, boolean enabled, int trustThreshold, boolean allowOverride) {
+		var event = new SettingAutoGrantUpdateEvent();
+		event.setTimestamp(Instant.now());
+		event.setUpdatedBy(updatedBy);
+		event.setEnabled(enabled);
+		event.setTrustThreshold(trustThreshold);
+		event.setAllowOverride(allowOverride);
 		auditEventRepository.persist(event);
 	}
 

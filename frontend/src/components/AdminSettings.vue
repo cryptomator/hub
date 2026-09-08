@@ -1,5 +1,5 @@
 <template>
-  <div v-if="billing === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
+  <div v-if="billing === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined || enableAutomaticAccessGrant === undefined || autoGrantTrustThreshold === undefined || allowAutomaticAccessGrantOverride === undefined">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
@@ -232,6 +232,83 @@
         </form>
       </section>
 
+      <!-- Automatic Access Grant Section -->
+      <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">
+          {{ t('admin.automaticAccessGrant.title') }}
+        </h3>
+        <p class="mt-1 text-sm text-gray-500 w-full">
+          {{ t('admin.automaticAccessGrant.description') }}
+        </p>
+        <hr class="my-4 pb-6 border-gray-200" />
+        <form ref="autoGrantForm" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveAutomaticAccessGrant()">
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="enableAutomaticAccessGrant" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.automaticAccessGrant.enabled.label') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <div class="flex items-center h-9">
+                <input id="enableAutomaticAccessGrant" v-model="enableAutomaticAccessGrant" type="checkbox" aria-describedby="enableAutomaticAccessGrantDescription" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" />
+                <label for="enableAutomaticAccessGrant" class="ml-2 text-sm text-gray-500">
+                  {{ t('admin.automaticAccessGrant.enabled.help') }}
+                </label>
+                <span id="enableAutomaticAccessGrantDescription" class="hidden">{{ t('admin.automaticAccessGrant.enabled.help') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="autoGrantTrustThreshold" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.automaticAccessGrant.trustThreshold.title') }}
+            </label>
+            <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
+              <input id="autoGrantTrustThreshold" v-model="autoGrantTrustThreshold" type="number" min="0" max="9" step="1" :disabled="!enableAutomaticAccessGrant" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': autoGrantTrustThresholdError instanceof AutoGrantFormValidationFailedError }" />
+              <div v-if="autoGrantTrustThresholdError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
+                <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                  {{ t('admin.automaticAccessGrant.trustThreshold.error') }}
+                  <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
+                </div>
+              </div>
+              <p class="mt-2 text-sm text-gray-500">
+                {{ t('admin.automaticAccessGrant.trustThreshold.description') }}
+              </p>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="allowAutomaticAccessGrantOverride" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.automaticAccessGrant.allowOverride.label') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <div class="flex items-center h-9">
+                <input id="allowAutomaticAccessGrantOverride" v-model="allowAutomaticAccessGrantOverride" type="checkbox" aria-describedby="allowAutomaticAccessGrantOverrideDescription" :disabled="!enableAutomaticAccessGrant" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary disabled:bg-gray-200" />
+                <label for="allowAutomaticAccessGrantOverride" class="ml-2 text-sm text-gray-500" aria-hidden="true">{{ t('admin.automaticAccessGrant.allowOverride.help') }}</label>
+                <span id="allowAutomaticAccessGrantOverrideDescription" class="hidden">{{ t('admin.automaticAccessGrant.allowOverride.help') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-start-2 flex items-center gap-2">
+              <button type="submit" :disabled="processing || !autoGrantHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <span v-if="!autoGrantUpdated">{{ t('admin.automaticAccessGrant.save') }}</span>
+                <span v-else>{{ t('admin.automaticAccessGrant.saved') }}</span>
+              </button>
+              <p v-if="onAutoGrantSaveError && !(onAutoGrantSaveError instanceof AutoGrantFormValidationFailedError)" class="mt-2 text-sm text-red-900">
+                {{ t('common.unexpectedError', [onAutoGrantSaveError.message]) }}
+              </p>
+              <div v-if="autoGrantHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
+                {{ t('common.unsavedChanges') }}&nbsp;
+                <button type="button" class="underline hover:text-yellow-900" @click="resetAutomaticAccessGrant()">
+                  {{ t('common.undo') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
       <AdminSettingsEmergencyAccess />
     </div>
 
@@ -298,6 +375,14 @@ async function fetchData() {
       wotIdVerifyLen: wotIdVerifyLen.value
     };
     latestVersion.value = await versionAvailable;
+    enableAutomaticAccessGrant.value = settings.enableAutomaticAccessGrant;
+    autoGrantTrustThreshold.value = settings.automaticAccessGrantTrustThreshold;
+    allowAutomaticAccessGrantOverride.value = settings.allowAutomaticAccessGrantOverride;
+    initialAutomaticAccessGrantSettings.value = {
+      enableAutomaticAccessGrant: enableAutomaticAccessGrant.value,
+      automaticAccessGrantTrustThreshold: autoGrantTrustThreshold.value,
+      allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value
+    };
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -454,6 +539,77 @@ async function saveWebOfTrust() {
 function resetWebOfTrust() {
   wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
   wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
+}
+
+// #endregion
+
+// #region Automatic Access Grant
+
+type AutoGrantSettings = { enableAutomaticAccessGrant: boolean; automaticAccessGrantTrustThreshold: number; allowAutomaticAccessGrantOverride: boolean };
+const initialAutomaticAccessGrantSettings = ref<AutoGrantSettings>({ enableAutomaticAccessGrant: false, automaticAccessGrantTrustThreshold: 0, allowAutomaticAccessGrantOverride: false });
+const enableAutomaticAccessGrant = ref<boolean>();
+const autoGrantTrustThreshold = ref<number>();
+const allowAutomaticAccessGrantOverride = ref<boolean>();
+const autoGrantUpdated = ref(false);
+const debouncedAutoGrantUpdated = debounce(() => autoGrantUpdated.value = false, 2000);
+const autoGrantTrustThresholdError = ref<Error>();
+const onAutoGrantSaveError = ref<Error>();
+const autoGrantForm = ref<HTMLFormElement>();
+
+class AutoGrantFormValidationFailedError extends Error {
+
+  constructor() {
+    super('The form is invalid.');
+  }
+
+}
+
+const autoGrantHasUnsavedChanges = computed(() => {
+  return initialAutomaticAccessGrantSettings.value.enableAutomaticAccessGrant !== enableAutomaticAccessGrant.value
+    || initialAutomaticAccessGrantSettings.value.automaticAccessGrantTrustThreshold !== autoGrantTrustThreshold.value
+    || initialAutomaticAccessGrantSettings.value.allowAutomaticAccessGrantOverride !== allowAutomaticAccessGrantOverride.value;
+});
+
+async function saveAutomaticAccessGrant() {
+  onAutoGrantSaveError.value = undefined;
+  autoGrantTrustThresholdError.value = undefined;
+  if (billing.value === undefined || enableAutomaticAccessGrant.value === undefined || autoGrantTrustThreshold.value === undefined || allowAutomaticAccessGrantOverride.value === undefined) {
+    throw new Error('No data available.');
+  }
+  if (!autoGrantForm.value?.checkValidity()) {
+    if (autoGrantTrustThreshold.value < 0 || autoGrantTrustThreshold.value > 9) {
+      autoGrantTrustThresholdError.value = new AutoGrantFormValidationFailedError();
+    }
+    return;
+  }
+  try {
+    processing.value = true;
+    const settings = {
+      enableAutomaticAccessGrant: enableAutomaticAccessGrant.value,
+      automaticAccessGrantTrustThreshold: autoGrantTrustThreshold.value,
+      allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value,
+      hubId: billing.value.hubId
+    };
+    initialAutomaticAccessGrantSettings.value = {
+      enableAutomaticAccessGrant: enableAutomaticAccessGrant.value,
+      automaticAccessGrantTrustThreshold: autoGrantTrustThreshold.value,
+      allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value
+    };
+    await backend.settings.update(settings);
+    autoGrantUpdated.value = true;
+    debouncedAutoGrantUpdated();
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    onAutoGrantSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } finally {
+    processing.value = false;
+  }
+}
+
+function resetAutomaticAccessGrant() {
+  enableAutomaticAccessGrant.value = initialAutomaticAccessGrantSettings.value.enableAutomaticAccessGrant;
+  autoGrantTrustThreshold.value = initialAutomaticAccessGrantSettings.value.automaticAccessGrantTrustThreshold;
+  allowAutomaticAccessGrantOverride.value = initialAutomaticAccessGrantSettings.value.allowAutomaticAccessGrantOverride;
 }
 
 // #endregion
