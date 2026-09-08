@@ -172,7 +172,7 @@
               {{ t('admin.webOfTrust.wotMaxDepth.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }" />
+              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" :max="WOT_MAX_DEPTH_LIMIT" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }" />
               <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
@@ -194,7 +194,7 @@
               {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }" />
+              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" :max="WOT_ID_VERIFY_LEN_LIMIT" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }" />
               <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
@@ -365,7 +365,6 @@ async function fetchData() {
     const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
     billing.value = await backend.billing.get();
     version.value = await versionDto;
-    latestVersion.value = await versionAvailable;
     hasLegacyDevices.value = await backend.devices.hasLegacyDevices();
 
     const settings = await backend.settings.get();
@@ -375,6 +374,7 @@ async function fetchData() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
+    latestVersion.value = await versionAvailable;
     enableAutomaticAccessGrant.value = settings.enableAutomaticAccessGrant;
     autoGrantTrustThreshold.value = settings.automaticAccessGrantTrustThreshold;
     allowAutomaticAccessGrantOverride.value = settings.allowAutomaticAccessGrantOverride;
@@ -472,6 +472,9 @@ const numberOfExceededSeats = computed(() => {
 
 // #region Web of Trust
 
+const WOT_MAX_DEPTH_LIMIT = 9;
+const WOT_ID_VERIFY_LEN_LIMIT = 64;
+
 type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
 const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
 const wotMaxDepth = ref<number>();
@@ -503,10 +506,10 @@ async function saveWebOfTrust() {
     throw new Error('No data available.');
   }
   if (!form.value?.checkValidity()) {
-    if (wotMaxDepth.value < 0 || wotMaxDepth.value > 9) {
+    if (wotMaxDepth.value < 0 || wotMaxDepth.value > WOT_MAX_DEPTH_LIMIT) {
       wotMaxDepthError.value = new WotFormValidationFailedError();
     }
-    if (wotIdVerifyLen.value < 0) {
+    if (wotIdVerifyLen.value < 0 || wotIdVerifyLen.value > WOT_ID_VERIFY_LEN_LIMIT) {
       wotIdVerifyLenError.value = new WotFormValidationFailedError();
     }
     return;

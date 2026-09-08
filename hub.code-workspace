@@ -13,7 +13,8 @@
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
 			"vitest.explorer",
-			"vue.volar"
+			"vue.volar",
+			"ImmanuelTikhonov.droast"
 		],
 		"unwantedRecommendations": [
 			"dbaeumer.jshint",
@@ -24,8 +25,8 @@
 		"files.exclude": {
 			"**/.DS_Store": true
 		},
-		"typescript.referencesCodeLens.enabled": true,
-		"typescript.implementationsCodeLens.enabled": true,
+		"ts.referencesCodeLens.enabled": true,
+		"ts.implementationsCodeLens.enabled": true,
 		"workbench.editor.enablePreviewFromQuickOpen": false,
 		"editor.codeActionsOnSave": {
 			"source.organizeImports": "explicit",

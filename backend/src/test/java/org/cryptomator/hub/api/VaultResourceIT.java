@@ -274,14 +274,42 @@ public class VaultResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and wrong device ID fails with 400")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and unknown device ID (e.g. not yet registered) returns 200 and creates audit log without device")
 		void testUnlock6() {
 			given().header("HUB-DEVICE-ID", "d3v1c33")
 					.header("X-Forwarded-For", "5.6.7.8")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
-					.then().statusCode(400);
+					.then().statusCode(200)
+					.body(is("jwe.jwe.jwe.vault1.user1"));
 
-			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(any(), any(), any(), any(), any(), any());
+			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					any(),
+					eq("user1"),
+					eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")),
+					eq(VaultKeyRetrievedEvent.Result.SUCCESS),
+					eq("5.6.7.8"),
+					isNull()
+			);
+			Mockito.verify(deviceRepo, never()).updateLastAccess(any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID of another user returns 200 and creates audit log without device")
+		void testUnlock7() {
+			given().header("HUB-DEVICE-ID", "device2")
+					.header("X-Forwarded-For", "5.6.7.8")
+					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body(is("jwe.jwe.jwe.vault1.user1"));
+
+			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					any(),
+					eq("user1"),
+					eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")),
+					eq(VaultKeyRetrievedEvent.Result.SUCCESS),
+					eq("5.6.7.8"),
+					isNull()
+			);
 			Mockito.verify(deviceRepo, never()).updateLastAccess(any(), any(), any());
 		}
 
@@ -541,6 +569,22 @@ public class VaultResourceIT {
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for empty body")
 		void testGrantAccess5() {
 			given().contentType(ContentType.JSON).body(Map.of())
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for syntactically invalid token (not a JWE)")
+		void testGrantAccessInvalidToken() {
+			given().contentType(ContentType.JSON).body(Map.of("user1", "not-a-jwe"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for syntactically invalid user id")
+		void testGrantAccessInvalidUserId() {
+			given().contentType(ContentType.JSON).body(Map.of("bad!id", "jwe.jwe.jwe.vault1.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(400);
 		}

@@ -3,6 +3,7 @@
 {{- $hubPath := include "cryptomator-hub.hubRelativePath" . -}}
 {{- $kcHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" -}}
 {{- $kcPath := include "cryptomator-hub.keycloakRelativePath" . -}}
+{{- $certSecret := include "cryptomator-hub.ingressCertSecretName" . -}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -12,6 +13,9 @@ metadata:
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
   annotations:
+    {{- with include "cryptomator-hub.ingressCertAnnotations" . }}
+    {{- . | nindent 4 }}
+    {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -34,11 +38,11 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-hub
                 port:
                   number: {{ .Values.hub.service.port }}
-  {{- if .Values.ingress.tls.enabled }}
+  {{- if $certSecret }}
   tls:
     - hosts:
         - {{ $hubHost | quote }}
-      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+      secretName: {{ $certSecret | quote }}
   {{- end }}
 {{- if .Values.keycloak.enabled }}
 ---
@@ -50,6 +54,9 @@ metadata:
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
   annotations:
+    {{- with include "cryptomator-hub.ingressCertAnnotations" . }}
+    {{- . | nindent 4 }}
+    {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -72,11 +79,11 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-kc
                 port:
                   number: {{ .Values.keycloak.service.httpPort }}
-  {{- if .Values.ingress.tls.enabled }}
+  {{- if $certSecret }}
   tls:
     - hosts:
         - {{ $kcHost | quote }}
-      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+      secretName: {{ $certSecret | quote }}
   {{- end }}
 {{- end }}
 {{- end }}

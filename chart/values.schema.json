@@ -1,0 +1,345 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cryptomator Hub Helm chart values",
+  "description": "Validates types, enums and key names. Cross-field rules (e.g. which values are required when a bundled component is disabled) are enforced by the templates with descriptive messages.",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "httpUrl": {
+      "type": "string",
+      "pattern": "^(https?://[^/?#]+.*)?$",
+      "description": "Absolute http(s) URL, or empty"
+    },
+    "jdbcUrl": {
+      "type": "string",
+      "pattern": "^(jdbc:postgresql://.+)?$",
+      "description": "PostgreSQL JDBC URL, or empty"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "quantity": {
+      "type": ["string", "integer"],
+      "pattern": "^[0-9]+(\\.[0-9]+)?(Ei|Pi|Ti|Gi|Mi|Ki|E|P|T|G|M|k|m)?$",
+      "description": "Kubernetes resource quantity, e.g. 250m, 512Mi, 10Gi"
+    },
+    "resourceList": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": { "$ref": "#/definitions/quantity" },
+        "memory": { "$ref": "#/definitions/quantity" },
+        "ephemeral-storage": { "$ref": "#/definitions/quantity" }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requests": { "$ref": "#/definitions/resourceList" },
+        "limits": { "$ref": "#/definitions/resourceList" }
+      }
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "enum": ["Always", "IfNotPresent", "Never"]
+    },
+    "serviceType": {
+      "type": "string",
+      "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Reserved by Helm; Rancher injects global.cattle.* here",
+      "additionalProperties": true
+    },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "urls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hub": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "public": { "$ref": "#/definitions/httpUrl" }
+          }
+        },
+        "kc": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "public": { "$ref": "#/definitions/httpUrl" },
+            "clusterInternal": { "$ref": "#/definitions/httpUrl" },
+            "authServerUrl": { "$ref": "#/definitions/httpUrl" },
+            "tokenIssuer": { "$ref": "#/definitions/httpUrl" }
+          }
+        },
+        "billing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "public": { "$ref": "#/definitions/httpUrl" }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "useColor": { "type": "boolean" }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "keepOnUninstall": { "type": "boolean" }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "controller": {
+          "type": "string",
+          "enum": ["", "nginx", "traefik"],
+          "description": "Empty renders no Ingress"
+        },
+        "className": { "type": "string" },
+        "annotations": { "$ref": "#/definitions/stringMap" },
+        "certificate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "attach": {
+              "type": "boolean",
+              "description": "UI-only toggle used by the Rancher form; the chart acts on secretName / clusterIssuer alone"
+            },
+            "secretName": { "type": "string" },
+            "clusterIssuer": { "type": "string" }
+          }
+        }
+      }
+    },
+    "hub": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicas": { "type": "integer", "minimum": 0 },
+        "imagePullPolicy": { "$ref": "#/definitions/imagePullPolicy" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tag": { "type": "string" }
+          }
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "#/definitions/serviceType" },
+            "port": { "$ref": "#/definitions/port" },
+            "managementPort": { "$ref": "#/definitions/port" }
+          }
+        },
+        "resources": { "$ref": "#/definitions/resources" },
+        "config": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "keycloakRealm": { "type": "string", "minLength": 1 },
+            "keycloakSyncerPeriod": { "type": "string", "minLength": 1 },
+            "contentSecurityPolicy": { "type": "string" }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "endpoint": { "$ref": "#/definitions/httpUrl" },
+            "protocol": { "type": "string", "enum": ["http/protobuf", "grpc"] },
+            "resourceAttributes": { "$ref": "#/definitions/stringMap" },
+            "otlp": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            }
+          }
+        },
+        "oidc": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "clientId": { "type": "string", "minLength": 1 }
+          }
+        },
+        "database": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "jdbcUrl": { "$ref": "#/definitions/jdbcUrl" },
+            "name": { "type": "string", "minLength": 1 },
+            "username": { "type": "string", "minLength": 1 },
+            "password": { "type": "string" }
+          }
+        },
+        "admin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": { "type": "string", "minLength": 1 },
+            "password": { "type": "string" },
+            "passwordTemporary": { "type": "boolean" }
+          }
+        },
+        "secrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "create": { "type": "boolean" },
+            "systemClientSecret": { "type": "string" },
+            "initialId": { "type": "string" },
+            "initialLicense": { "type": "string" }
+          }
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "chain": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "requiredCn": { "type": "string" }
+              }
+            },
+            "managedApi": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            },
+            "apiUrl": { "$ref": "#/definitions/httpUrl" }
+          }
+        }
+      }
+    },
+    "keycloak": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicas": { "type": "integer", "minimum": 0 },
+        "imagePullPolicy": { "$ref": "#/definitions/imagePullPolicy" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tag": { "type": "string" }
+          }
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "#/definitions/serviceType" },
+            "httpPort": { "$ref": "#/definitions/port" },
+            "managementPort": { "$ref": "#/definitions/port" }
+          }
+        },
+        "resources": { "$ref": "#/definitions/resources" },
+        "admin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": { "type": "string", "minLength": 1 },
+            "password": { "type": "string" }
+          }
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "proxyHeaders": { "type": "string", "enum": ["xforwarded", "forwarded"] }
+          }
+        },
+        "database": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "jdbcUrl": { "$ref": "#/definitions/jdbcUrl" },
+            "name": { "type": "string", "minLength": 1 },
+            "username": { "type": "string", "minLength": 1 },
+            "password": { "type": "string" }
+          }
+        },
+        "realmBootstrap": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "realmId": { "type": "string" }
+          }
+        }
+      }
+    },
+    "postgres": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "imagePullPolicy": { "$ref": "#/definitions/imagePullPolicy" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tag": { "type": "string" }
+          }
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "#/definitions/serviceType" },
+            "port": { "$ref": "#/definitions/port" }
+          }
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "size": { "$ref": "#/definitions/quantity" },
+            "storageClassName": { "type": "string" },
+            "accessMode": { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteOncePod", "ReadWriteMany"] }
+          }
+        },
+        "resources": { "$ref": "#/definitions/resources" },
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "adminUsername": { "type": "string", "minLength": 1 },
+            "adminPassword": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

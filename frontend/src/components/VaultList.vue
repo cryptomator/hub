@@ -92,12 +92,12 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense && settings?.enableEmergencyAccess">
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
               <EmergencyBadge
-                v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                v-if="vault.requiredEmergencyKeyShares == 0"
                 type="warning"
-                :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
-                :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+                :title="t('emergencyAccess.badge.notConfigured.title')"
+                :message="t('emergencyAccess.badge.notConfigured.message')"
               />
               <EmergencyBadge
                 v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
@@ -105,6 +105,13 @@
                 :title="t('emergencyAccess.badge.broken.title')"
                 :message="t('emergencyAccess.badge.broken.message')"
               />
+              <EmergencyBadge
+                v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                type="warning"
+                :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+              />
+
             </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -139,15 +146,16 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import config from '../common/config';
 import userdata from '../common/userdata';
+import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
-import ContentBanner from './ContentBanner.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
@@ -155,6 +163,7 @@ import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
+const cfg = config.get();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
@@ -182,11 +191,7 @@ const anyUserHasLegacyDevices = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
 const isLicenseViolated = computed(() => licenseStatus.value?.isViolated() ?? false);
 
-const isCommunityLicense = computed(() => {
-  return !licenseStatus.value?.expiresAt;
-});
-
-const filterOptions = ref< { [key: string]: string } >({
+const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
 });

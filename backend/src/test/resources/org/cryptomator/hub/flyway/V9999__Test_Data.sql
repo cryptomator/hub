@@ -81,6 +81,20 @@ VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'), -- access via group1
 	('user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'jwe.jwe.jwe.vaultAAA.user1'); -- direct access to archived vault
 
+-- Emergency access: user1 is a member of vault 1's emergency access council (user2 is not)
+INSERT INTO "emergency_key_shares" ("vault_id", "council_member_id", "emergency_key_share")
+VALUES
+	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'jwe.jwe.jwe.emergency.user1');
+
+-- A pre-existing recovery process on vault 1, started by council member user1
+INSERT INTO "emergency_recovery_processes" ("id", "vault_id", "type", "details", "required_key_shares", "process_public_key")
+VALUES
+	('7E57C0DE-0000-4000-8000-000200000001', '7E57C0DE-0000-4000-8000-000100001111', 'COUNCIL_CHANGE', NULL, 2, 'processPublicKey');
+
+INSERT INTO "recovered_emergency_key_shares" ("recovery_process_id", "council_member_id", "process_private_key", "unrecovered_key_share", "recovered_key_share", "signed_process_info")
+VALUES
+	('7E57C0DE-0000-4000-8000-000200000001', 'user1', 'jwe.jwe.jwe.process.privatekey', 'jwe.jwe.jwe.unrecovered.share', NULL, NULL);
+
 -- DEPRECATED:
 INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
 VALUES

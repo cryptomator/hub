@@ -9,6 +9,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.http.HttpServerRequest;
+import org.jboss.logging.Logger;
 import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.event.Event;
@@ -59,6 +60,7 @@ import org.cryptomator.hub.metrics.VaultUnlockMetrics;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
+import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -84,6 +86,8 @@ import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
+
+	private static final Logger LOG = Logger.getLogger(VaultResource.class);
 
 	private final EventLogger eventLogger;
 	private final AccessToken.Repository accessTokenRepo;
@@ -446,7 +450,7 @@ public class VaultResource {
 			return response.build();
 		} catch (NoResultException _) {
 			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
-			throw new ForbiddenException("Access to this device not granted.");
+			return Response.status(Response.Status.FORBIDDEN.getStatusCode(), "Access to this device not granted").build();
 		}
 	}
 
@@ -489,8 +493,9 @@ public class VaultResource {
 			//for backwards compatibility, we can only validate the deviceId if the header is set
 			try {
 				deviceRepo.findByIdAndUser(deviceId, user.getId());
-			} catch (NoResultException e) {
-				throw new BadRequestException("User has no such device as specified in Header");
+			} catch (NoResultException _) {
+				LOG.info("Device with id %s does not exists for user %s. Ignoring device id.".formatted(deviceId, user.getId()));
+				deviceId = null;
 			}
 		}
 
@@ -516,7 +521,7 @@ public class VaultResource {
 		} else {
 			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
-			throw new ForbiddenException("Access to this vault not granted.");
+			return Response.status(Response.Status.FORBIDDEN.getStatusCode(), "Access to this device not granted").build();
 		}
 	}
 
@@ -563,7 +568,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		// check number of available seats
 		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
@@ -587,7 +592,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an access grant for this vault")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
-	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
+	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
 		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
 		var pendingUserIds = effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId)

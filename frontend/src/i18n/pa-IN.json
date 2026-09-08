@@ -187,5 +187,6 @@
   "vaultList.filter.entry.allVaults": "ਸਭ",
   "vaultList.filter.result.empty.title": "ਕੋਈ ਵਾਲਟ ਨਹੀਂ",
   "vaultList.search.placeholder": "ਖੋਜੋ…",
-  "vaultList.badge.owner": "ਮਾਲਕ"
+  "vaultList.badge.owner": "ਮਾਲਕ",
+  "setupLicense.nonAdmin.title": "ਸੈਟਅੱਪ ਚਾਹੀਦਾ ਹੈ"
 }

@@ -1,0 +1,266 @@
+# Self-contained Cryptomator Hub stack for local testing. Does not reference any other file of this repository:
+#
+#   docker compose up
+#
+# Hub:      http://localhost:8080  (realm user `admin` / `admin`, set a license on first login)
+# Keycloak: http://localhost:8180  (bootstrap admin `admin` / `admin`)
+#
+# NOT FOR PRODUCTION: well-known passwords, plain HTTP, all services on localhost. See README.md in this directory for details.
+#
+# To change ports or hostnames, update all of these together: the `ports` mappings, `KC_HOSTNAME`, `HUB_KEYCLOAK_PUBLIC_URL`, `QUARKUS_OIDC_TOKEN_ISSUER`,
+# the `connect-src` entry of Hub's Content Security Policy, and the `redirectUris` / `frame-ancestors` of the embedded realm. Note that browsers grant a secure
+# context (required by Hub's client-side crypto) to `localhost` only — any other hostname needs TLS, see ../prod/compose.yaml.
+services:
+
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: hub
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+    configs:
+      - source: create-keycloak-db
+        target: /docker-entrypoint-initdb.d/create-keycloak-db.sql
+    volumes:
+      # postgres >= 18 keeps PGDATA in /var/lib/postgresql/<major>/docker, so the volume is mounted one level up
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  keycloak:
+    image: ghcr.io/cryptomator/keycloak:26.7.3
+    command: start --optimized --import-realm
+    environment:
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      # issuer/discovery URLs advertise the browser-facing origin; Hub's backchannel requests via http://keycloak:8080 still work:
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: "false"
+    ports:
+      - "8180:8080"
+    configs:
+      # imported on first boot only; `--import-realm` never overwrites an existing realm (run `docker compose down -v` to start over)
+      - source: cryptomator-realm
+        target: /opt/keycloak/data/import/cryptomator-realm.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  hub:
+    image: ghcr.io/cryptomator/hub:2.0.1
+    environment:
+      HUB_PUBLIC_ROOT_PATH: /
+      HUB_KEYCLOAK_PUBLIC_URL: http://localhost:8180
+      HUB_KEYCLOAK_LOCAL_URL: http://keycloak:8080
+      HUB_KEYCLOAK_REALM: cryptomator
+      HUB_KEYCLOAK_SYSTEM_CLIENT_ID: cryptomatorhub-system
+      HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET: top-secret
+      HUB_KEYCLOAK_SYNCER_PERIOD: 1m
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/cryptomator
+      QUARKUS_OIDC_TOKEN_ISSUER: http://localhost:8180/realms/cryptomator
+      QUARKUS_OIDC_CLIENT_ID: cryptomatorhub
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/hub
+      QUARKUS_DATASOURCE_USERNAME: hub
+      QUARKUS_DATASOURCE_PASSWORD: hub
+      # the image's default CSP only allows same-origin connections, but the SPA must reach Keycloak's OIDC endpoints on localhost:8180:
+      QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: "default-src 'self'; connect-src 'self' api.cryptomator.org localhost:8180; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'"
+      QUARKUS_OTEL_SDK_DISABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/q/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+configs:
+  # Hub and Keycloak share the postgres instance but use separate databases:
+  create-keycloak-db:
+    content: |
+      CREATE USER keycloak WITH PASSWORD 'keycloak';
+      CREATE DATABASE keycloak OWNER keycloak;
+
+  # Minimal realm: realm roles, the three OIDC clients Hub relies on, one Hub admin and the service account used by Hub to sync users/groups.
+  # Mirrors what the Helm chart renders (chart/templates/_realm.tpl); URLs are fixed to the ports published above.
+  cryptomator-realm:
+    content: |
+      {
+        "realm": "cryptomator",
+        "displayName": "Cryptomator Hub",
+        "loginTheme": "cryptomator",
+        "enabled": true,
+        "sslRequired": "external",
+        "defaultRole": {
+          "name": "user",
+          "description": "User"
+        },
+        "roles": {
+          "realm": [
+            {
+              "name": "user",
+              "description": "User",
+              "composite": false
+            },
+            {
+              "name": "create-vaults",
+              "description": "Can create vaults",
+              "composite": false
+            },
+            {
+              "name": "admin",
+              "description": "Administrator",
+              "composite": true,
+              "composites": {
+                "realm": [
+                  "user",
+                  "create-vaults"
+                ],
+                "client": {
+                  "realm-management": [
+                    "realm-admin"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "users": [
+          {
+            "username": "admin",
+            "enabled": true,
+            "credentials": [
+              {
+                "type": "password",
+                "value": "admin",
+                "temporary": false
+              }
+            ],
+            "realmRoles": [
+              "admin"
+            ]
+          },
+          {
+            "username": "system",
+            "email": "system@localhost",
+            "enabled": true,
+            "serviceAccountClientId": "cryptomatorhub-system",
+            "clientRoles": {
+              "realm-management": [
+                "realm-admin",
+                "view-system"
+              ]
+            }
+          }
+        ],
+        "scopeMappings": [
+          {
+            "client": "cryptomatorhub",
+            "roles": [
+              "user",
+              "admin"
+            ]
+          }
+        ],
+        "clients": [
+          {
+            "clientId": "cryptomatorhub",
+            "serviceAccountsEnabled": false,
+            "publicClient": true,
+            "name": "Cryptomator Hub",
+            "enabled": true,
+            "redirectUris": [
+              "http://localhost:8080/*"
+            ],
+            "webOrigins": [
+              "+"
+            ],
+            "bearerOnly": false,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "attributes": {
+              "pkce.code.challenge.method": "S256"
+            },
+            "protocolMappers": [
+              {
+                "name": "realm roles",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                "consentRequired": false,
+                "config": {
+                  "access.token.claim": "true",
+                  "claim.name": "realm_access.roles",
+                  "jsonType.label": "String",
+                  "multivalued": "true"
+                }
+              },
+              {
+                "name": "client roles",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-usermodel-client-role-mapper",
+                "consentRequired": false,
+                "config": {
+                  "access.token.claim": "true",
+                  "claim.name": "resource_access.$${client_id}.roles",
+                  "jsonType.label": "String",
+                  "multivalued": "true"
+                }
+              }
+            ]
+          },
+          {
+            "clientId": "cryptomator",
+            "serviceAccountsEnabled": false,
+            "publicClient": true,
+            "name": "Cryptomator App",
+            "enabled": true,
+            "redirectUris": [
+              "http://127.0.0.1/*",
+              "org.cryptomator.ios:/hub/auth",
+              "org.cryptomator.android:/hub/auth"
+            ],
+            "webOrigins": [
+              "+"
+            ],
+            "bearerOnly": false,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "attributes": {
+              "pkce.code.challenge.method": "S256"
+            }
+          },
+          {
+            "clientId": "cryptomatorhub-system",
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "name": "Cryptomator Hub System",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "top-secret",
+            "standardFlowEnabled": false
+          }
+        ],
+        "browserSecurityHeaders": {
+          "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self' http://localhost:8080; object-src 'none';"
+        }
+      }
+
+volumes:
+  postgres-data:

@@ -22,6 +22,7 @@
       :input-visible="allowChoosingCouncil && !readonly"
       :error-message="t('emergencyAccess.validation.minimumMembers', [settings.defaultMinMembers])"
       :has-error="allowChoosingCouncil && hasValidationErrors"
+      :no-results-text="t('emergencyAccess.keyholders.noEligible')"
       @action="addCouncilMember"
       @remove="removeCouncilMember"
     />

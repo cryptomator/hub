@@ -13,6 +13,7 @@
 {{- define "cryptomator-hub.labels" -}}
 app.kubernetes.io/name: {{ include "cryptomator-hub.name" . }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
+app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
@@ -50,6 +51,28 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- else -}}
 {{/* if keycloak isn't part of the deployment, use public url: */}}
 {{- trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+
+Ingress certificate: the chart attaches a certificate to the Ingresses only when `ingress.certificate.secretName` or
+`ingress.certificate.clusterIssuer` is set. Otherwise the Ingresses stay plain HTTP and TLS termination is left to the
+infrastructure (load balancer, controller default certificate, Traefik ACME resolver, ...).
+
+*/}}
+
+{{- define "cryptomator-hub.ingressCertSecretName" -}}
+{{- if .Values.ingress.certificate.secretName -}}
+{{- .Values.ingress.certificate.secretName -}}
+{{- else if .Values.ingress.certificate.clusterIssuer -}}
+{{- printf "%s-tls" (include "cryptomator-hub.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.ingressCertAnnotations" -}}
+{{- if .Values.ingress.certificate.clusterIssuer -}}
+cert-manager.io/cluster-issuer: {{ .Values.ingress.certificate.clusterIssuer | quote }}
 {{- end -}}
 {{- end -}}
 

@@ -208,5 +208,6 @@
   "vaultList.filter.result.empty.description": "Tidak ada hasil memakai penyaring atau istilah pencarian itu.",
   "vaultList.search.placeholder": "Cari…",
   "vaultList.badge.owner": "Pemilik",
-  "vaultList.badge.archived": "Diarsipkan"
+  "vaultList.badge.archived": "Diarsipkan",
+  "setupLicense.nonAdmin.title": "Penyiapan Diperlukan"
 }

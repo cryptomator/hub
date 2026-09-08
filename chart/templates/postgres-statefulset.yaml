@@ -34,9 +34,11 @@ spec:
           args:
             - |
               set -eux
-              mkdir -p /var/lib/postgresql/data /var/run/postgresql
-              chown -R 70:70 /var/lib/postgresql/data /var/run/postgresql
-              chmod 700 /var/lib/postgresql/data
+              # Since postgres:18 the volume is /var/lib/postgresql and PGDATA lives in a per-major subdirectory
+              # (/var/lib/postgresql/18/docker) so that pg_upgrade can keep old and new clusters side by side.
+              # The entrypoint creates PGDATA itself; it only needs the volume root to be writable by uid 70.
+              chown 70:70 /var/lib/postgresql /var/run/postgresql
+              chmod 750 /var/lib/postgresql
               chmod 775 /var/run/postgresql
           securityContext:
             runAsNonRoot: false
@@ -46,13 +48,12 @@ spec:
             privileged: false
           volumeMounts:
             - name: data
-              mountPath: /var/lib/postgresql/data
-              subPath: pgdata
+              mountPath: /var/lib/postgresql
             - name: run
               mountPath: /var/run/postgresql
       containers:
         - name: postgres
-          image: "postgres:{{ .Values.postgres.image.tag | default "17-alpine" }}"
+          image: "postgres:{{ .Values.postgres.image.tag | default "18-alpine" }}"
           imagePullPolicy: {{ .Values.postgres.imagePullPolicy }}
           ports:
             - name: postgres
@@ -102,8 +103,7 @@ spec:
               subPath: initdb.sql
               readOnly: true
             - name: data
-              mountPath: /var/lib/postgresql/data
-              subPath: pgdata
+              mountPath: /var/lib/postgresql
             - name: run
               mountPath: /var/run/postgresql
             - name: tmp
