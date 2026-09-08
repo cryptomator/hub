@@ -33,7 +33,7 @@
       </div>
     </nav>
 
-    <div v-if="showAppCard" data-tour="appCard" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
+    <div v-if="showAppCard" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
       <div class="flex items-center gap-x-2.5 pr-6">
         <img src="/cryptomator.svg" alt="" class="h-7 w-auto shrink-0" />
         <h3 class="text-sm font-medium text-white">{{ t('appHintCard.title') }}</h3>

@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Show a first-time onboarding tour explaining how data gets encrypted in the cloud, with role-specific steps, a Cryptomator app download card in the sidebar, and a replay option in the profile menu
+- Show a short onboarding tour to first-time users, replayable from the profile menu
+- Suggest downloading the Cryptomator app in the sidebar
 
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)
 
