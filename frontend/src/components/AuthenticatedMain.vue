@@ -11,6 +11,7 @@
 
   <AppShell v-else :me="me">
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <GlobalBanners />
       <router-view />
     </div>
   </AppShell>
@@ -23,6 +24,7 @@ import { UserDto } from '../common/backend';
 import userdata from '../common/userdata';
 import AppShell from './AppShell.vue';
 import FetchError from './FetchError.vue';
+import GlobalBanners from './GlobalBanners.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
