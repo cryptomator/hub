@@ -5,8 +5,12 @@
     {{ t('legacyDeviceBanner.admin.description') }}
   </ContentBanner>
 
-  <ContentBanner v-else-if="hasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
-    {{ t('legacyDeviceBanner.user.description') }}
+  <ContentBanner v-else-if="true" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+    <i18n-t keypath="legacyDeviceBanner.user.description" scope="global" tag="p">
+      <router-link to="/app/profile#legacyDeviceListTitle" class="underline hover:no-underline">
+        {{ t('legacyDeviceBanner.button') }}
+      </router-link>
+    </i18n-t>
   </ContentBanner>
 </template>
 
