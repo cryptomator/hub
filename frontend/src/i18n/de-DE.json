@@ -107,6 +107,7 @@
   "admin.emergencyAccess.keyholders.label": "Schlüsselinhaber",
   "admin.emergencyAccess.keyholders.minSelected": "Es müssen mindestens {0} Mitglieder ausgewählt werden. Die erforderliche Anzahl wurde oben festgelegt.",
   "admin.emergencyAccess.keyholders.help": "Wer einen Emergency-Access-Schlüssel abrufen soll.",
+  "emergencyAccess.keyholders.noEligible": "Es wurden keine berechtigten Benutzer gefunden. Benutzer müssen die Einrichtung ihres Schlüssels abschließen, indem sie sich einmal anmelden, bevor sie berechtigt sind.",
   "admin.emergencyAccess.allowChoosing.label": "Erlaube Tresor-Eigentümern, andere Schlüsselinhaber zu wählen.",
   "admin.emergencyAccess.allowChoosing.atLeast": "Mindestens:",
   "admin.emergencyAccess.minMembers.ariaLabel": "Mindestanzahl Mitglieder",
