@@ -33,16 +33,16 @@
       </div>
     </nav>
 
-    <div v-if="showAppCard" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
+    <div v-if="showAppHint" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
       <div class="flex items-center gap-x-2.5 pr-6">
         <img src="/cryptomator.svg" alt="" class="h-7 w-auto shrink-0" />
-        <h3 class="text-sm font-medium text-white">{{ t('appHintCard.title') }}</h3>
+        <h3 class="text-sm font-medium text-white">{{ t('appHint.title') }}</h3>
       </div>
-      <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHintCard.description') }}</p>
-      <a :href="appDownloadLink" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        {{ t('appHintCard.download') }}
+      <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHint.description') }}</p>
+      <a :href="downloadUrl" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        {{ t('appHint.download') }}
       </a>
-      <button type="button" class="absolute top-2 right-2 rounded-md p-1 text-gray-500 hover:text-white focus-visible:outline-2 focus-visible:outline-primary" @click="dismissAppCard()">
+      <button type="button" class="absolute top-2 right-2 rounded-md p-1 text-gray-500 hover:text-white focus-visible:outline-2 focus-visible:outline-primary" @click="dismissHint()">
         <span class="sr-only">{{ t('common.close') }}</span>
         <XMarkIcon class="h-4 w-4" aria-hidden="true" />
       </button>
@@ -60,32 +60,26 @@
             <span class="block mb-0.5 text-xs text-gray-500">{{ t('nav.profile.signedInAs') }}</span>
             <span class="text-sm font-semibold">{{ me.name }}</span>
           </div>
-          <template v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`">
-            <ul class="py-1.5">
-              <li v-for="item in itemGroup" :key="item.name">
-                <router-link :to="item.to" @click="emit('navigate')">
-                  <MenuItem v-slot="{ active }">
-                    <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
-                      <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
-                      {{ t(item.name) }}
-                    </div>
-                  </MenuItem>
-                </router-link>
-              </li>
-            </ul>
-            <ul v-if="index === profileDropdown.length - 2" class="py-1.5">
-              <li>
+          <ul v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="py-1.5">
+            <li v-for="item in itemGroup" :key="item.name">
+              <router-link v-if="'to' in item" :to="item.to" @click="emit('navigate')">
                 <MenuItem v-slot="{ active }">
-                  <button type="button" class="w-full" @click="emit('replayTour')">
-                    <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
-                      <QuestionMarkCircleIcon :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
-                      {{ t('nav.profile.showTour') }}
-                    </div>
-                  </button>
+                  <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
+                    <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
+                    {{ t(item.name) }}
+                  </div>
                 </MenuItem>
-              </li>
-            </ul>
-          </template>
+              </router-link>
+              <MenuItem v-else v-slot="{ active }">
+                <button type="button" class="w-full" @click="item.action()">
+                  <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
+                    <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
+                    {{ t(item.name) }}
+                  </div>
+                </button>
+              </MenuItem>
+            </li>
+          </ul>
         </MenuItems>
       </transition>
     </Menu>
@@ -94,15 +88,15 @@
 
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { QuestionMarkCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { computed, FunctionalComponent, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { appDownloadUrl, dismissAppHint, isAppHintDismissed } from '../common/appdownload';
 import { UserDto } from '../common/backend';
-import { appDownloadUrl, dismissAppHint, isAppHintDismissed } from '../common/onboarding';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
-export type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
+export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & ({ to: string } | { action: () => void });
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
@@ -118,17 +112,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   navigate: [],
-  close: [],
-  replayTour: []
+  close: []
 }>();
 
-const appDownloadLink = appDownloadUrl();
-const appCardDismissed = ref(isAppHintDismissed(props.me.id));
-const showAppCard = computed(() => !appCardDismissed.value && !props.me.devices.some(device => device.type !== 'BROWSER'));
+const downloadUrl = appDownloadUrl();
+const appHintDismissed = ref(isAppHintDismissed(props.me.id));
+const showAppHint = computed(() => !appHintDismissed.value && props.me.devices.every(device => device.type === 'BROWSER'));
 
-function dismissAppCard() {
+function dismissHint() {
   dismissAppHint(props.me.id);
-  appCardDismissed.value = true;
+  appHintDismissed.value = true;
 }
 
 function itemClasses(to: string) {

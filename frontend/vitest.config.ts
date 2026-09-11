@@ -1,6 +1,7 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vitest/config';
+import viteConfig from './vite.config';
 
-export default defineConfig({
+export default mergeConfig(viteConfig, defineConfig({
   test: {
     environment: 'happy-dom',
     setupFiles: ['test/setup.ts'],
@@ -8,4 +9,4 @@ export default defineConfig({
       reporter: ['html', 'text-summary', 'lcov']
     }
   }
-});
+}));

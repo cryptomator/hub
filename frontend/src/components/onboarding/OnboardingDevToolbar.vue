@@ -8,5 +8,5 @@
 </template>
 
 <script setup lang="ts">
-import { previewOnboarding, previewVariants } from '../common/onboarding';
+import { previewOnboarding, previewVariants } from '../../common/onboarding';
 </script>

@@ -124,6 +124,10 @@
   "admin.emergencyAccess.validation.minMembersAtLeastRequiredShares": "Must be greater than or equal to required key shares.",
   "admin.emergencyAccess.errors.sharesMustNotExceedMembers": "Required key shares must not exceed minimum members.",
 
+  "appHint.title": "Cryptomator App",
+  "appHint.description": "Unlock your vaults on your computer and phone.",
+  "appHint.download": "Download App",
+
   "archiveVaultDialog.title": "Archive Vault",
   "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
   "archiveVaultDialog.confirm": "Archive",
@@ -457,9 +461,6 @@
   "nav.closeMenu": "Close menu",
   "nav.sidebar.title": "Navigation",
 
-  "appHintCard.title": "Cryptomator App",
-  "appHintCard.description": "Unlock your vaults on your computer and phone.",
-  "appHintCard.download": "Download App",
 
   "onboarding.done": "Done",
   "onboarding.progress": "{0} of {1}",

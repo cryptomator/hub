@@ -10,7 +10,7 @@
         <TransitionChild as="template" enter="transition ease-in-out duration-300 transform" enter-from="-translate-x-full" enter-to="translate-x-0" leave="transition ease-in-out duration-300 transform" leave-from="translate-x-0" leave-to="-translate-x-full">
           <DialogPanel class="relative flex w-full max-w-xs flex-1 bg-tertiary2">
             <DialogTitle class="sr-only">{{ t('nav.sidebar.title') }}</DialogTitle>
-            <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" :show-close="true" @navigate="emit('close')" @close="emit('close')" @replay-tour="replayTour()" />
+            <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" :show-close="true" @navigate="emit('close')" @close="emit('close')" />
           </DialogPanel>
         </TransitionChild>
       </div>
@@ -19,13 +19,13 @@
 
   <!-- Static sidebar for desktop -->
   <div class="hidden bg-tertiary2 md:flex md:w-64 md:flex-col">
-    <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" @replay-tour="replayTour()" />
+    <SidebarContent :me="me" :main-nav="mainNav" :admin-nav="adminNav" :is-admin="isAdmin" :profile-dropdown="profileDropdown" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { ArrowRightStartOnRectangleIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon } from '@heroicons/vue/24/outline';
+import { ArrowRightStartOnRectangleIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, QuestionMarkCircleIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon } from '@heroicons/vue/24/outline';
 import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -61,6 +61,7 @@ const adminNav: NavigationItem[] = [
 
 const profileDropdown: ProfileDropdownItem[][] = [
   [{ icon: UserIcon, name: 'nav.profile.profile', to: '/app/profile' }],
+  [{ icon: QuestionMarkCircleIcon, name: 'nav.profile.showTour', action: replayTour }],
   [{ icon: ArrowRightStartOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }]
 ];
 

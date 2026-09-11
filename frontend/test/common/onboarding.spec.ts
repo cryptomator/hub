@@ -1,16 +1,21 @@
-import { Config, driver, DriveStep } from 'driver.js';
+import { Config, driver, DriveStep, PopoverDOM } from 'driver.js';
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { previewOnboarding, PreviewVariant, previewVariants, startOnboarding, tourSteps } from '../../src/common/onboarding';
-import enUs from '../../src/i18n/en-US.json';
+import { Component, createApp } from 'vue';
+import auth from '../../src/common/auth';
+import { previewOnboarding, previewVariants, startOnboarding, tourSteps } from '../../src/common/onboarding';
+import i18n from '../../src/i18n';
 
-const { driveMock, hasRoleMock } = vi.hoisted(() => ({ driveMock: vi.fn(), hasRoleMock: vi.fn(() => true) }));
-vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: hasRoleMock }) }));
-vi.mock('driver.js', () => ({ driver: vi.fn(() => ({ drive: driveMock })) }));
+vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: vi.fn(() => true) }) }));
+// one shared drive fn, so tests can assert the tour was actually started across driver() instances
+vi.mock('driver.js', () => {
+  const drive = vi.fn();
+  return { driver: vi.fn(() => ({ drive })) };
+});
 
-const messages = enUs as Record<string, string>;
+const { t, te } = i18n.global;
 
 describe('tourSteps', () => {
   it('includes the create vault step for users allowed to create vaults', () => {
@@ -42,34 +47,40 @@ describe('tourSteps', () => {
     expect(tourSteps(true, false).map(step => step.target)).not.toContain('[data-tour="adminNav"]');
   });
 
-  it.each([
+  ([
     [true, 'onboarding.vaultList.description'],
     [false, 'onboarding.vaultList.description.shared']
-  ])('describes the vault list for canCreateVaults: %s', (canCreateVaults, descriptionKey) => {
-    expect(tourSteps(canCreateVaults)[1].descriptionKey).toBe(descriptionKey);
+  ] as const).forEach(([canCreateVaults, descriptionKey]) => {
+    it(`describes the vault list for canCreateVaults: ${canCreateVaults}`, () => {
+      expect(tourSteps(canCreateVaults)[1].descriptionKey).toBe(descriptionKey);
+    });
   });
 
-  it.each([[true], [false]])('resolves every message key against en-US (canCreateVaults: %s)', (canCreateVaults) => {
-    for (const step of tourSteps(canCreateVaults)) {
-      expect(enUs, `missing key ${step.titleKey}`).toHaveProperty([step.titleKey]);
-      expect(enUs, `missing key ${step.descriptionKey}`).toHaveProperty([step.descriptionKey]);
-    }
+  [true, false].forEach(canCreateVaults => {
+    it(`resolves every message key against en-US (canCreateVaults: ${canCreateVaults})`, () => {
+      for (const step of tourSteps(canCreateVaults)) {
+        expect(te(step.titleKey, 'en-US'), `missing key ${step.titleKey}`).toBe(true);
+        expect(te(step.descriptionKey, 'en-US'), `missing key ${step.descriptionKey}`).toBe(true);
+      }
+    });
   });
 
   it('renders a vignette for the welcome, vault list, and profile steps', () => {
-    const vignettes = tourSteps(true).filter(step => step.vignette).map(step => [step.titleKey, step.vignette!()] as const);
+    const vignettes = renderVignettes();
 
     expect(vignettes.map(([titleKey]) => titleKey)).toEqual(['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.profile.title']);
+    for (const [titleKey, html] of vignettes) {
+      // anchored to the root element, so a nested icon's aria-hidden cannot satisfy it
+      expect(html, `${titleKey} must be decorative`).toMatch(/^<div [^>]*aria-hidden="true"/);
+    }
     const rendered = vignettes.map(([, html]) => html).join('\n');
     expect(rendered).toContain('Finance');
     expect(rendered).toContain('Marketing');
-    // vue-i18n echoes unresolved keys verbatim, so a dotted key in the output means a missing message
-    expect(rendered).not.toMatch(/(?:onboarding|common)\.[a-z]/i);
   });
 
   it('anchors every step target in a component', () => {
     const componentsDir = join(dirname(fileURLToPath(import.meta.url)), '../../src/components');
-    const sources = readdirSync(componentsDir)
+    const sources = readdirSync(componentsDir, { recursive: true, encoding: 'utf8' })
       .filter(name => name.endsWith('.vue'))
       .map(name => readFileSync(join(componentsDir, name), 'utf8'))
       .join('\n');
@@ -80,6 +91,163 @@ describe('tourSteps', () => {
     }
   });
 });
+
+describe('startOnboarding', () => {
+  beforeEach(setUpTourDom);
+  afterEach(tearDownTourDom);
+
+  it('drives all steps and mounts the vignettes with the description text', async () => {
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    expect(steps.map(step => step.popover?.title)).toEqual([
+      t('onboarding.welcome.title'),
+      t('onboarding.vaultList.title'),
+      t('onboarding.addVault.title'),
+      t('onboarding.adminNav.title'),
+      t('onboarding.profile.title'),
+      t('onboarding.getApp.title')
+    ]);
+    expect(steps.every(step => step.popover?.description)).toBe(true);
+    expect(steps[1].element).toBeInstanceOf(HTMLElement);
+    const vaultListStep = renderStep(1);
+    // the illustration is decorative, while the app step's list carries real instructions
+    expect(vaultListStep.firstElementChild!.getAttribute('aria-hidden')).toBe('true');
+    expect(vaultListStep.innerHTML).toContain(`<p>${t('onboarding.vaultList.description')}</p>`);
+    const appStep = renderStep(steps.length - 1);
+    expect(appStep.firstElementChild!.getAttribute('aria-hidden')).toBeNull();
+    expect(appStep.innerHTML).toContain('<ol');
+    expect(appStep.innerHTML).toContain(t('onboarding.getApp.step1'));
+    expect(appStep.innerHTML).toContain('href="https://cryptomator.org/downloads/');
+    expect(appStep.innerHTML).toContain('src="/download-qr.svg"');
+    const { hasRole } = await auth;
+    expect(vi.mocked(hasRole)).toHaveBeenCalledWith('create-vaults');
+    expect(driveMock()).toHaveBeenCalledOnce();
+  });
+
+  it('skips a step whose target element is not visible', async () => {
+    document.querySelector('[data-tour="adminNav"]')!.remove();
+
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    expect(steps.map(step => step.popover?.title)).toEqual([
+      t('onboarding.welcome.title'),
+      t('onboarding.vaultList.title'),
+      t('onboarding.addVault.title'),
+      t('onboarding.profile.title'),
+      t('onboarding.getApp.title')
+    ]);
+    expect(renderStep(3).innerHTML).toContain(t('onboarding.profile.description'));
+  });
+
+  it('leaves no unresolved message key in the rendered tour', async () => {
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    const config = lastConfig();
+    const rendered = [
+      ...steps.map((step, index) => `${step.popover?.title}\n${renderStep(index).innerHTML}`),
+      config.progressText, config.nextBtnText, config.prevBtnText, config.doneBtnText
+    ].join('\n');
+    // vue-i18n echoes unresolved keys verbatim, so a dotted key in the output means a missing message
+    expect(rendered).not.toMatch(/(?:onboarding|common)\.[a-z]/i);
+  });
+
+  it('renders a text-only step without a vignette', async () => {
+    await drive(() => startOnboarding('user-1'));
+
+    const addVaultStep = renderStep(2).innerHTML;
+    expect(addVaultStep).toContain(`<p>${t('onboarding.addVault.description')}</p>`);
+    expect(addVaultStep).not.toContain('<div');
+  });
+
+  it('leaves the popover empty for an unknown or missing step index', async () => {
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    const first = renderStep(0);
+    expect(first.innerHTML).not.toBe('');
+    expect(renderStep(steps.length).innerHTML).toBe('');
+    // a content-less render must still have unmounted the previous step's app
+    expect(first.innerHTML).toBe('');
+    expect(renderStep().innerHTML).toBe('');
+  });
+
+  it('unmounts the previous step content on each render and on destroy', async () => {
+    const dispose = vi.spyOn(i18n, 'dispose');
+    await drive(() => startOnboarding('user-1'));
+
+    const first = renderStep(0);
+    expect(first.innerHTML).toContain('/logo.svg');
+    const second = renderStep(1);
+    expect(first.innerHTML).toBe('');
+    expect(second.innerHTML).toContain('Finance');
+    invokeDestroyed(lastConfig());
+    expect(second.innerHTML).toBe('');
+    // the popover apps share the module-wide i18n instance, which must survive their teardown
+    expect(dispose).not.toHaveBeenCalled();
+  });
+
+  it('marks the tour as completed once driver reports it destroyed', async () => {
+    await drive(() => startOnboarding('user-1'));
+
+    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).toBeNull();
+    invokeDestroyed(lastConfig());
+    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).not.toBeNull();
+  });
+
+  it('omits the QR code on mobile devices', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
+
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    const appStep = renderStep(steps.length - 1).innerHTML;
+    expect(appStep).not.toContain('download-qr.svg');
+    expect(appStep).toContain('apps.apple.com');
+  });
+});
+
+describe('previewOnboarding', () => {
+  beforeEach(setUpTourDom);
+  afterEach(tearDownTourDom);
+
+  ([
+    ['admin', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.adminNav.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
+    ['create-vaults', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
+    ['user', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.useVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']]
+  ] as const).forEach(([variant, titleKeys]) => {
+    it(`drives the ${variant} variant without querying roles`, async () => {
+      const steps = await drive(() => previewOnboarding(variant));
+
+      expect(steps.map(step => step.popover?.title)).toEqual(titleKeys.map(key => t(key)));
+      const { hasRole } = await auth;
+      expect(vi.mocked(hasRole)).not.toHaveBeenCalled();
+    });
+  });
+
+  it('never marks the tour as completed', async () => {
+    for (const variant of previewVariants) {
+      await drive(() => previewOnboarding(variant));
+      invokeDestroyed(lastConfig());
+    }
+
+    expect(Object.keys(localStorage).filter(key => key.startsWith('hub.onboardingCompleted'))).toHaveLength(0);
+    expect(driveMock()).toHaveBeenCalledTimes(previewVariants.length);
+  });
+});
+
+/* ---------- MOCKS ---------- */
+
+function setUpTourDom() {
+  vi.clearAllMocks();
+  localStorage.clear();
+  document.body.innerHTML = ['vaultList', 'addVault', 'adminNav', 'profile'].map(anchor => `<div data-tour="${anchor}"></div>`).join('');
+  // happy-dom never reports an offsetParent, which would make driveTour skip every targeted step
+  Object.defineProperty(HTMLElement.prototype, 'offsetParent', { configurable: true, get: () => document.body });
+}
+
+function tearDownTourDom() {
+  vi.restoreAllMocks();
+  Reflect.deleteProperty(HTMLElement.prototype, 'offsetParent');
+  document.body.innerHTML = '';
+}
 
 async function drive(run: () => Promise<void>): Promise<DriveStep[]> {
   vi.useFakeTimers();
@@ -97,97 +265,33 @@ function lastConfig(): Config {
   return vi.mocked(driver).mock.calls.at(-1)![0]!;
 }
 
+function driveMock() {
+  return vi.mocked(driver).mock.results.at(-1)!.value.drive;
+}
+
+function renderStep(index?: number): HTMLElement {
+  const config = lastConfig();
+  const description = document.createElement('div');
+  type RenderHook = NonNullable<Config['onPopoverRender']>;
+  const state = index !== undefined ? { activeIndex: index } : {};
+  (config.onPopoverRender as RenderHook)({ description } as unknown as PopoverDOM, { config, state, driver: undefined as never, index: index ?? 0 } as Parameters<RenderHook>[1]);
+  return description;
+}
+
+function renderComponent(component: Component): string {
+  const host = document.createElement('div');
+  const app = createApp(component);
+  app.mount(host);
+  const html = host.innerHTML;
+  app.unmount();
+  return html;
+}
+
+function renderVignettes(): [string, string][] {
+  return tourSteps(true).filter(step => step.vignette).map(step => [step.titleKey, renderComponent(step.vignette!)]);
+}
+
 function invokeDestroyed(config: Config) {
   type DestroyHook = NonNullable<Config['onDestroyed']>;
   (config.onDestroyed as DestroyHook | undefined)?.(undefined, {} as DriveStep, { config, state: {}, index: 0, driver: undefined as never } as Parameters<DestroyHook>[2]);
 }
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  localStorage.clear();
-  document.body.innerHTML = ['vaultList', 'addVault', 'adminNav', 'profile'].map(anchor => `<div data-tour="${anchor}"></div>`).join('');
-  // happy-dom never reports an offsetParent, which would make driveTour skip every targeted step
-  Object.defineProperty(HTMLElement.prototype, 'offsetParent', { configurable: true, get: () => document.body });
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  Reflect.deleteProperty(HTMLElement.prototype, 'offsetParent');
-  document.body.innerHTML = '';
-});
-
-describe('startOnboarding', () => {
-  it('drives all steps with the vignettes prepended and the app step appended', async () => {
-    const steps = await drive(() => startOnboarding('user-1'));
-
-    expect(steps.map(step => step.popover?.title)).toEqual([
-      messages['onboarding.welcome.title'],
-      messages['onboarding.vaultList.title'],
-      messages['onboarding.addVault.title'],
-      messages['onboarding.adminNav.title'],
-      messages['onboarding.profile.title'],
-      messages['onboarding.getApp.title']
-    ]);
-    expect(steps[1].element).toBeInstanceOf(HTMLElement);
-    expect(steps[1].popover?.description).toContain('<div class="onboarding-vignette" aria-hidden="true">');
-    expect(steps[1].popover?.description).toContain(`<p>${messages['onboarding.vaultList.description']}</p>`);
-    const appStep = steps.at(-1)?.popover?.description;
-    expect(appStep).toContain('<div class="onboarding-vignette">');
-    expect(appStep).toContain(messages['onboarding.getApp.step1']);
-    expect(appStep).toContain('href="https://cryptomator.org/downloads/');
-    expect(appStep).toContain('/download-qr.svg');
-    expect(hasRoleMock).toHaveBeenCalledWith('create-vaults');
-    expect(driveMock).toHaveBeenCalledOnce();
-  });
-
-  it('leaves no unresolved message key in the driver config', async () => {
-    await drive(() => startOnboarding('user-1'));
-
-    const config = lastConfig();
-    const rendered = [
-      ...config.steps!.flatMap(step => [step.popover?.title, step.popover?.description]),
-      config.progressText, config.nextBtnText, config.prevBtnText, config.doneBtnText
-    ].join('\n');
-    expect(rendered).not.toMatch(/(?:onboarding|common)\.[a-z]/i);
-  });
-
-  it('marks the tour as completed once driver reports it destroyed', async () => {
-    await drive(() => startOnboarding('user-1'));
-
-    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).toBeNull();
-    invokeDestroyed(lastConfig());
-    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).not.toBeNull();
-  });
-
-  it('omits the QR code on mobile devices', async () => {
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
-
-    const steps = await drive(() => startOnboarding('user-1'));
-
-    expect(steps.at(-1)?.popover?.description).not.toContain('/download-qr.svg');
-    expect(steps.at(-1)?.popover?.description).toContain('apps.apple.com');
-  });
-});
-
-describe('previewOnboarding', () => {
-  it.each<[PreviewVariant, string[]]>([
-    ['admin', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.adminNav.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
-    ['create-vaults', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
-    ['user', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.useVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']]
-  ])('drives the %s variant without querying roles', async (variant, titleKeys) => {
-    const steps = await drive(() => previewOnboarding(variant));
-
-    expect(steps.map(step => step.popover?.title)).toEqual(titleKeys.map(key => messages[key]));
-    expect(hasRoleMock).not.toHaveBeenCalled();
-  });
-
-  it('never marks the tour as completed', async () => {
-    for (const variant of previewVariants) {
-      await drive(() => previewOnboarding(variant));
-      invokeDestroyed(lastConfig());
-    }
-
-    expect(Object.keys(localStorage).filter(key => key.startsWith('hub.onboardingCompleted'))).toHaveLength(0);
-    expect(driveMock).toHaveBeenCalledTimes(previewVariants.length);
-  });
-});

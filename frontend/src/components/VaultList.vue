@@ -190,7 +190,7 @@ const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
 
 const isAdmin = ref<boolean>(false);
 // the ternary folds at build time, keeping the dev toolbar chunk out of production bundles
-const OnboardingDevToolbar = import.meta.env.DEV ? defineAsyncComponent(() => import('./OnboardingDevToolbar.vue')) : undefined;
+const OnboardingDevToolbar = import.meta.env.DEV ? defineAsyncComponent(() => import('./onboarding/OnboardingDevToolbar.vue')) : undefined;
 const canCreateVaults = ref<boolean>(false);
 const hasLegacyDevices = ref<boolean>(false);
 const anyUserHasLegacyDevices = ref<boolean>(false);
