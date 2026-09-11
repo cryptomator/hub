@@ -8,8 +8,6 @@
     </div>
   </div>
 
-  <OnboardingDevToolbar v-if="OnboardingDevToolbar" />
-
   <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
   <ContentBanner v-if="anyUserHasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
@@ -150,12 +148,12 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import config from '../common/config';
-import { startOnboardingIfNeeded } from '../common/onboarding';
+import { startOnboardingIfNeeded, stopOnboarding } from '../common/onboarding';
 import userdata from '../common/userdata';
 import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
@@ -189,8 +187,6 @@ const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
 });
 
 const isAdmin = ref<boolean>(false);
-// the ternary folds at build time, keeping the dev toolbar chunk out of production bundles
-const OnboardingDevToolbar = import.meta.env.DEV ? defineAsyncComponent(() => import('./onboarding/OnboardingDevToolbar.vue')) : undefined;
 const canCreateVaults = ref<boolean>(false);
 const hasLegacyDevices = ref<boolean>(false);
 const anyUserHasLegacyDevices = ref<boolean>(false);
@@ -219,6 +215,9 @@ onMounted(async () => {
     await startOnboardingIfNeeded(me.value.id);
   }
 });
+
+// without this a tour would keep its overlay up after navigating away from the vault list
+onBeforeUnmount(stopOnboarding);
 
 async function fetchData() {
   onFetchError.value = undefined;

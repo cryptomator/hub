@@ -5,14 +5,20 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, createApp } from 'vue';
 import auth from '../../src/common/auth';
-import { previewOnboarding, previewVariants, startOnboarding, tourSteps } from '../../src/common/onboarding';
+import { startOnboarding, stopOnboarding, tourSteps } from '../../src/common/onboarding';
 import i18n from '../../src/i18n';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: vi.fn(() => true) }) }));
-// one shared drive fn, so tests can assert the tour was actually started across driver() instances
+// one shared drive fn, so tests can assert the tour was actually started across driver() instances;
+// destroy fires onDestroyed like the real driver does, so stopOnboarding() is testable
 vi.mock('driver.js', () => {
   const drive = vi.fn();
-  return { driver: vi.fn(() => ({ drive })) };
+  return {
+    driver: vi.fn((config?: Config) => ({
+      drive,
+      destroy: vi.fn(() => (config?.onDestroyed as unknown as (() => void) | undefined)?.())
+    }))
+  };
 });
 
 const { t, te } = i18n.global;
@@ -26,7 +32,8 @@ describe('tourSteps', () => {
       '[data-tour="vaultList"]',
       '[data-tour="addVault"]',
       '[data-tour="adminNav"]',
-      '[data-tour="profile"]'
+      '[data-tour="profile"]',
+      undefined
     ]);
   });
 
@@ -38,13 +45,10 @@ describe('tourSteps', () => {
       '[data-tour="vaultList"]',
       '[data-tour="vaultList"]',
       '[data-tour="adminNav"]',
-      '[data-tour="profile"]'
+      '[data-tour="profile"]',
+      undefined
     ]);
     expect(steps[2].titleKey).toBe('onboarding.useVault.title');
-  });
-
-  it('drops the admin nav step when excluded', () => {
-    expect(tourSteps(true, false).map(step => step.target)).not.toContain('[data-tour="adminNav"]');
   });
 
   ([
@@ -60,12 +64,14 @@ describe('tourSteps', () => {
     it(`resolves every message key against en-US (canCreateVaults: ${canCreateVaults})`, () => {
       for (const step of tourSteps(canCreateVaults)) {
         expect(te(step.titleKey, 'en-US'), `missing key ${step.titleKey}`).toBe(true);
-        expect(te(step.descriptionKey, 'en-US'), `missing key ${step.descriptionKey}`).toBe(true);
+        if (step.descriptionKey) {
+          expect(te(step.descriptionKey, 'en-US'), `missing key ${step.descriptionKey}`).toBe(true);
+        }
       }
     });
   });
 
-  it('renders a vignette for the welcome, vault list, and profile steps', () => {
+  it('renders a decorative vignette for the welcome, vault list, and profile steps', () => {
     const vignettes = renderVignettes();
 
     expect(vignettes.map(([titleKey]) => titleKey)).toEqual(['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.profile.title']);
@@ -74,8 +80,8 @@ describe('tourSteps', () => {
       expect(html, `${titleKey} must be decorative`).toMatch(/^<div [^>]*aria-hidden="true"/);
     }
     const rendered = vignettes.map(([, html]) => html).join('\n');
-    expect(rendered).toContain('Finance');
-    expect(rendered).toContain('Marketing');
+    expect(rendered).toContain(t('onboarding.vaultList.example1'));
+    expect(rendered).toContain(t('onboarding.vaultList.example2'));
   });
 
   it('anchors every step target in a component', () => {
@@ -122,6 +128,12 @@ describe('startOnboarding', () => {
     const { hasRole } = await auth;
     expect(vi.mocked(hasRole)).toHaveBeenCalledWith('create-vaults');
     expect(driveMock()).toHaveBeenCalledOnce();
+  });
+
+  it('localizes the close button provided by driver.js', async () => {
+    await drive(() => startOnboarding('user-1'));
+
+    expect(renderPopover(0).closeButton.getAttribute('aria-label')).toBe(t('common.close'));
   });
 
   it('skips a step whose target element is not visible', async () => {
@@ -178,7 +190,7 @@ describe('startOnboarding', () => {
     expect(first.innerHTML).toContain('/logo.svg');
     const second = renderStep(1);
     expect(first.innerHTML).toBe('');
-    expect(second.innerHTML).toContain('Finance');
+    expect(second.innerHTML).toContain(t('onboarding.vaultList.example1'));
     invokeDestroyed(lastConfig());
     expect(second.innerHTML).toBe('');
     // the popover apps share the module-wide i18n instance, which must survive their teardown
@@ -193,6 +205,14 @@ describe('startOnboarding', () => {
     expect(localStorage.getItem('hub.onboardingCompleted.user-1')).not.toBeNull();
   });
 
+  it('stops a running tour without marking it as completed', async () => {
+    await drive(() => startOnboarding('user-1'));
+
+    stopOnboarding();
+
+    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).toBeNull();
+  });
+
   it('omits the QR code on mobile devices', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
 
@@ -204,48 +224,16 @@ describe('startOnboarding', () => {
   });
 });
 
-describe('previewOnboarding', () => {
-  beforeEach(setUpTourDom);
-  afterEach(tearDownTourDom);
-
-  ([
-    ['admin', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.adminNav.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
-    ['create-vaults', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.addVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']],
-    ['user', ['onboarding.welcome.title', 'onboarding.vaultList.title', 'onboarding.useVault.title', 'onboarding.profile.title', 'onboarding.getApp.title']]
-  ] as const).forEach(([variant, titleKeys]) => {
-    it(`drives the ${variant} variant without querying roles`, async () => {
-      const steps = await drive(() => previewOnboarding(variant));
-
-      expect(steps.map(step => step.popover?.title)).toEqual(titleKeys.map(key => t(key)));
-      const { hasRole } = await auth;
-      expect(vi.mocked(hasRole)).not.toHaveBeenCalled();
-    });
-  });
-
-  it('never marks the tour as completed', async () => {
-    for (const variant of previewVariants) {
-      await drive(() => previewOnboarding(variant));
-      invokeDestroyed(lastConfig());
-    }
-
-    expect(Object.keys(localStorage).filter(key => key.startsWith('hub.onboardingCompleted'))).toHaveLength(0);
-    expect(driveMock()).toHaveBeenCalledTimes(previewVariants.length);
-  });
-});
-
 /* ---------- MOCKS ---------- */
 
 function setUpTourDom() {
   vi.clearAllMocks();
   localStorage.clear();
   document.body.innerHTML = ['vaultList', 'addVault', 'adminNav', 'profile'].map(anchor => `<div data-tour="${anchor}"></div>`).join('');
-  // happy-dom never reports an offsetParent, which would make driveTour skip every targeted step
-  Object.defineProperty(HTMLElement.prototype, 'offsetParent', { configurable: true, get: () => document.body });
 }
 
 function tearDownTourDom() {
   vi.restoreAllMocks();
-  Reflect.deleteProperty(HTMLElement.prototype, 'offsetParent');
   document.body.innerHTML = '';
 }
 
@@ -269,13 +257,17 @@ function driveMock() {
   return vi.mocked(driver).mock.results.at(-1)!.value.drive;
 }
 
-function renderStep(index?: number): HTMLElement {
+function renderPopover(index?: number): { description: HTMLElement, closeButton: HTMLElement } {
   const config = lastConfig();
-  const description = document.createElement('div');
+  const popover = { description: document.createElement('div'), closeButton: document.createElement('button') };
   type RenderHook = NonNullable<Config['onPopoverRender']>;
   const state = index !== undefined ? { activeIndex: index } : {};
-  (config.onPopoverRender as RenderHook)({ description } as unknown as PopoverDOM, { config, state, driver: undefined as never, index: index ?? 0 } as Parameters<RenderHook>[1]);
-  return description;
+  (config.onPopoverRender as RenderHook)(popover as unknown as PopoverDOM, { config, state, driver: undefined as never, index: index ?? 0 } as Parameters<RenderHook>[1]);
+  return popover;
+}
+
+function renderStep(index?: number): HTMLElement {
+  return renderPopover(index).description;
 }
 
 function renderComponent(component: Component): string {
@@ -288,7 +280,9 @@ function renderComponent(component: Component): string {
 }
 
 function renderVignettes(): [string, string][] {
-  return tourSteps(true).filter(step => step.vignette).map(step => [step.titleKey, renderComponent(step.vignette!)]);
+  return tourSteps(true)
+    .filter(step => step.vignette && step.descriptionKey)
+    .map(step => [step.titleKey, renderComponent(step.vignette!)]);
 }
 
 function invokeDestroyed(config: Config) {
