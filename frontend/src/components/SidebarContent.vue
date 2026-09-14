@@ -20,7 +20,8 @@
         </li>
       </ul>
 
-      <div v-if="isAdmin">
+      <!-- SidebarContent renders twice (drawer and desktop); the tour resolves data-tour anchors to the visible instance -->
+      <div v-if="isAdmin" data-tour="adminNav">
         <hr class="border-white/10" />
         <ul role="list" class="mt-3 space-y-1">
           <li v-for="item in adminNav" :key="item.name">
@@ -33,9 +34,24 @@
       </div>
     </nav>
 
+    <div v-if="showAppHint" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
+      <div class="flex items-center gap-x-2.5 pr-6">
+        <img src="/app-logo.svg" alt="" class="h-7 w-auto shrink-0" />
+        <h3 class="text-sm font-medium text-white">{{ t('appHint.title') }}</h3>
+      </div>
+      <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHint.description') }}</p>
+      <a :href="downloadUrl" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        {{ t('appHint.download') }}
+      </a>
+      <button type="button" class="absolute top-2 right-2 rounded-md p-1 text-gray-500 hover:text-white focus-visible:outline-2 focus-visible:outline-primary" @click="dismissHint()">
+        <span class="sr-only">{{ t('common.close') }}</span>
+        <XMarkIcon class="h-4 w-4" aria-hidden="true" />
+      </button>
+    </div>
+
     <!-- Kept outside the scrolling nav so the dropdown isn't clipped by the nav's overflow -->
     <Menu as="div" class="relative">
-      <MenuButton class="flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden">
+      <MenuButton data-tour="profile" class="flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden">
         <img class="h-8 w-8 shrink-0 rounded-full bg-white" :src="me.pictureUrl" alt="" />
         <span class="truncate">{{ me.name }}</span>
       </MenuButton>
@@ -47,7 +63,7 @@
           </div>
           <ul v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="py-1.5">
             <li v-for="item in itemGroup" :key="item.name">
-              <router-link :to="item.to" @click="emit('navigate')">
+              <router-link v-if="'to' in item" :to="item.to" @click="emit('navigate')">
                 <MenuItem v-slot="{ active }">
                   <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
                     <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
@@ -55,6 +71,14 @@
                   </div>
                 </MenuItem>
               </router-link>
+              <MenuItem v-else v-slot="{ active }">
+                <button type="button" class="w-full" @click="item.action()">
+                  <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
+                    <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
+                    {{ t(item.name) }}
+                  </div>
+                </button>
+              </MenuItem>
             </li>
           </ul>
         </MenuItems>
@@ -66,18 +90,21 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
-import { FunctionalComponent } from 'vue';
+import { computed, FunctionalComponent, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { appDownloadUrl } from '../common/appdownload';
 import { UserDto } from '../common/backend';
+import { isOnboardingCompleted } from '../common/onboarding';
+import { isFlagSet, setFlag } from '../common/util';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
-export type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
+export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & ({ to: string } | { action: () => void });
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 
-defineProps<{
+const props = defineProps<{
   me: UserDto,
   mainNav: NavigationItem[],
   adminNav: NavigationItem[],
@@ -90,6 +117,18 @@ const emit = defineEmits<{
   navigate: [],
   close: []
 }>();
+
+const downloadUrl = appDownloadUrl();
+const appHintKey = `hub.appHintDismissed.${props.me.id}`;
+const appHintDismissed = ref(isFlagSet(appHintKey));
+// only shown once the tour is over, so it does not compete with the tour's own download step;
+// legacy devices are ignored on purpose: their owners should switch to the current app anyway
+const showAppHint = computed(() => !appHintDismissed.value && isOnboardingCompleted(props.me.id) && props.me.devices.every(device => device.type === 'BROWSER'));
+
+function dismissHint() {
+  setFlag(appHintKey);
+  appHintDismissed.value = true;
+}
 
 function itemClasses(to: string) {
   const active = route.path === to || route.path.startsWith(to + '/');
