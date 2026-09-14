@@ -176,3 +176,26 @@ class WordEncoder {
 }
 
 export const wordEncoder = new WordEncoder(dictionary);
+
+/**
+ * Checks whether a flag was set via {@link setFlag}.
+ */
+export function isFlagSet(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== null;
+  } catch {
+    // without localStorage the flag cannot be remembered, so report it as set rather than nag on every visit
+    return true;
+  }
+}
+
+/**
+ * Sets a persistent flag. The stored timestamp is informational; only the key's presence matters.
+ */
+export function setFlag(key: string) {
+  try {
+    localStorage.setItem(key, new Date().toISOString());
+  } catch {
+    // if localStorage is unavailable, the flag may be requested again next time
+  }
+}

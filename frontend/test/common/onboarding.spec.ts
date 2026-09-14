@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, createApp } from 'vue';
 import auth from '../../src/common/auth';
-import { startOnboarding, stopOnboarding, tourSteps } from '../../src/common/onboarding';
+import { isOnboardingCompleted, startOnboarding, stopOnboarding, tourSteps } from '../../src/common/onboarding';
 import i18n from '../../src/i18n';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: vi.fn(() => true) }) }));
@@ -37,13 +37,13 @@ describe('tourSteps', () => {
     ]);
   });
 
-  it('swaps in the use vault step for users without the create-vaults role', () => {
+  it('swaps in a floating use vault step for users without the create-vaults role', () => {
     const steps = tourSteps(false);
 
     expect(steps.map(step => step.target)).toEqual([
       undefined,
       '[data-tour="vaultList"]',
-      '[data-tour="vaultList"]',
+      undefined,
       '[data-tour="adminNav"]',
       '[data-tour="profile"]',
       undefined
@@ -52,8 +52,8 @@ describe('tourSteps', () => {
   });
 
   ([
-    [true, 'onboarding.vaultList.description'],
-    [false, 'onboarding.vaultList.description.shared']
+    [true, 'onboarding.vaultList.owner.description'],
+    [false, 'onboarding.vaultList.member.description']
   ] as const).forEach(([canCreateVaults, descriptionKey]) => {
     it(`describes the vault list for canCreateVaults: ${canCreateVaults}`, () => {
       expect(tourSteps(canCreateVaults)[1].descriptionKey).toBe(descriptionKey);
@@ -80,8 +80,8 @@ describe('tourSteps', () => {
       expect(html, `${titleKey} must be decorative`).toMatch(/^<div [^>]*aria-hidden="true"/);
     }
     const rendered = vignettes.map(([, html]) => html).join('\n');
-    expect(rendered).toContain(t('onboarding.vaultList.example1'));
-    expect(rendered).toContain(t('onboarding.vaultList.example2'));
+    expect(rendered).toContain(t('onboarding.vaultList.example.finance'));
+    expect(rendered).toContain(t('onboarding.vaultList.example.marketing'));
   });
 
   it('anchors every step target in a component', () => {
@@ -105,7 +105,7 @@ describe('startOnboarding', () => {
   it('drives all steps and mounts the vignettes with the description text', async () => {
     const steps = await drive(() => startOnboarding('user-1'));
 
-    expect(steps.map(step => step.popover?.title)).toEqual([
+    expect(steps.map((step, index) => renderPopover(index).title.textContent)).toEqual([
       t('onboarding.welcome.title'),
       t('onboarding.vaultList.title'),
       t('onboarding.addVault.title'),
@@ -113,27 +113,33 @@ describe('startOnboarding', () => {
       t('onboarding.profile.title'),
       t('onboarding.getApp.title')
     ]);
-    expect(steps.every(step => step.popover?.description)).toBe(true);
+    // blank placeholders keep driver.js from hiding the elements the render hook fills
+    expect(steps.every(step => step.popover?.title && step.popover?.description)).toBe(true);
     expect(steps[1].element).toBeInstanceOf(HTMLElement);
-    const vaultListStep = renderStep(1);
+    const vaultListStep = renderPopover(1);
     // the illustration is decorative, while the app step's list carries real instructions
-    expect(vaultListStep.firstElementChild!.getAttribute('aria-hidden')).toBe('true');
-    expect(vaultListStep.innerHTML).toContain(`<p>${t('onboarding.vaultList.description')}</p>`);
-    const appStep = renderStep(steps.length - 1);
-    expect(appStep.firstElementChild!.getAttribute('aria-hidden')).toBeNull();
-    expect(appStep.innerHTML).toContain('<ol');
-    expect(appStep.innerHTML).toContain(t('onboarding.getApp.step1'));
-    expect(appStep.innerHTML).toContain('href="https://cryptomator.org/downloads/');
-    expect(appStep.innerHTML).toContain('src="/download-qr.svg"');
+    expect(vaultListStep.description.firstElementChild!.getAttribute('aria-hidden')).toBe('true');
+    expect(vaultListStep.description.innerHTML).toContain(`<p>${t('onboarding.vaultList.owner.description')}</p>`);
+    const appStep = renderPopover(steps.length - 1);
+    expect(appStep.description.firstElementChild!.getAttribute('aria-hidden')).toBeNull();
+    expect(appStep.description.innerHTML).toContain('<ol');
+    expect(appStep.description.innerHTML).toContain(t('onboarding.getApp.step1'));
+    expect(appStep.description.innerHTML).toContain('href="https://cryptomator.org/downloads/');
+    expect(appStep.description.innerHTML).toContain('src="/download-qr.svg"');
+    expect(appStep.nextButton.textContent).toBe(t('onboarding.done'));
     const { hasRole } = await auth;
     expect(vi.mocked(hasRole)).toHaveBeenCalledWith('create-vaults');
     expect(driveMock()).toHaveBeenCalledOnce();
   });
 
-  it('localizes the close button provided by driver.js', async () => {
+  it('localizes the popover chrome provided by driver.js', async () => {
     await drive(() => startOnboarding('user-1'));
 
-    expect(renderPopover(0).closeButton.getAttribute('aria-label')).toBe(t('common.close'));
+    const popover = renderPopover(0);
+    expect(popover.progress.textContent).toBe(t('onboarding.progress', [1, 6]));
+    expect(popover.previousButton.textContent).toBe(t('common.previous'));
+    expect(popover.nextButton.textContent).toBe(t('common.next'));
+    expect(popover.closeButton.getAttribute('aria-label')).toBe(t('common.close'));
   });
 
   it('skips a step whose target element is not visible', async () => {
@@ -141,7 +147,7 @@ describe('startOnboarding', () => {
 
     const steps = await drive(() => startOnboarding('user-1'));
 
-    expect(steps.map(step => step.popover?.title)).toEqual([
+    expect(steps.map((step, index) => renderPopover(index).title.textContent)).toEqual([
       t('onboarding.welcome.title'),
       t('onboarding.vaultList.title'),
       t('onboarding.addVault.title'),
@@ -151,14 +157,31 @@ describe('startOnboarding', () => {
     expect(renderStep(3).innerHTML).toContain(t('onboarding.profile.description'));
   });
 
+  it('keeps the account step as a floating card when its anchor is hidden', async () => {
+    document.querySelector('[data-tour="profile"]')!.remove();
+
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    expect(renderPopover(4).title.textContent).toBe(t('onboarding.profile.title'));
+    expect(steps[4].element).toBeUndefined();
+  });
+
+  it('skips a step whose target element is disabled', async () => {
+    document.querySelector('[data-tour="addVault"]')!.replaceWith(createDisabledButton());
+
+    const steps = await drive(() => startOnboarding('user-1'));
+
+    expect(steps.map((step, index) => renderPopover(index).title.textContent)).not.toContain(t('onboarding.addVault.title'));
+    expect(steps).toHaveLength(5);
+  });
+
   it('leaves no unresolved message key in the rendered tour', async () => {
     const steps = await drive(() => startOnboarding('user-1'));
 
-    const config = lastConfig();
-    const rendered = [
-      ...steps.map((step, index) => `${step.popover?.title}\n${renderStep(index).innerHTML}`),
-      config.progressText, config.nextBtnText, config.prevBtnText, config.doneBtnText
-    ].join('\n');
+    const rendered = steps.map((step, index) => {
+      const popover = renderPopover(index);
+      return [popover.title.textContent, popover.progress.textContent, popover.previousButton.textContent, popover.nextButton.textContent, popover.description.innerHTML].join('\n');
+    }).join('\n');
     // vue-i18n echoes unresolved keys verbatim, so a dotted key in the output means a missing message
     expect(rendered).not.toMatch(/(?:onboarding|common)\.[a-z]/i);
   });
@@ -190,7 +213,7 @@ describe('startOnboarding', () => {
     expect(first.innerHTML).toContain('/logo.svg');
     const second = renderStep(1);
     expect(first.innerHTML).toBe('');
-    expect(second.innerHTML).toContain(t('onboarding.vaultList.example1'));
+    expect(second.innerHTML).toContain(t('onboarding.vaultList.example.finance'));
     invokeDestroyed(lastConfig());
     expect(second.innerHTML).toBe('');
     // the popover apps share the module-wide i18n instance, which must survive their teardown
@@ -200,9 +223,10 @@ describe('startOnboarding', () => {
   it('marks the tour as completed once driver reports it destroyed', async () => {
     await drive(() => startOnboarding('user-1'));
 
-    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).toBeNull();
+    expect(isOnboardingCompleted('user-1')).toBe(false);
     invokeDestroyed(lastConfig());
     expect(localStorage.getItem('hub.onboardingCompleted.user-1')).not.toBeNull();
+    expect(isOnboardingCompleted('user-1')).toBe(true);
   });
 
   it('stops a running tour without marking it as completed', async () => {
@@ -237,6 +261,13 @@ function tearDownTourDom() {
   document.body.innerHTML = '';
 }
 
+function createDisabledButton(): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.setAttribute('data-tour', 'addVault');
+  button.disabled = true;
+  return button;
+}
+
 async function drive(run: () => Promise<void>): Promise<DriveStep[]> {
   vi.useFakeTimers();
   try {
@@ -257,9 +288,16 @@ function driveMock() {
   return vi.mocked(driver).mock.results.at(-1)!.value.drive;
 }
 
-function renderPopover(index?: number): { description: HTMLElement, closeButton: HTMLElement } {
+function renderPopover(index?: number): { description: HTMLElement, title: HTMLElement, progress: HTMLElement, previousButton: HTMLElement, nextButton: HTMLElement, closeButton: HTMLElement } {
   const config = lastConfig();
-  const popover = { description: document.createElement('div'), closeButton: document.createElement('button') };
+  const popover = {
+    description: document.createElement('div'),
+    title: document.createElement('header'),
+    progress: document.createElement('span'),
+    previousButton: document.createElement('button'),
+    nextButton: document.createElement('button'),
+    closeButton: document.createElement('button')
+  };
   type RenderHook = NonNullable<Config['onPopoverRender']>;
   const state = index !== undefined ? { activeIndex: index } : {};
   (config.onPopoverRender as RenderHook)(popover as unknown as PopoverDOM, { config, state, driver: undefined as never, index: index ?? 0 } as Parameters<RenderHook>[1]);

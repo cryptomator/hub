@@ -193,7 +193,7 @@ const anyUserHasLegacyDevices = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
 const isLicenseViolated = computed(() => licenseStatus.value?.isViolated() ?? false);
 
-const filterOptions = ref< {[key: string]: string} >({
+const filterOptions = ref< { [key: string]: string } >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
 });
@@ -210,7 +210,7 @@ const filteredVaults = computed(() =>
 
 onMounted(async () => {
   await fetchData();
-  if (me.value) {
+  if (me.value && !onFetchError.value) {
     await nextTick();
     await startOnboardingIfNeeded(me.value.id);
   }

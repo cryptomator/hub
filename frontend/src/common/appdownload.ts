@@ -1,12 +1,17 @@
 export function isMobile(): boolean {
-  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent) || isIpadOs();
+}
+
+// iPadOS reports itself as a Mac in the user agent; the touch screen gives it away
+function isIpadOs(): boolean {
+  return /mac/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
 }
 
 export function appDownloadUrl(): string {
   const ua = navigator.userAgent;
   if (/android/i.test(ua)) {
     return 'https://play.google.com/store/apps/details?id=org.cryptomator.freemium';
-  } else if (/iphone|ipad|ipod/i.test(ua)) {
+  } else if (/iphone|ipad|ipod/i.test(ua) || isIpadOs()) {
     return 'https://apps.apple.com/app/cryptomator/id1560822163';
   } else if (/windows/i.test(ua)) {
     return 'https://cryptomator.org/downloads/win/thanks/';
@@ -24,13 +29,14 @@ let cachedMacDownloadUrl: string | undefined;
 const macFallbackUrl = 'https://cryptomator.org/downloads/#mac';
 
 // same WebGL renderer sniffing as cryptomator.org uses to tell Apple Silicon and Intel Macs apart;
-// cached because every sniff allocates a WebGL context that counts against the browser's context cap
+// the context is released right away and the result cached, as browsers cap concurrent WebGL contexts
 function macDownloadUrl(): string {
   try {
     const gl = document.createElement('canvas').getContext('webgl');
     if (gl) {
       const info = gl.getExtension('WEBGL_debug_renderer_info');
       const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)).toLowerCase() : '';
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
       cachedMacDownloadUrl = macUrlForRenderer(renderer);
       return cachedMacDownloadUrl;
     }
@@ -47,26 +53,5 @@ function macUrlForRenderer(renderer: string): string {
     return 'https://cryptomator.org/downloads/mac/thanks/';
   } else {
     return macFallbackUrl;
-  }
-}
-
-function appHintKey(userId: string): string {
-  return `hub.appHintDismissed.${userId}`;
-}
-
-export function isAppHintDismissed(userId: string): boolean {
-  try {
-    return localStorage.getItem(appHintKey(userId)) !== null;
-  } catch {
-    // without localStorage we cannot remember a dismissal, so rather hide the hint than repeat it on every visit
-    return true;
-  }
-}
-
-export function dismissAppHint(userId: string) {
-  try {
-    localStorage.setItem(appHintKey(userId), new Date().toISOString());
-  } catch {
-    // if localStorage is unavailable, the hint may show again next time
   }
 }

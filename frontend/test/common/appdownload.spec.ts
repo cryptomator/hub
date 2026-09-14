@@ -38,6 +38,14 @@ describe('appDownloadUrl', () => {
     });
   });
 
+  it('treats iPadOS pretending to be a Mac as an Apple mobile device', async () => {
+    vi.spyOn(navigator, 'maxTouchPoints', 'get').mockReturnValue(5);
+    const { appDownloadUrl, isMobile } = await loadAppDownload(macUserAgent);
+
+    expect(appDownloadUrl()).toBe('https://apps.apple.com/app/cryptomator/id1560822163');
+    expect(isMobile()).toBe(true);
+  });
+
   it('sniffs the mac renderer only once', async () => {
     const getContext = stubGetContext(webGlContext('Apple M2'));
     const { appDownloadUrl } = await loadAppDownload(macUserAgent);
@@ -108,7 +116,7 @@ async function loadAppDownload(userAgent: string): Promise<typeof import('../../
 
 function webGlContext(renderer?: string) {
   return {
-    getExtension: () => renderer === undefined ? null : { UNMASKED_RENDERER_WEBGL: 0x9246 },
+    getExtension: (name: string) => name === 'WEBGL_debug_renderer_info' && renderer !== undefined ? { UNMASKED_RENDERER_WEBGL: 0x9246 } : null,
     getParameter: () => renderer
   };
 }

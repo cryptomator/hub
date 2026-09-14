@@ -60,23 +60,25 @@ const adminNav: NavigationItem[] = [
 ];
 
 const profileDropdown: ProfileDropdownItem[][] = [
-  [{ icon: UserIcon, name: 'nav.profile.profile', to: '/app/profile' }],
-  [{ icon: QuestionMarkCircleIcon, name: 'nav.profile.showTour', action: replayTour }],
+  [
+    { icon: UserIcon, name: 'nav.profile.profile', to: '/app/profile' },
+    { icon: QuestionMarkCircleIcon, name: 'nav.profile.showTour', action: replayTour }
+  ],
   [{ icon: ArrowRightStartOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }]
 ];
 
 const isAdmin = ref(false);
-let drawerClosed: Deferred<void> | undefined;
+let drawerClosed: Deferred<'closed' | 'reopened'> | undefined;
 
 function onDrawerClosed() {
-  drawerClosed?.resolve();
+  drawerClosed?.resolve('closed');
   drawerClosed = undefined;
 }
 
 // a cancelled leave transition never emits after-leave, which would leave the replay hanging forever
 watch(() => props.mobileOpen, (open) => {
   if (open) {
-    drawerClosed?.reject(new Error('Drawer reopened'));
+    drawerClosed?.resolve('reopened');
     drawerClosed = undefined;
   }
 });
@@ -87,7 +89,9 @@ async function replayTour() {
       // otherwise the tour would highlight the drawer's detaching elements
       drawerClosed ??= new Deferred();
       emit('close');
-      await drawerClosed.promise;
+      if (await drawerClosed.promise === 'reopened') {
+        return;
+      }
     }
     await router.push('/app/vaults');
     await startOnboarding(props.me.id);

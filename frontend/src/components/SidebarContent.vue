@@ -20,6 +20,7 @@
         </li>
       </ul>
 
+      <!-- SidebarContent renders twice (drawer and desktop); the tour resolves data-tour anchors to the visible instance -->
       <div v-if="isAdmin" data-tour="adminNav">
         <hr class="border-white/10" />
         <ul role="list" class="mt-3 space-y-1">
@@ -35,7 +36,7 @@
 
     <div v-if="showAppHint" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
       <div class="flex items-center gap-x-2.5 pr-6">
-        <img src="/cryptomator.svg" alt="" class="h-7 w-auto shrink-0" />
+        <img src="/app-logo.svg" alt="" class="h-7 w-auto shrink-0" />
         <h3 class="text-sm font-medium text-white">{{ t('appHint.title') }}</h3>
       </div>
       <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHint.description') }}</p>
@@ -92,8 +93,10 @@ import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { computed, FunctionalComponent, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { appDownloadUrl, dismissAppHint, isAppHintDismissed } from '../common/appdownload';
+import { appDownloadUrl } from '../common/appdownload';
 import { UserDto } from '../common/backend';
+import { isOnboardingCompleted } from '../common/onboarding';
+import { isFlagSet, setFlag } from '../common/util';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
 export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & ({ to: string } | { action: () => void });
@@ -116,11 +119,14 @@ const emit = defineEmits<{
 }>();
 
 const downloadUrl = appDownloadUrl();
-const appHintDismissed = ref(isAppHintDismissed(props.me.id));
-const showAppHint = computed(() => !appHintDismissed.value && props.me.devices.every(device => device.type === 'BROWSER'));
+const appHintKey = `hub.appHintDismissed.${props.me.id}`;
+const appHintDismissed = ref(isFlagSet(appHintKey));
+// only shown once the tour is over, so it does not compete with the tour's own download step;
+// legacy devices are ignored on purpose: their owners should switch to the current app anyway
+const showAppHint = computed(() => !appHintDismissed.value && isOnboardingCompleted(props.me.id) && props.me.devices.every(device => device.type === 'BROWSER'));
 
 function dismissHint() {
-  dismissAppHint(props.me.id);
+  setFlag(appHintKey);
   appHintDismissed.value = true;
 }
 

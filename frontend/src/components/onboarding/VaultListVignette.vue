@@ -29,7 +29,7 @@ import VignetteFrame from './VignetteFrame.vue';
 const { t } = i18n.global;
 
 const vaults = [
-  { labelKey: 'onboarding.vaultList.example1', barClass: 'w-20', avatars: [0, 1] },
-  { labelKey: 'onboarding.vaultList.example2', barClass: 'w-14', avatars: [2] }
+  { labelKey: 'onboarding.vaultList.example.finance', barClass: 'w-20', avatars: [0, 1] },
+  { labelKey: 'onboarding.vaultList.example.marketing', barClass: 'w-14', avatars: [2] }
 ];
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <component :is="content" v-if="content" />
+  <component :is="vignette" v-if="vignette" />
   <p v-if="text">{{ text }}</p>
 </template>
 
@@ -7,7 +7,7 @@
 import type { Component } from 'vue';
 
 export type TourPopoverProps = {
-  content?: Component
+  vignette?: Component
   text?: string
 };
 
