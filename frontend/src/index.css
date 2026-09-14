@@ -32,24 +32,24 @@
   --color-gray_8: #e1e1e1;
   --color-gray_9: #f7f7f7;
 
-  --animate-onboarding-key-travel: onboarding-key-travel 4.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  /* movement runs as one keyframe segment because easing restarts at every keyframe, which reads as stutter */
+  --animate-onboarding-key-travel: onboarding-key-travel 4.6s cubic-bezier(0.45, 0, 0.25, 1) infinite, onboarding-key-fade 4.6s linear infinite;
 
   @keyframes onboarding-key-travel {
     0% {
-      transform: translateX(40px);
-      opacity: 0;
-    }
-    18% {
-      transform: translateX(28px);
-      opacity: 1;
-    }
-    72% {
-      transform: translateX(-28px);
-      opacity: 1;
+      transform: translateX(46px);
     }
     88%, 100% {
-      transform: translateX(-40px);
+      transform: translateX(-46px);
+    }
+  }
+
+  @keyframes onboarding-key-fade {
+    0%, 88%, 100% {
       opacity: 0;
+    }
+    15%, 73% {
+      opacity: 1;
     }
   }
 }
