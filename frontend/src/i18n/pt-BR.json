@@ -400,7 +400,6 @@
   "legacyDeviceList.lastAccess": "Último acesso ao cofre",
   "legacyDeviceList.lastAccess.toolTip": "Pode estar ausente em dispositivos acessados ​​com versões mais antigas.",
   "legacyDeviceBanner.title": "Dispositivos antigos serão interrompidos",
-  "legacyDeviceBanner.user.description": "Seus dispositivos antigos não receberão mais suporte na próxima versão principal. Atualize o Cryptomator neles ou remova-os.",
   "legacyDeviceBanner.admin.description": "Um ou mais usuários ainda estão usando dispositivos antigos. O suporte a dispositivos antigos será interrompido na próxima versão principal. Solicite ao(s) usuário(s) afetado(s) para atualizar o Cryptomator ou remover os seus dispositivos antigos.",
   "manageAccountKey.title": "Chave da Conta",
   "manageAccountKey.description": "Sua Chave de Conta é necessária para o fazer login em outros aplicativos ou navegadores.",
