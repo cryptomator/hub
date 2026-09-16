@@ -400,7 +400,6 @@
   "legacyDeviceList.lastAccess": "آخر وصول إلى الخزنة",
   "legacyDeviceList.lastAccess.toolTip": "قد يكون مفقودًا للأجهزة التي تم الوصول إليها بإصدارات أقدم.",
   "legacyDeviceBanner.title": "سيتم إسقاط الأجهزة القديمة",
-  "legacyDeviceBanner.user.description": "لن يتم دعم أجهزتك القديمة في الإصدار الرئيسي التالي. يرجى تحديث Cryptomator على تلك الأجهزة أو إزالتها.",
   "legacyDeviceBanner.admin.description": "لا يزال لدى مستخدم واحد أو أكثر أجهزة قديمة. سيتم إسقاط دعم الأجهزة القديمة في الإصدار الرئيسي التالي. يرجى مطالبة المستخدمين المتأثرين بتحديث Cryptomator أو إزالة أجهزتهم القديمة.",
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "مفتاح حسابك مطلوب لتسجيل الدخول من تطبيقات أو متصفحات أخرى.",
