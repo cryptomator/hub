@@ -397,7 +397,6 @@
   "legacyDeviceList.lastAccess": "Letzter Tresor Zugriff",
   "legacyDeviceList.lastAccess.toolTip": "Kann bei Zugriff von Geräten mit älteren Versionen fehlen.",
   "legacyDeviceBanner.title": "Ältere Geräte werden eingestellt",
-  "legacyDeviceBanner.user.description": "Deine älteren Geräte werden in der nächsten Hauptversion nicht mehr unterstützt. Bitte aktualisiere Cryptomator auf diesen Geräten oder entferne sie.",
   "legacyDeviceBanner.admin.description": "Einer oder mehrere Benutzer haben immer noch Legacy-Geräte. Die Unterstützung für diese veralterten Geräte wird in der nächsten Hauptversion entfernt. Bitten Sie die betroffenen Benutzer, Cryptomator zu aktualisieren oder diese veralterten Geräte zu entfernen.",
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",
