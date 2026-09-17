@@ -156,6 +156,8 @@
   "legacyDeviceList.ipAddress": "IP adresa",
   "legacyDeviceList.lastAccess": "Posledný prístup do trezoru",
   "legacyDeviceList.lastAccess.toolTip": "Môže chýbať pre zariadenia so staršími verziami.",
+  "legacyDeviceBanner.user.description": "Vaše staršie zariadenia už nebudú v ďalšej hlavnej verzii podporované. Skontrolujte si ich v {0} a buď aktualizujte Cryptomator na uvedených zariadeniach, alebo ich odstráňte.",
+  "legacyDeviceBanner.button": "Užívateľský profil",
   "manageAccountKey.title": "Kľúč účtu",
   "nav.vaults": "Trezory",
   "nav.emergencyAccess": "Núdzový prístup",
