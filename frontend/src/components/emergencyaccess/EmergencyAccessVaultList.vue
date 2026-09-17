@@ -3,12 +3,6 @@
     {{ t('common.loading') }}
   </div>
   <div v-else-if="!onFetchError">
-    <LicenseAlert v-if="licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
-
-    <ContentBanner v-if="entitlements.emergencyAccessEnabled && entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
-      {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
-    </ContentBanner>
-
     <div v-if="!entitlements.emergencyAccessEnabled" class="flex flex-col justify-center items-center text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
@@ -64,6 +58,10 @@
           </Listbox>
         </div>
       </header>
+
+      <ContentBanner v-if="entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mt-5">
+        {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
+      </ContentBanner>
 
       <div v-if="filteredVaults.length === 0" class="mt-3 text-center">
         <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.noneFound') }}</h3>
@@ -242,10 +240,9 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import auth from '../../common/auth';
-import backend, { LicenseUserInfoDto, VaultDto, RecoveryProcessDto, MemberDto, SettingsDto } from '../../common/backend';
+import backend, { VaultDto, RecoveryProcessDto, MemberDto, SettingsDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import LicenseAlert from '../LicenseAlert.vue';
 import ContentBanner from '../ContentBanner.vue';
 import { CheckIcon, ChevronDownIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
@@ -268,7 +265,6 @@ const onFetchError = ref<Error>();
 const isAdmin = ref<boolean>(false);
 
 const entitlements = config.get().entitlements;
-const licenseStatus = ref<LicenseUserInfoDto>();
 const settings = ref<SettingsDto>();
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
@@ -298,7 +294,6 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
-    licenseStatus.value = await backend.license.getUserInfo();
     settings.value = await backend.settings.get();
 
     if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
