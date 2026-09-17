@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, createApp } from 'vue';
 import auth from '../../src/common/auth';
-import { isOnboardingCompleted, startOnboarding, stopOnboarding, tourSteps } from '../../src/common/onboarding';
+import backend, { UserDto } from '../../src/common/backend';
+import { startOnboarding, startOnboardingIfNeeded, stopOnboarding, tourSteps } from '../../src/common/onboarding';
 import i18n from '../../src/i18n';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: vi.fn(() => true) }) }));
@@ -103,7 +104,7 @@ describe('startOnboarding', () => {
   afterEach(tearDownTourDom);
 
   it('drives all steps and mounts the vignettes with the description text', async () => {
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     expect(steps.map((step, index) => renderPopover(index).title.textContent)).toEqual([
       t('onboarding.welcome.title'),
@@ -133,7 +134,7 @@ describe('startOnboarding', () => {
   });
 
   it('localizes the popover chrome provided by driver.js', async () => {
-    await drive(() => startOnboarding('user-1'));
+    await drive(() => startOnboarding(me));
 
     const popover = renderPopover(0);
     expect(popover.progress.textContent).toBe(t('onboarding.progress', [1, 6]));
@@ -145,7 +146,7 @@ describe('startOnboarding', () => {
   it('skips a step whose target element is not visible', async () => {
     document.querySelector('[data-tour="adminNav"]')!.remove();
 
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     expect(steps.map((step, index) => renderPopover(index).title.textContent)).toEqual([
       t('onboarding.welcome.title'),
@@ -160,7 +161,7 @@ describe('startOnboarding', () => {
   it('keeps the account step as a floating card when its anchor is hidden', async () => {
     document.querySelector('[data-tour="profile"]')!.remove();
 
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     expect(renderPopover(4).title.textContent).toBe(t('onboarding.profile.title'));
     expect(steps[4].element).toBeUndefined();
@@ -169,14 +170,14 @@ describe('startOnboarding', () => {
   it('skips a step whose target element is disabled', async () => {
     document.querySelector('[data-tour="addVault"]')!.replaceWith(createDisabledButton());
 
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     expect(steps.map((step, index) => renderPopover(index).title.textContent)).not.toContain(t('onboarding.addVault.title'));
     expect(steps).toHaveLength(5);
   });
 
   it('leaves no unresolved message key in the rendered tour', async () => {
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     const rendered = steps.map((step, index) => {
       const popover = renderPopover(index);
@@ -187,7 +188,7 @@ describe('startOnboarding', () => {
   });
 
   it('renders a text-only step without a vignette', async () => {
-    await drive(() => startOnboarding('user-1'));
+    await drive(() => startOnboarding(me));
 
     const addVaultStep = renderStep(2).innerHTML;
     expect(addVaultStep).toContain(`<p>${t('onboarding.addVault.description')}</p>`);
@@ -195,7 +196,7 @@ describe('startOnboarding', () => {
   });
 
   it('leaves the popover empty for an unknown or missing step index', async () => {
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     const first = renderStep(0);
     expect(first.innerHTML).not.toBe('');
@@ -207,7 +208,7 @@ describe('startOnboarding', () => {
 
   it('unmounts the previous step content on each render and on destroy', async () => {
     const dispose = vi.spyOn(i18n, 'dispose');
-    await drive(() => startOnboarding('user-1'));
+    await drive(() => startOnboarding(me));
 
     const first = renderStep(0);
     expect(first.innerHTML).toContain('/logo.svg');
@@ -221,26 +222,45 @@ describe('startOnboarding', () => {
   });
 
   it('marks the tour as completed once driver reports it destroyed', async () => {
-    await drive(() => startOnboarding('user-1'));
+    await drive(() => startOnboarding(me));
 
-    expect(isOnboardingCompleted('user-1')).toBe(false);
+    expect(me.onboardingCompleted).toBe(false);
     invokeDestroyed(lastConfig());
-    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).not.toBeNull();
-    expect(isOnboardingCompleted('user-1')).toBe(true);
+    expect(me.onboardingCompleted).toBe(true);
+    await vi.waitFor(() => expect(persistedDto?.onboardingCompleted).toBe(true));
+    expect(persistedDto?.setupCode).toBe('freshly-fetched');
+    // withDevices, so the PUT round-trips the devices unchanged
+    expect(backend.users.me).toHaveBeenCalledWith(true, false);
+  });
+
+  it('keeps the tour dismissed for the session even when persisting fails', async () => {
+    vi.mocked(backend.users.putMe).mockRejectedValue(new Error('backend unavailable'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await drive(() => startOnboarding(me));
+
+    invokeDestroyed(lastConfig());
+
+    await vi.waitFor(() => expect(consoleError).toHaveBeenCalledWith('Persisting the onboarding completion failed:', expect.any(Error)));
+    expect(backend.users.putMe).toHaveBeenCalled();
+    // asserted after the rejection was handled, so a catch block reverting the flag would fail here
+    expect(me.onboardingCompleted).toBe(true);
   });
 
   it('stops a running tour without marking it as completed', async () => {
-    await drive(() => startOnboarding('user-1'));
+    await drive(() => startOnboarding(me));
 
     stopOnboarding();
 
-    expect(localStorage.getItem('hub.onboardingCompleted.user-1')).toBeNull();
+    expect(me.onboardingCompleted).toBe(false);
+    // completion would fetch the user synchronously, so this cannot be a timing artifact
+    expect(backend.users.me).not.toHaveBeenCalled();
+    expect(backend.users.putMe).not.toHaveBeenCalled();
   });
 
   it('omits the QR code on mobile devices', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
 
-    const steps = await drive(() => startOnboarding('user-1'));
+    const steps = await drive(() => startOnboarding(me));
 
     const appStep = renderStep(steps.length - 1).innerHTML;
     expect(appStep).not.toContain('download-qr.svg');
@@ -248,11 +268,40 @@ describe('startOnboarding', () => {
   });
 });
 
+describe('startOnboardingIfNeeded', () => {
+  beforeEach(setUpTourDom);
+  afterEach(tearDownTourDom);
+
+  it('starts the tour for a user who has not completed onboarding', async () => {
+    await drive(() => startOnboardingIfNeeded(me));
+
+    expect(driveMock()).toHaveBeenCalledOnce();
+  });
+
+  it('does not start the tour for a user who has completed onboarding', async () => {
+    me.onboardingCompleted = true;
+
+    await startOnboardingIfNeeded(me);
+
+    expect(vi.mocked(driver)).not.toHaveBeenCalled();
+  });
+});
+
 /* ---------- MOCKS ---------- */
+
+let me: UserDto;
+let persistedDto: UserDto | undefined;
 
 function setUpTourDom() {
   vi.clearAllMocks();
-  localStorage.clear();
+  me = { type: 'USER', id: 'user-1', name: 'User 1', enabled: true, onboardingCompleted: false, devices: [], accessibleVaults: [] };
+  persistedDto = undefined;
+  // the fresh copy carries a marker, so tests can prove the PUT carried the re-fetched DTO and not the cached one
+  vi.spyOn(backend.users, 'me').mockImplementation(async () => ({ ...me, onboardingCompleted: false, setupCode: 'freshly-fetched' }));
+  // captured at call time, so a mutation after the PUT cannot satisfy the assertion retroactively
+  vi.spyOn(backend.users, 'putMe').mockImplementation(async dto => {
+    persistedDto = dto && { ...dto };
+  });
   document.body.innerHTML = ['vaultList', 'addVault', 'adminNav', 'profile'].map(anchor => `<div data-tour="${anchor}"></div>`).join('');
 }
 

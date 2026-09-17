@@ -87,6 +87,7 @@ export type UserDto = {
   firstName?: string;
   lastName?: string;
   enabled: boolean;
+  onboardingCompleted?: boolean;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDtoWithRole[];
@@ -103,6 +104,7 @@ export type UserDtoWithCounts = UserDto & {
 };
 
 export type UserDtoWithDetails = UserDto & {
+  onboardingCompleted: boolean;
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];

@@ -94,7 +94,7 @@ async function replayTour() {
       }
     }
     await router.push('/app/vaults');
-    await startOnboarding(props.me.id);
+    await startOnboarding(props.me);
   } catch (error) {
     console.error('Replaying the onboarding tour failed:', error);
   }

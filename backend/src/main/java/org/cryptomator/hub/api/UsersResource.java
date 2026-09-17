@@ -114,6 +114,10 @@ public class UsersResource {
 			}
 			updateDevices(user, dto);
 			user.setLanguage(dto.getLanguage());
+			// absent means unchanged, so a partial PUT cannot reset the flag
+			if (dto.getOnboardingCompleted() != null) {
+				user.setOnboardingCompleted(dto.getOnboardingCompleted());
+			}
 		}
 		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
@@ -187,7 +191,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -206,7 +210,7 @@ public class UsersResource {
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
 		var deviceDtos = legacyDevicesWithLastAccess(user);
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -380,7 +384,7 @@ public class UsersResource {
 		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
 		var realmRoles = keycloakAuthorityPuller.realmRolesOf(userId);
 
-		return UserDto.justPublicInfo(user).withDetails(
+		return UserDto.detailedInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Show a short onboarding tour to first-time users, replayable from the profile menu
+- Show a short onboarding tour to first-time users, remembered across browsers and devices and replayable from the profile menu
 - Suggest downloading the Cryptomator app in the sidebar
 
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)

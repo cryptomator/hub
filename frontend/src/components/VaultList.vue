@@ -212,7 +212,7 @@ onMounted(async () => {
   await fetchData();
   if (me.value && !onFetchError.value) {
     await nextTick();
-    await startOnboardingIfNeeded(me.value.id);
+    await startOnboardingIfNeeded(me.value);
   }
 });
 

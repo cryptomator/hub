@@ -1,5 +1,5 @@
 import { DriveStep, driver } from 'driver.js';
-import { createApp, ref } from 'vue';
+import { createApp } from 'vue';
 import type { App, Component } from 'vue';
 import GetAppStep from '../components/onboarding/GetAppStep.vue';
 import ProfileVignette from '../components/onboarding/ProfileVignette.vue';
@@ -8,7 +8,7 @@ import VaultListVignette from '../components/onboarding/VaultListVignette.vue';
 import WelcomeVignette from '../components/onboarding/WelcomeVignette.vue';
 import i18n from '../i18n';
 import auth from './auth';
-import { isFlagSet, setFlag } from './util';
+import backend, { UserDto } from './backend';
 import 'driver.js/dist/driver.css';
 
 type TourStep = {
@@ -49,22 +49,19 @@ export function tourSteps(canCreateVaults: boolean): TourStep[] {
   ];
 }
 
-function onboardingKey(userId: string): string {
-  return `hub.onboardingCompleted.${userId}`;
-}
-
-// bumped on completion, so long-lived components like the sidebar react without a reload
-const completionVersion = ref(0);
-
-/** also gates UI that should only appear once the tour is over, e.g. the sidebar app hint */
-export function isOnboardingCompleted(userId: string): boolean {
-  void completionVersion.value; // subscribes reactive callers to tour completions
-  return isFlagSet(onboardingKey(userId));
-}
-
-function completeOnboarding(userId: string) {
-  setFlag(onboardingKey(userId));
-  completionVersion.value++;
+async function completeOnboarding(me: UserDto) {
+  // the shared DTO is mutated first, so the tour stays dismissed for the session even if persisting fails
+  me.onboardingCompleted = true;
+  try {
+    // PUT /users/me replaces the whole record, so flag a freshly fetched DTO instead of
+    // the possibly stale cached one, which could revert e.g. a rotated setup code;
+    // no fallback picture: the server derives pictureUrl from the JWT anyway
+    const current = await backend.users.me(true, false);
+    current.onboardingCompleted = true;
+    await backend.users.putMe(current);
+  } catch (error) {
+    console.error('Persisting the onboarding completion failed:', error);
+  }
 }
 
 function findVisibleElement(selector: string): Element | undefined {
@@ -82,11 +79,10 @@ async function waitForVisibleElement(selector: string): Promise<boolean> {
 
 /**
  * Starts the onboarding tour unless the user has already completed or dismissed it.
- * @param userId the id of the currently logged in user
  */
-export async function startOnboardingIfNeeded(userId: string) {
-  if (!isOnboardingCompleted(userId)) {
-    await startOnboarding(userId);
+export async function startOnboardingIfNeeded(me: UserDto) {
+  if (!me.onboardingCompleted) {
+    await startOnboarding(me);
   }
 }
 
@@ -94,10 +90,9 @@ export async function startOnboardingIfNeeded(userId: string) {
  * Starts the onboarding tour on the vault list; resolves once the tour is running.
  * Completion is recorded when the user finishes or dismisses the tour.
  * Steps whose target element is not visible (e.g. the sidebar on mobile) are skipped.
- * @param userId the id of the currently logged in user
  */
-export async function startOnboarding(userId: string) {
-  await driveTour(tourSteps((await auth).hasRole('create-vaults')), () => completeOnboarding(userId));
+export async function startOnboarding(me: UserDto) {
+  await driveTour(tourSteps((await auth).hasRole('create-vaults')), () => completeOnboarding(me));
 }
 
 /**

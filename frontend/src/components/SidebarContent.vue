@@ -95,7 +95,6 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { appDownloadUrl } from '../common/appdownload';
 import { UserDto } from '../common/backend';
-import { isOnboardingCompleted } from '../common/onboarding';
 import { isFlagSet, setFlag } from '../common/util';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
@@ -119,11 +118,12 @@ const emit = defineEmits<{
 }>();
 
 const downloadUrl = appDownloadUrl();
+// dismissing the hint is a per-browser convenience, unlike the account-wide onboardingCompleted
 const appHintKey = `hub.appHintDismissed.${props.me.id}`;
 const appHintDismissed = ref(isFlagSet(appHintKey));
 // only shown once the tour is over, so it does not compete with the tour's own download step;
 // legacy devices are ignored on purpose: their owners should switch to the current app anyway
-const showAppHint = computed(() => !appHintDismissed.value && isOnboardingCompleted(props.me.id) && props.me.devices.every(device => device.type === 'BROWSER'));
+const showAppHint = computed(() => !appHintDismissed.value && (props.me.onboardingCompleted ?? false) && props.me.devices.every(device => device.type === 'BROWSER'));
 
 function dismissHint() {
   setFlag(appHintKey);
