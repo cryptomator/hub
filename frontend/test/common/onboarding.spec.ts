@@ -227,21 +227,17 @@ describe('startOnboarding', () => {
     expect(me.onboardingCompleted).toBe(false);
     invokeDestroyed(lastConfig());
     expect(me.onboardingCompleted).toBe(true);
-    await vi.waitFor(() => expect(persistedDto?.onboardingCompleted).toBe(true));
-    expect(persistedDto?.setupCode).toBe('freshly-fetched');
-    // withDevices, so the PUT round-trips the devices unchanged
-    expect(backend.users.me).toHaveBeenCalledWith(true, false);
+    expect(backend.users.setMyOnboardingCompleted).toHaveBeenCalledWith(true);
   });
 
   it('keeps the tour dismissed for the session even when persisting fails', async () => {
-    vi.mocked(backend.users.putMe).mockRejectedValue(new Error('backend unavailable'));
+    vi.mocked(backend.users.setMyOnboardingCompleted).mockRejectedValue(new Error('backend unavailable'));
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     await drive(() => startOnboarding(me));
 
     invokeDestroyed(lastConfig());
 
     await vi.waitFor(() => expect(consoleError).toHaveBeenCalledWith('Persisting the onboarding completion failed:', expect.any(Error)));
-    expect(backend.users.putMe).toHaveBeenCalled();
     // asserted after the rejection was handled, so a catch block reverting the flag would fail here
     expect(me.onboardingCompleted).toBe(true);
   });
@@ -252,9 +248,8 @@ describe('startOnboarding', () => {
     stopOnboarding();
 
     expect(me.onboardingCompleted).toBe(false);
-    // completion would fetch the user synchronously, so this cannot be a timing artifact
-    expect(backend.users.me).not.toHaveBeenCalled();
-    expect(backend.users.putMe).not.toHaveBeenCalled();
+    // completion would call the backend synchronously, so this cannot be a timing artifact
+    expect(backend.users.setMyOnboardingCompleted).not.toHaveBeenCalled();
   });
 
   it('omits the QR code on mobile devices', async () => {
@@ -290,18 +285,11 @@ describe('startOnboardingIfNeeded', () => {
 /* ---------- MOCKS ---------- */
 
 let me: UserDto;
-let persistedDto: UserDto | undefined;
 
 function setUpTourDom() {
   vi.clearAllMocks();
   me = { type: 'USER', id: 'user-1', name: 'User 1', enabled: true, onboardingCompleted: false, devices: [], accessibleVaults: [] };
-  persistedDto = undefined;
-  // the fresh copy carries a marker, so tests can prove the PUT carried the re-fetched DTO and not the cached one
-  vi.spyOn(backend.users, 'me').mockImplementation(async () => ({ ...me, onboardingCompleted: false, setupCode: 'freshly-fetched' }));
-  // captured at call time, so a mutation after the PUT cannot satisfy the assertion retroactively
-  vi.spyOn(backend.users, 'putMe').mockImplementation(async dto => {
-    persistedDto = dto && { ...dto };
-  });
+  vi.spyOn(backend.users, 'setMyOnboardingCompleted').mockResolvedValue();
   document.body.innerHTML = ['vaultList', 'addVault', 'adminNav', 'profile'].map(anchor => `<div data-tour="${anchor}"></div>`).join('');
 }
 

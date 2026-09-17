@@ -53,12 +53,7 @@ async function completeOnboarding(me: UserDto) {
   // the shared DTO is mutated first, so the tour stays dismissed for the session even if persisting fails
   me.onboardingCompleted = true;
   try {
-    // PUT /users/me replaces the whole record, so flag a freshly fetched DTO instead of
-    // the possibly stale cached one, which could revert e.g. a rotated setup code;
-    // no fallback picture: the server derives pictureUrl from the JWT anyway
-    const current = await backend.users.me(true, false);
-    current.onboardingCompleted = true;
-    await backend.users.putMe(current);
+    await backend.users.setMyOnboardingCompleted(true);
   } catch (error) {
     console.error('Persisting the onboarding completion failed:', error);
   }

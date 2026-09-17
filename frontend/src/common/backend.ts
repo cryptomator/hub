@@ -528,6 +528,10 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
+  public async setMyOnboardingCompleted(onboardingCompleted: boolean): Promise<void> {
+    await axiosAuth.put('/users/me/onboarding-completed', String(onboardingCompleted), { headers: { 'Content-Type': 'text/plain' } });
+  }
+
   public async me(withDevices: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
     const user = await axiosAuth.get<UserDto>('/users/me', {
       params: {

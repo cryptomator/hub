@@ -192,24 +192,13 @@ class UsersResourceIT {
 	class AsAuthorzedUser2 {
 
 		@Test
-		@DisplayName("PUT /users/me with onboardingCompleted=true persists the flag")
-		void testPutMeOnboardingCompleted() throws SQLException {
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as completed")
+		void testSetMyOnboardingCompleted() throws SQLException {
 			seedOnboardingCompleted("user2", false);
-			when().get("/users/me")
-					.then().statusCode(200)
-					.body("onboardingCompleted", is(false));
 
-			var body = """
-					{
-						"id": "user2",
-						"name": "User Name 2",
-						"email": "user2@example.com",
-						"onboardingCompleted": true
-					}
-					""";
-			given().contentType(ContentType.JSON).body(body)
-					.when().put("/users/me")
-					.then().statusCode(201);
+			given().contentType(ContentType.TEXT).body("true")
+					.when().put("/users/me/onboarding-completed")
+					.then().statusCode(204);
 
 			when().get("/users/me")
 					.then().statusCode(200)
@@ -217,12 +206,23 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("PUT /users/me with onboardingCompleted=false resets the flag")
-		void testPutMeResetOnboardingCompleted() throws SQLException {
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as pending")
+		void testSetMyOnboardingPending() throws SQLException {
 			seedOnboardingCompleted("user2", true);
+
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/me/onboarding-completed")
+					.then().statusCode(204);
+
 			when().get("/users/me")
 					.then().statusCode(200)
-					.body("onboardingCompleted", is(true));
+					.body("onboardingCompleted", is(false));
+		}
+
+		@Test
+		@DisplayName("PUT /users/me returns 201 and does not clear the onboarding flag")
+		void testPutMeKeepsOnboardingCompleted() throws SQLException {
+			seedOnboardingCompleted("user2", true);
 
 			var body = """
 					{
@@ -238,19 +238,20 @@ class UsersResourceIT {
 
 			when().get("/users/me")
 					.then().statusCode(200)
-					.body("onboardingCompleted", is(false));
+					.body("onboardingCompleted", is(true));
 		}
 
 		@Test
-		@DisplayName("PUT /users/me without onboardingCompleted keeps the flag")
-		void testPutMeWithoutOnboardingCompleted() throws SQLException {
-			seedOnboardingCompleted("user2", true);
+		@DisplayName("PUT /users/me returns 201 and does not set the onboarding flag")
+		void testPutMeKeepsOnboardingPending() throws SQLException {
+			seedOnboardingCompleted("user2", false);
 
 			var body = """
 					{
 						"id": "user2",
 						"name": "User Name 2",
-						"email": "user2@example.com"
+						"email": "user2@example.com",
+						"onboardingCompleted": true
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -259,7 +260,7 @@ class UsersResourceIT {
 
 			when().get("/users/me")
 					.then().statusCode(200)
-					.body("onboardingCompleted", is(true));
+					.body("onboardingCompleted", is(false));
 		}
 
 		@AfterAll
@@ -278,6 +279,7 @@ class UsersResourceIT {
 		@CsvSource(value = {
 				"GET, /users/me",
 				"PUT, /users/me",
+				"PUT, /users/me/onboarding-completed",
 				"GET, /users"
 		})
 		void testGet(String method, String path) {

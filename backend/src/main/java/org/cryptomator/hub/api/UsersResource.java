@@ -114,10 +114,6 @@ public class UsersResource {
 			}
 			updateDevices(user, dto);
 			user.setLanguage(dto.getLanguage());
-			// absent means unchanged, so a partial PUT cannot reset the flag
-			if (dto.getOnboardingCompleted() != null) {
-				user.setOnboardingCompleted(dto.getOnboardingCompleted());
-			}
 		}
 		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
@@ -171,6 +167,20 @@ public class UsersResource {
 			eventLogger.logVaultAccessGranted(user.getId(), vault.getId(), user.getId());
 		}
 		return Response.ok().build();
+	}
+
+	@PUT
+	@Path("/me/onboarding-completed")
+	@RolesAllowed("user")
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Transactional
+	@Operation(summary = "marks the onboarding tour as completed or pending for the logged-in user")
+	@APIResponse(responseCode = "204", description = "user updated")
+	public Response setMyOnboardingCompleted(boolean onboardingCompleted) {
+		User user = userRepo.findById(jwt.getSubject());
+		user.setOnboardingCompleted(onboardingCompleted);
+		userRepo.persist(user);
+		return Response.noContent().build();
 	}
 
 	@GET
