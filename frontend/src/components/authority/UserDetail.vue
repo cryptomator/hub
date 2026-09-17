@@ -149,6 +149,7 @@ const user = ref<UserDtoWithDetails>({
   accessibleVaults: [],
   realmRoles: [],
   enabled: true,
+  onboardingCompleted: false,
   groups: [],
   devices: [],
   legacyDevices: [],

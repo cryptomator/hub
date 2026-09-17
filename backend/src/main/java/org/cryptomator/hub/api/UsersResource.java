@@ -169,6 +169,20 @@ public class UsersResource {
 		return Response.ok().build();
 	}
 
+	@PUT
+	@Path("/me/onboarding-completed")
+	@RolesAllowed("user")
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Transactional
+	@Operation(summary = "marks the onboarding tour as completed or pending for the logged-in user")
+	@APIResponse(responseCode = "204", description = "user updated")
+	public Response setMyOnboardingCompleted(boolean onboardingCompleted) {
+		User user = userRepo.findById(jwt.getSubject());
+		user.setOnboardingCompleted(onboardingCompleted);
+		userRepo.persist(user);
+		return Response.noContent().build();
+	}
+
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
@@ -187,7 +201,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -206,7 +220,7 @@ public class UsersResource {
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
 		var deviceDtos = legacyDevicesWithLastAccess(user);
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -380,7 +394,7 @@ public class UsersResource {
 		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
 		var realmRoles = keycloakAuthorityPuller.realmRolesOf(userId);
 
-		return UserDto.justPublicInfo(user).withDetails(
+		return UserDto.detailedInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,

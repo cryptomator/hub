@@ -87,6 +87,7 @@ export type UserDto = {
   firstName?: string;
   lastName?: string;
   enabled: boolean;
+  onboardingCompleted?: boolean;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDtoWithRole[];
@@ -103,6 +104,7 @@ export type UserDtoWithCounts = UserDto & {
 };
 
 export type UserDtoWithDetails = UserDto & {
+  onboardingCompleted: boolean;
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
@@ -524,6 +526,10 @@ class UserService {
 
   public async putMe(dto?: UserDto): Promise<void> {
     return axiosAuth.put('/users/me', dto);
+  }
+
+  public async setMyOnboardingCompleted(onboardingCompleted: boolean): Promise<void> {
+    await axiosAuth.put('/users/me/onboarding-completed', String(onboardingCompleted), { headers: { 'Content-Type': 'text/plain' } });
   }
 
   public async me(withDevices: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {

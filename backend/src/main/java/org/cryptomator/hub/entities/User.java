@@ -66,6 +66,9 @@ public class User extends Authority {
 	@Column(name = "enabled", nullable = false)
 	private boolean enabled = true;
 
+	@Column(name = "onboarding_completed", nullable = false)
+	private boolean onboardingCompleted;
+
 	@Column(name = "ecdh_publickey")
 	private @Nullable String ecdhPublicKey;
 
@@ -139,6 +142,14 @@ public class User extends Authority {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public boolean isOnboardingCompleted() {
+		return onboardingCompleted;
+	}
+
+	public void setOnboardingCompleted(boolean onboardingCompleted) {
+		this.onboardingCompleted = onboardingCompleted;
 	}
 
 	public @Nullable String getEcdhPublicKey() {
