@@ -441,8 +441,8 @@ public class VaultResource {
 			try {
 				deviceRepo.findByIdAndUser(deviceId, user.getId());
 			} catch (NoResultException _) {
-				deviceId = null;
 				LOG.info("Device with id %s does not exists for user %s. Ignoring device id.".formatted(deviceId, user.getId()));
+				deviceId = null;
 			}
 		}
 

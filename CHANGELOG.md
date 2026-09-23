@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/cryptomator/hub/compare/2.0.1...2.1.0) (2026-09-23)
+
+### Changed
+
+- Updated Keycloak to 26.7.4
+- Updated to Quarkus 3.39.4
+
+### Fixed
+
+- Fixed license refreshes of all instances of a version happening at the same time
+
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)
 
 ### Fixed
@@ -37,8 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated logo and favicon to the new Hub branding
 - Updated to Java 25 and Quarkus 3.33.2.1 LTS (#469)
 - Updated Keycloak to 26.7.3 (including Helm chart)
-- Helm chart now defaults to Postgres 18
-- Migrated from Micrometer to OpenTelemetry (#443)
+- Helm chart now defaults to Postgres 18 (the new volume layout requires Postgres >= 18)
+- Added OpenTelemetry support for metrics, traces and logs (#443)
 - OpenTelemetry SDK is now disabled by default (set `QUARKUS_OTEL_SDK_DISABLED=false` to enable)
 - Moved health check to separate service port (configurable via `QUARKUS_MANAGEMENT_PORT`) (#443)
 - Migrated frontend package management from npm to pnpm (#446)
@@ -77,9 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Fixed [Emergency Access Authorization Bypass](https://github.com/cryptomator/hub/security/advisories/GHSA-99p9-vhhj-2x98)
-- Fixed [Unauthorized Read/Delete of Recovery Process State](https://github.com/cryptomator/hub/security/advisories/GHSA-p94x-9592-5r73)
-- Fixed [Endpoints Accepts Invalid / non-JWE Key Material](https://github.com/cryptomator/hub/security/advisories/GHSA-hq3g-4c59-cgg7)
+- Fixed CVE-2026-64674: [Emergency Access Authorization Bypass](https://github.com/cryptomator/hub/security/advisories/GHSA-99p9-vhhj-2x98)
+- Fixed CVE-2026-64681: [Unauthorized Read/Delete of Recovery Process State](https://github.com/cryptomator/hub/security/advisories/GHSA-p94x-9592-5r73)
+- Fixed CVE-2026-64683: [Endpoints Accepts Invalid / non-JWE Key Material](https://github.com/cryptomator/hub/security/advisories/GHSA-hq3g-4c59-cgg7)
 - CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
 - CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
 
