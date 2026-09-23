@@ -399,7 +399,7 @@
   "legacyDeviceBanner.title": "Ältere Geräte werden eingestellt",
   "legacyDeviceBanner.user.description": "Ihre Altgeräte werden in der nächsten großen Version nicht mehr unterstützt. Bitte überprüfe Sie die Geräte in der {0} und aktualisiere Sie entweder den Cryptomator auf den aufgelisteten Geräten oder entferne sie diese.",
   "legacyDeviceBanner.button": "Benutzerprofil",
-  "legacyDeviceBanner.admin.description": "Einer oder mehrere Benutzer haben immer noch Legacy-Geräte. Die Unterstützung für diese veralterten Geräte wird in der nächsten Hauptversion entfernt. Bitten Sie die betroffenen Benutzer, Cryptomator zu aktualisieren oder diese veralterten Geräte zu entfernen.",
+  "legacyDeviceBanner.admin.description": "Einer oder mehrere Benutzer haben immer noch Legacy-Geräte. Die Unterstützung für diese veralteten Geräte wird in der nächsten Hauptversion entfernt. Bitten Sie die betroffenen Benutzer, Cryptomator zu aktualisieren oder diese veralteten Geräte zu entfernen.",
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",
   "manageAccountKey.regenerate": "Neuen Key generieren",
