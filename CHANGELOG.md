@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated Keycloak to 26.7.4
 
+### Fixed
+
+- Fixed license refreshes of all instances of a version happening at the same time
+
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)
 
 ### Fixed
