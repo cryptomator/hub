@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.ProcessingException;
 import org.cryptomator.hub.entities.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -424,7 +426,7 @@ class LicenseHolderTest {
 			var settings = mock(Settings.class);
 			Mockito.doReturn("42").when(settings).getHubId();
 			Mockito.doReturn(settings).when(settingsRepo).get();
-			Mockito.doReturn("newToken").when(licenseApi).getLicense(SESSION);
+			Mockito.doReturn(CompletableFuture.completedFuture("newToken")).when(licenseApi).getLicense(SESSION);
 			Mockito.doReturn(mockLicense()).when(validator).validate("newToken", "42");
 
 			licenseHolder.refreshLicense(SESSION);
@@ -441,7 +443,7 @@ class LicenseHolderTest {
 			var settings = mock(Settings.class);
 			Mockito.doReturn("42").when(settings).getHubId();
 			Mockito.doReturn(settings).when(settingsRepo).get();
-			Mockito.doReturn("newToken").when(licenseApi).getLicense(SESSION);
+			Mockito.doReturn(CompletableFuture.completedFuture("newToken")).when(licenseApi).getLicense(SESSION);
 			Mockito.doThrow(new JWTVerificationException("invalid")).when(validator).validate("newToken", "42");
 
 			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.refreshLicense(SESSION));
@@ -455,13 +457,25 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("Failing license request propagates and does not touch validation or settings")
 		void testRefreshLicenseWithSessionFailingRequest() {
-			Mockito.doThrow(new InternalServerErrorException()).when(licenseApi).getLicense(SESSION);
+			Mockito.doReturn(CompletableFuture.failedFuture(new InternalServerErrorException())).when(licenseApi).getLicense(SESSION);
 
 			Assertions.assertThrows(InternalServerErrorException.class, () -> licenseHolder.refreshLicense(SESSION));
 
 			verify(licenseApi).getLicense(SESSION);
 			verify(validator, never()).validate(any(), any());
 			verify(settingsRepo, never()).get();
+			verify(settingsRepo, never()).persistAndFlush(any());
+		}
+
+		@Test
+		@DisplayName("Unreachable license server throws LicenseRefreshFailedException")
+		void testRefreshLicenseWithSessionUnreachableServer() {
+			Mockito.doReturn(CompletableFuture.failedFuture(new ProcessingException("Connection refused"))).when(licenseApi).getLicense(SESSION);
+
+			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.refreshLicense(SESSION));
+
+			verify(licenseApi).getLicense(SESSION);
+			verify(validator, never()).validate(any(), any());
 			verify(settingsRepo, never()).persistAndFlush(any());
 		}
 	}
@@ -474,7 +488,7 @@ class LicenseHolderTest {
 		private LicenseApi.Solution solvedChallenge;
 
 		@BeforeEach
-		void setup() {
+		void setup() throws LicenseApi.RequestFailedException {
 			licenseHolderSpy = Mockito.spy(licenseHolder);
 			solvedChallenge = Mockito.mock(LicenseApi.Solution.class);
 			Mockito.doReturn(solvedChallenge).when(licenseHolderSpy).solveChallenge();
@@ -484,7 +498,7 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("successful refresh returns the new token")
 		void testSuccess() throws LicenseHolder.LicenseRefreshFailedException {
-			Mockito.doReturn("newToken").when(licenseApi).refreshLicense("token", "fooBar123");
+			Mockito.doReturn(CompletableFuture.completedFuture("newToken")).when(licenseApi).refreshLicense("token", "fooBar123");
 
 			var result = licenseHolderSpy.requestLicenseRefresh("token");
 
@@ -494,7 +508,15 @@ class LicenseHolderTest {
 		@Test
 		@DisplayName("refresh endpoint error is converted to LicenseRefreshFailedException")
 		void testUpstreamFailure() {
-			Mockito.doThrow(new InternalServerErrorException()).when(licenseApi).refreshLicense("token", "fooBar123");
+			Mockito.doReturn(CompletableFuture.failedFuture(new InternalServerErrorException())).when(licenseApi).refreshLicense("token", "fooBar123");
+
+			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh("token"));
+		}
+
+		@Test
+		@DisplayName("unreachable license server is converted to LicenseRefreshFailedException")
+		void testUnreachableServer() {
+			Mockito.doReturn(CompletableFuture.failedFuture(new ProcessingException("Connection refused"))).when(licenseApi).refreshLicense("token", "fooBar123");
 
 			Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh("token"));
 		}
