@@ -5,16 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1](https://github.com/cryptomator/hub/compare/2.1.0...2.1.1) (2026-09-24)
+
+### Fixed
+
+- Fixed unhandled errors during license refresh that prevented Hub from starting when the license server is unreachable (#500)
+
 ## [2.1.0](https://github.com/cryptomator/hub/compare/2.0.1...2.1.0) (2026-09-23)
+
+### Added
+
+- Split info banners into global, always-shown ones(License, legacy device banners)and local, only-on-selected- pages ones (#494)
 
 ### Changed
 
 - Updated Keycloak to 26.7.4
 - Updated to Quarkus 3.39.4
+- Updated frontend dependencies, including Vite 8.3, Vitest 5 and vue-router 5.3
+- Updated translations (#492, #499)
 
 ### Fixed
 
-- Fixed license refreshes of all instances of a version happening at the same time
+- Fixed license refreshes of all instances of a version happening at the same time (bdc40758f0992b73cc86b2f1f19d7e194bb7cf69)
+- Fixed log message about ignored device IDs during unlock reporting `null` instead of the actual ID (09dc989abd458ea57d460da6fc35dc8d3d599f77)
 
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)
 
