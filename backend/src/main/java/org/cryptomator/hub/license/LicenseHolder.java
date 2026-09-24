@@ -153,7 +153,15 @@ public class LicenseHolder {
 		return validated;
 	}
 
-	LicenseApi.Solution solveChallenge() {
+	/**
+	 * Obtains a solved proof-of-work challenge from the license server, required to authorize a license refresh.
+	 * <p>
+	 * On managed instances, a presolved challenge is requested using the configured API credentials; if that fails, this method falls back to solving a regular challenge.
+	 *
+	 * @return the solution to be sent along with the license refresh request
+	 * @throws WebApplicationException if the license api endpoints does not respond with a 2xx status code.
+	 */
+	LicenseApi.Solution solveChallenge() throws WebApplicationException {
 		if (managedApiUsername.isPresent() && managedApiPassword.isPresent()) {
 			var authHeader = "Basic " + Base64.getEncoder().encodeToString((managedApiUsername.get() + ":" + managedApiPassword.get()).getBytes(StandardCharsets.UTF_8));
 			try {
@@ -162,8 +170,13 @@ public class LicenseHolder {
 				LOG.warn("Failed to retrieve presolved challenge for license refresh. Falling back to solving a regular challenge.", e);
 			}
 		}
-		var challenge = licenseApi.generateChallenge();
-		return solveChallenge(challenge);
+		try {
+			var challenge = licenseApi.generateChallenge();
+			return solveChallenge(challenge);
+		} catch (WebApplicationException e) {
+			LOG.warn("Failed to retrieve regular challenge for license refresh.", e);
+			throw e;
+		}
 	}
 
 	// visible for testing
@@ -276,8 +289,8 @@ public class LicenseHolder {
 
 	//visible for testing
 	String requestLicenseRefresh(String licenseToken) throws LicenseRefreshFailedException {
-		var solution = solveChallenge();
 		try {
+			var solution = solveChallenge();
 			return licenseApi.refreshLicense(licenseToken, solution.toCaptcha());
 		} catch (WebApplicationException e) {
 			throw new LicenseRefreshFailedException("License endpoint responded with status code " + e.getResponse().getStatus());
