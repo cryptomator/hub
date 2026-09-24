@@ -127,6 +127,12 @@ public class Vault {
 	@Column(name = "emergency_key_share")
 	private Map<String, String> emergencyKeyShares = new HashMap<>();
 
+	@Column(name = "uvf_metadata_file")
+	private String uvfMetadataFile;
+
+	@Column(name = "uvf_jwks")
+	private String uvfKeySet;
+
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
 			return Optional.empty();
@@ -257,24 +263,33 @@ public class Vault {
 		this.emergencyKeyShares.putAll(emergencyKeyShares);
 	}
 
+	public String getUvfMetadataFile() {
+		return uvfMetadataFile;
+	}
+
+	public void setUvfMetadataFile(String uvfMetadataFile) {
+		this.uvfMetadataFile = uvfMetadataFile;
+	}
+
+	public String getUvfKeySet() {
+		return uvfKeySet;
+	}
+
+	public void setUvfKeySet(String uvfKeySet) {
+		this.uvfKeySet = uvfKeySet;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Vault vault = (Vault) o;
-		return Objects.equals(id, vault.id)
-				&& Objects.equals(name, vault.name)
-				&& Objects.equals(salt, vault.salt)
-				&& Objects.equals(iterations, vault.iterations)
-				&& Objects.equals(masterkey, vault.masterkey)
-				&& Objects.equals(archived, vault.archived)
-				&& Objects.equals(requiredEmergencyKeyShares, vault.requiredEmergencyKeyShares)
-				&& Objects.equals(emergencyKeyShares, vault.emergencyKeyShares);
+		return Objects.equals(id, vault.id);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived, requiredEmergencyKeyShares, emergencyKeyShares);
+		return Objects.hash(id);
 	}
 
 	@Override
@@ -284,7 +299,6 @@ public class Vault {
 				", members=" + directMembers.stream().map(Authority::getId).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.getId().toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
-				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
@@ -292,6 +306,9 @@ public class Vault {
 				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
 				", requiredEmergencyKeyShares='" + requiredEmergencyKeyShares + '\'' +
 				", emergencyKeyShares=" + emergencyKeyShares.keySet().stream().collect(Collectors.joining(", ")) +
+				", archived='" + archived + '\'' +
+				", uvfMetadataFile='" + uvfMetadataFile + '\'' +
+				", uvfKeySet='" + uvfKeySet + '\'' +
 				'}';
 	}
 
