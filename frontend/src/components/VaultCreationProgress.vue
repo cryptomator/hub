@@ -43,6 +43,7 @@ enum State {
   Initial,
   EnterRecoveryKey,
   EnterVaultDetails,
+  DefineAutomaticAccessGrant,
   DefineEmergencyAccess,
   ShowRecoveryKey,
   Finished
@@ -61,6 +62,8 @@ const tooltipForStep = (step: State): string => {
   switch (step) {
     case State.EnterVaultDetails:
       return t('createVault.enterVaultDetails.title');
+    case State.DefineAutomaticAccessGrant:
+      return t('createVault.automaticAccessGrant.title');
     case State.DefineEmergencyAccess:
       return t('createVault.emergencyAccessDetails.title');
     case State.ShowRecoveryKey:

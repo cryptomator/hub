@@ -2,7 +2,7 @@ import { base64 } from '@scure/base';
 import { combine, split } from 'shamir-secret-sharing';
 import { ActivatedUser } from './backend';
 import { asPublicKey, UserKeys } from './crypto';
-import { JWEBuilder, JWEParser } from './jwe';
+import { JWE, Recipient } from './jwe';
 
 type KeySharePayload = {
   keyShare: string;
@@ -53,8 +53,8 @@ export class EmergencyAccess {
       };
       const keyBytes = base64.decode(recipient.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
-      const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
-      result[recipient.id] = jwe;
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('', key));
+      result[recipient.id] = jwe.compactSerialization();
     }
     return result;
   }
@@ -74,8 +74,8 @@ export class EmergencyAccess {
     for (const member of councilMembers) {
       const keyBytes = base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
-      const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
-      encryptedPrivateKeys.set(member.id, jwe);
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('', key));
+      encryptedPrivateKeys.set(member.id, jwe.compactSerialization());
     }
     // return public key and encrypted private keys:
     const publicKeyJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', processKeyPair.publicKey)); // TODO: JWK? or SPKI?
@@ -93,10 +93,10 @@ export class EmergencyAccess {
    * @returns A new JWE containing the key share, encrypted for the recovery process.
    */
   public static async recoverShare(share: string, userPrivateKey: CryptoKey, recoveryProcessPublicKey: string): Promise<string> {
-    const decrypted: KeySharePayload = await JWEParser.parse(share).decryptEcdhEs(userPrivateKey);
+    const decrypted: KeySharePayload = await JWE.parseCompact(share).decrypt(Recipient.ecdhEs('', userPrivateKey));
     const processPublicKeyJwk = JSON.parse(recoveryProcessPublicKey);
     const processPublicKey = await crypto.subtle.importKey('jwk', processPublicKeyJwk, EmergencyAccess.PROCESS_KEY_DESIGNATION, false, []);
-    return await JWEBuilder.ecdhEs(processPublicKey).encrypt(decrypted);
+    return (await JWE.build(decrypted).encrypt(Recipient.ecdhEs('', processPublicKey))).compactSerialization();
   }
 
   /**
@@ -107,9 +107,9 @@ export class EmergencyAccess {
    * @returns The combined secret as a Uint8Array.
    */
   public static async combineRecoveredShares(recoveredShares: string[], recoveryProcessPrivateKeyJwe: string, userPrivateKey: CryptoKey): Promise<Uint8Array> {
-    const jwePayload = await JWEParser.parse(recoveryProcessPrivateKeyJwe).decryptEcdhEs<ProcessPrivateKeyPayload>(userPrivateKey);
+    const jwePayload: ProcessPrivateKeyPayload = await JWE.parseCompact(recoveryProcessPrivateKeyJwe).decrypt(Recipient.ecdhEs('', userPrivateKey));
     const recoveryProcessPrivateKey = await crypto.subtle.importKey('jwk', jwePayload.privateKey, EmergencyAccess.PROCESS_KEY_DESIGNATION, false, EmergencyAccess.PROCESS_KEY_USAGE);
-    const decryptedShares = await Promise.all(recoveredShares.map(share => JWEParser.parse(share).decryptEcdhEs<KeySharePayload>(recoveryProcessPrivateKey)));
+    const decryptedShares: KeySharePayload[] = await Promise.all(recoveredShares.map(share => JWE.parseCompact(share).decrypt(Recipient.ecdhEs('', recoveryProcessPrivateKey))));
     const keyShares = decryptedShares.map(share => base64.decode(share.keyShare) as Uint8Array<ArrayBuffer>);
     return combine(keyShares);
   }

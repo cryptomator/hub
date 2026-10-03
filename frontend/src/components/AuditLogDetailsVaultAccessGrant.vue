@@ -1,6 +1,7 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
     {{ t('auditLog.details.vaultAccess.grant') }}
+    <span v-if="event.automatic" class="ml-1 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{{ t('auditLog.details.vaultAccess.automatic') }}</span>
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
