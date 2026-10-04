@@ -394,8 +394,7 @@ export class VaultMetadata {
       'cloud.katta.origin': `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`, // single source of truth for this vault
       jku: 'jwks.json', // URL relative to cloud.katta.origin
     };
-    const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey));
-    const json = jwe.jsonSerialization();
+    const json = await JWE.build(this.payload(), protectedHeader).withRecipients(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey)).toJson();
     return JSON.stringify(json);
   }
 

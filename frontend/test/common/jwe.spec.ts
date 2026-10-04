@@ -21,13 +21,13 @@ describe('JWE', () => {
     const jwe = new EncryptedJWE('protectedHeader', [{ encrypted_key: 'encryptedKey', header: { kid: 'alice' } }], 'iv', 'ciphertext', 'tag');
 
     it('compactSerialization', () => {
-      const token = jwe.compactSerialization();
+      const token = jwe.toCompact();
 
       expect(token).to.eq('protectedHeader.encryptedKey.iv.ciphertext.tag');
     });
 
     it('jsonSerialization', () => {
-      const token = jwe.jsonSerialization();
+      const token = jwe.toJson();
 
       expect(token.protected).to.eq('protectedHeader');
       expect(token.iv).to.eq('iv');
@@ -46,11 +46,11 @@ describe('JWE', () => {
     const jwe = new EncryptedJWE('protectedHeader', recipients, 'iv', 'ciphertext', 'tag');
 
     it('compactSerialization', () => {
-      expect(jwe.compactSerialization).to.throw();
+      expect(jwe.toCompact).to.throw();
     });
 
     it('jsonSerialization', () => {
-      const token = jwe.jsonSerialization();
+      const token = jwe.toJson();
 
       expect(token.protected).to.eq('protectedHeader');
       expect(token.iv).to.eq('iv');
@@ -60,6 +60,42 @@ describe('JWE', () => {
       expect(token.recipients[0].header.kid).to.eq('alice');
       expect(token.recipients[1].encrypted_key).to.eq('encryptedKey2');
       expect(token.recipients[1].header.kid).to.eq('bob');
+    });
+  });
+
+  describe('JWE header layout', () => {
+    const orig = { hello: 'world' };
+    let recipient: Recipient;
+
+    beforeEach(async () => {
+      const kek = await crypto.subtle.generateKey({ name: 'AES-KW', length: 256 }, false, ['wrapKey', 'unwrapKey']);
+      recipient = Recipient.a256kw('kw', kek);
+    });
+
+    it('toCompact() moves all params into the protected header', async () => {
+      const token = await JWE.build(orig, { cty: 'json' }).withRecipients(recipient).toCompact();
+
+      const header = JWE.parseCompact(token).header;
+      expect(header).to.deep.eq({ cty: 'json', enc: 'A256GCM', kid: 'kw', alg: 'A256KW' });
+    });
+
+    it('toJson() keeps alg and kid per recipient, even for a single recipient', async () => {
+      const json = await JWE.build(orig, { cty: 'json' }).withRecipients(recipient).toJson();
+
+      expect(JWE.parseJson(json).header).to.deep.eq({ cty: 'json', enc: 'A256GCM' });
+      expect(json.recipients[0].header).to.deep.eq({ kid: 'kw', alg: 'A256KW' });
+      await expect(JWE.parseJson(json).decrypt(recipient)).resolves.toEqual(orig);
+    });
+
+    it('toCompact() rejects multiple recipients', async () => {
+      await expect(JWE.build(orig).withRecipients(recipient, recipient).toCompact()).rejects.toThrow('exactly one recipient');
+    });
+
+    it('can only be serialized once', async () => {
+      const pending = JWE.build(orig).withRecipients(recipient);
+      await pending.toJson();
+
+      await expect(pending.toCompact()).rejects.toThrow('already been encrypted');
     });
   });
 
@@ -81,7 +117,7 @@ describe('JWE', () => {
 
       const orig = { hello: 'world' };
 
-      const jwe = await JWE.build(orig).encrypt(Recipient.ecdhEs('alice', recipientPublicKey));
+      const jwe = JWE.parseCompact(await JWE.build(orig).withRecipients(Recipient.ecdhEs('alice', recipientPublicKey)).toCompact());
 
       const decrypted = await jwe.decrypt(Recipient.ecdhEs('alice', recipientPrivateKey));
       expect(decrypted).to.deep.eq(orig);
@@ -131,7 +167,7 @@ describe('JWE', () => {
       const orig = { hello: 'world' };
       const recipient = Recipient.pbes2('password', 'topsecret', 1000);
 
-      const jwe = await JWE.build(orig).encrypt(recipient);
+      const jwe = JWE.parseCompact(await JWE.build(orig).withRecipients(recipient).toCompact());
 
       const decrypted = await jwe.decrypt(recipient);
       expect(decrypted).to.deep.eq(orig);
@@ -141,8 +177,7 @@ describe('JWE', () => {
       const orig = { key: 'ME8CAQAwEAYHKoZIzj0CAQYFK4EEACIEODA2AgEBBDEA6QybmBitf94veD5aCLr7nlkF5EZpaXHCfq1AXm57AKQyGOjTDAF9EQB28fMywTDQ' };
 
       const recipient = Recipient.pbes2('password', '123456', 1000);
-      const jwe = await JWE.build(orig).encrypt(recipient);
-      const token = jwe.compactSerialization();
+      const token = await JWE.build(orig).withRecipients(recipient).toCompact();
 
       expect(token).to.not.be.undefined;
     });
@@ -165,7 +200,7 @@ describe('JWE', () => {
       const orig = { hello: 'world' };
       const recipient = Recipient.a256kw('kw', kek);
 
-      const jwe = await JWE.build(orig).encrypt(recipient);
+      const jwe = JWE.parseCompact(await JWE.build(orig).withRecipients(recipient).toCompact());
 
       const decrypted = await jwe.decrypt(recipient);
       expect(decrypted).to.deep.eq(orig);
@@ -195,33 +230,32 @@ describe('JWE', () => {
     });
 
     it('decrypts if all critical params are understood', async () => {
-      const jwe = await JWE.build(orig, protectedHeader).encrypt(recipient);
+      const jwe = JWE.parseJson(await JWE.build(orig, protectedHeader).withRecipients(recipient).toJson());
 
       const decrypted = await jwe.decrypt(recipient, ['org.example.ext']);
       expect(decrypted).to.deep.eq(orig);
     });
 
     it('rejects if a critical param is not understood', async () => {
-      const jwe = await JWE.build(orig, protectedHeader).encrypt(recipient);
+      const jwe = JWE.parseJson(await JWE.build(orig, protectedHeader).withRecipients(recipient).toJson());
 
       await expect(jwe.decrypt(recipient)).rejects.toThrow('Unsupported critical header parameter: org.example.ext');
     });
 
     it('rejects if a critical param is listed but missing', async () => {
-      const jwe = await JWE.build(orig, { crit: ['org.example.ext'] }).encrypt(recipient);
+      const jwe = JWE.parseJson(await JWE.build(orig, { crit: ['org.example.ext'] }).withRecipients(recipient).toJson());
 
       await expect(jwe.decrypt(recipient, ['org.example.ext'])).rejects.toThrow('Critical header parameter is missing: org.example.ext');
     });
 
     it('rejects if "crit" lists a registered param', async () => {
-      const jwe = await JWE.build(orig, { crit: ['enc'] }).encrypt(recipient);
+      const jwe = JWE.parseJson(await JWE.build(orig, { crit: ['enc'] }).withRecipients(recipient).toJson());
 
       await expect(jwe.decrypt(recipient, ['enc'])).rejects.toThrow('must not list registered header parameter: enc');
     });
 
     it('rejects if "crit" is not integrity protected', async () => {
-      const jwe = await JWE.build(orig).encrypt(recipient);
-      const json = jwe.jsonSerialization();
+      const json = await JWE.build(orig).withRecipients(recipient).toJson();
       json.recipients[0].header.crit = ['org.example.ext'];
 
       await expect(JWE.parseJson(json).decrypt(recipient, ['org.example.ext'])).rejects.toThrow('"crit" must be integrity protected');

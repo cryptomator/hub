@@ -97,8 +97,7 @@ export class OtherVaultMember {
    * @return A ECDH-ES encrypted JWE containing the encrypted payload
    */
   public async createAccessToken(payload: AccessTokenPayload): Promise<string> {
-    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey));
-    return jwe.compactSerialization();
+    return JWE.build(payload).withRecipients(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey)).toCompact();
   }
 
 }
@@ -198,8 +197,7 @@ export class UserKeys {
    */
   public async encryptWithSetupCode(setupCode: string, p2c?: number): Promise<string> {
     const payload = await this.prepareForEncryption();
-    const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c));
-    return jwe.compactSerialization();
+    return JWE.build(payload).withRecipients(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c)).toCompact();
   }
 
   /**
@@ -211,8 +209,7 @@ export class UserKeys {
   public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array<ArrayBuffer>): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
     const payload = await this.prepareForEncryption();
-    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
-    return jwe.compactSerialization();
+    return JWE.build(payload).withRecipients(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey)).toCompact();
   }
 
   /**

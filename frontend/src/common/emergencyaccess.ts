@@ -53,8 +53,7 @@ export class EmergencyAccess {
       };
       const keyBytes = base64.decode(recipient.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('', key));
-      result[recipient.id] = jwe.compactSerialization();
+      result[recipient.id] = await JWE.build(payload).withRecipients(Recipient.ecdhEs('', key)).toCompact();
     }
     return result;
   }
@@ -74,8 +73,7 @@ export class EmergencyAccess {
     for (const member of councilMembers) {
       const keyBytes = base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('', key));
-      encryptedPrivateKeys.set(member.id, jwe.compactSerialization());
+      encryptedPrivateKeys.set(member.id, await JWE.build(payload).withRecipients(Recipient.ecdhEs('', key)).toCompact());
     }
     // return public key and encrypted private keys:
     const publicKeyJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', processKeyPair.publicKey)); // TODO: JWK? or SPKI?
@@ -96,7 +94,7 @@ export class EmergencyAccess {
     const decrypted: KeySharePayload = await JWE.parseCompact(share).decrypt(Recipient.ecdhEs('', userPrivateKey));
     const processPublicKeyJwk = JSON.parse(recoveryProcessPublicKey);
     const processPublicKey = await crypto.subtle.importKey('jwk', processPublicKeyJwk, EmergencyAccess.PROCESS_KEY_DESIGNATION, false, []);
-    return (await JWE.build(decrypted).encrypt(Recipient.ecdhEs('', processPublicKey))).compactSerialization();
+    return JWE.build(decrypted).withRecipients(Recipient.ecdhEs('', processPublicKey)).toCompact();
   }
 
   /**

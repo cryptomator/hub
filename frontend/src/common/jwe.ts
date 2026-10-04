@@ -140,7 +140,7 @@ export abstract class Recipient {
 
 class EcdhRecipient extends Recipient {
 
-  constructor(readonly kid: string, private recipientKey: CryptoKey, private apu: Uint8Array = new Uint8Array(), private apv: Uint8Array = new Uint8Array()) {
+  constructor(readonly kid: string, private readonly recipientKey: CryptoKey, private readonly apu: Uint8Array = new Uint8Array(), private readonly apv: Uint8Array = new Uint8Array()) {
     super(kid);
   }
 
@@ -207,7 +207,7 @@ class EcdhRecipient extends Recipient {
 
 class A256kwRecipient extends Recipient {
 
-  constructor(readonly kid: string, private wrappingKey: CryptoKey) {
+  constructor(readonly kid: string, private readonly wrappingKey: CryptoKey) {
     super(kid);
   }
 
@@ -239,7 +239,7 @@ class A256kwRecipient extends Recipient {
 
 class Pbes2Recipient extends Recipient {
 
-  constructor(readonly kid: string, private password: string, private iterations: number) {
+  constructor(readonly kid: string, private readonly password: string, private readonly iterations: number) {
     super(kid);
   }
 
@@ -280,7 +280,7 @@ class Pbes2Recipient extends Recipient {
 
 export class JWE {
 
-  private constructor(private payload: object, private protectedHeader: JWEHeader) { }
+  private constructor(private readonly payload: object, private readonly protectedHeader: JWEHeader) { }
 
   public static build(payload: object, protectedHeader: JWEHeader = {}): JWE {
     return new JWE(payload, protectedHeader);
@@ -299,22 +299,65 @@ export class JWE {
     return new EncryptedJWE(jwe.protected, jwe.recipients, jwe.iv, jwe.ciphertext, jwe.tag);
   }
 
-  public async encrypt(recipient: Recipient, ...moreRecipients: Recipient[]): Promise<EncryptedJWE> {
+  /**
+   * Specifies the recipients of this JWE. Encryption is deferred until a serialization is requested.
+   * @param recipient first recipient
+   * @param moreRecipients further recipients
+   * @returns a JWE that can be serialized via {@link PendingJWE#toCompact} or {@link PendingJWE#toJson}
+   */
+  public withRecipients(recipient: Recipient, ...moreRecipients: Recipient[]): PendingJWE {
+    return new PendingJWE(this.payload, this.protectedHeader, [recipient, ...moreRecipients]);
+  }
+
+}
+
+/**
+ * A JWE with known recipients, waiting for a serialization to be chosen.
+ * The serialization determines the header layout (which is authenticated), so encryption only happens in the terminal call.
+ */
+export class PendingJWE {
+
+  private consumed = false;
+
+  constructor(private readonly payload: object, private readonly protectedHeader: JWEHeader, private readonly recipients: Recipient[]) { }
+
+  /**
+   * Encrypts and serializes this JWE in Compact Serialization (RFC 7516, Section 7.1), moving all per-recipient header parameters into the protected header.
+   * @returns the compact JWE
+   */
+  public async toCompact(): Promise<string> {
+    if (this.recipients.length !== 1) {
+      throw new Error('JWE Compact Serialization requires exactly one recipient.');
+    }
+    return (await this.encrypt(true)).toCompact();
+  }
+
+  /**
+   * Encrypts and serializes this JWE in JSON Serialization (RFC 7516, Section 7.2), keeping per-recipient header parameters per recipient.
+   * @returns the JSON JWE
+   */
+  public async toJson(): Promise<JsonJWE> {
+    return (await this.encrypt(false)).toJson();
+  }
+
+  private async encrypt(foldIntoProtectedHeader: boolean): Promise<EncryptedJWE> {
+    if (this.consumed) {
+      throw new Error('JWE has already been encrypted.');
+    }
+    this.consumed = true;
     let protectedHeader: JWEHeader = {
       ...this.protectedHeader,
       enc: 'A256GCM'
     };
     const cek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const perRecipientData = await Promise.all([recipient, ...moreRecipients].map(r => r.encrypt(cek, protectedHeader)));
+    const perRecipientData = await Promise.all(this.recipients.map(r => r.encrypt(cek, protectedHeader)));
 
-    if (perRecipientData.length === 1) {
+    if (foldIntoProtectedHeader) {
       protectedHeader = {
         ...protectedHeader,
         ...perRecipientData[0].header
       };
-    } else {
-      protectedHeader.enc = perRecipientData[0].header.enc;
     }
     // header parameter names in the protected and per-recipient headers must be disjoint (RFC 7516, Section 2):
     for (const key of Object.keys(protectedHeader)) {
@@ -348,13 +391,13 @@ export class JWE {
 // visible for testing
 export class EncryptedJWE {
 
-  constructor(private protectedHeader: string, private perRecipient: PerRecipientProperties[], private iv: string, private ciphertext: string, private tag: string) {
+  constructor(private readonly protectedHeader: string, private readonly perRecipient: PerRecipientProperties[], private readonly iv: string, private readonly ciphertext: string, private readonly tag: string) {
     if (perRecipient.length < 1) {
       throw new Error('Expected at least one recipient.');
     }
   }
 
-  public jsonSerialization(): JsonJWE {
+  public toJson(): JsonJWE {
     if (this.perRecipient.length < 1) {
       throw new Error('JWE JSON Serialization requires at least one recipient.');
     }
@@ -371,7 +414,7 @@ export class EncryptedJWE {
     };
   }
 
-  public compactSerialization(): string {
+  public toCompact(): string {
     if (this.perRecipient.length !== 1) {
       throw new Error('JWE Compact Serialization requires exactly one recipient.');
     }
