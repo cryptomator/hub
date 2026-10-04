@@ -55,7 +55,7 @@ describe('UVF', () => {
 
   describe('VaultMetadata', () => {
     it('create()', async () => {
-      const orig = await VaultMetadata.create({ enabled: true, trustThreshold: 1 });
+      const orig = VaultMetadata.create({ enabled: true, trustThreshold: 1 });
       expect(orig).to.not.be.undefined;
       expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined;
       expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32);
@@ -68,7 +68,7 @@ describe('UVF', () => {
 
       beforeEach(async () => {
         // prepare some test metadata:
-        original = await VaultMetadata.create({ enabled: true, trustThreshold: 1 });
+        original = VaultMetadata.create({ enabled: true, trustThreshold: 1 });
       });
 
       it('decrypt(encrypt(orig)) == orig', async () => {
@@ -237,7 +237,7 @@ describe('UVF', () => {
             "kdfSalt": "NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8",
             "org.example.customfield": 42
         }`;
-        const metadata = await VaultMetadata.createFromJson(JSON.parse(json));
+        const metadata = VaultMetadata.createFromJson(JSON.parse(json));
         uvf = await UniversalVaultFormat.forTesting(metadata);
       });
 

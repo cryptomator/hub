@@ -258,7 +258,7 @@ export class VaultMetadata {
    * @param automaticAccessGrant Configuration instructing the client how to automatically deal with permission requests
    * @returns new vault
    */
-  public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<VaultMetadata> {
+  public static create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): VaultMetadata {
     const initialSeedId = new Uint8Array(4);
     const initialSeedValue = new Uint8Array(32);
     const kdfSalt = new Uint8Array(32);
@@ -313,7 +313,7 @@ export class VaultMetadata {
     return VaultMetadata.createFromJson(payload);
   }
 
-  public static async createFromJson(payload: MetadataPayload): Promise<VaultMetadata> {
+  public static createFromJson(payload: MetadataPayload): VaultMetadata {
     const seeds = new Map<number, Uint8Array<ArrayBuffer>>();
     for (const key in payload.seeds) {
       const num = parseSeedId(key);
@@ -386,7 +386,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   private constructor(readonly metadata: VaultMetadata, readonly memberKey: MemberKey, readonly recoveryKey: RecoveryKey) { }
 
   public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<UniversalVaultFormat> {
-    const metadata = await VaultMetadata.create(automaticAccessGrant);
+    const metadata = VaultMetadata.create(automaticAccessGrant);
     const memberKey = await MemberKey.create();
     const recoveryKey = await RecoveryKey.create();
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
