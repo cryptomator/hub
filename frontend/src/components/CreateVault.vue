@@ -446,7 +446,7 @@ enum VaultType {
   UniversalVaultFormat
 }
 
-const vaultType = ref(VaultType.UniversalVaultFormat);
+const vaultType = ref(VaultType.VaultFormat8);
 
 class FormValidationFailedError extends Error {
 
@@ -528,7 +528,8 @@ const vaultMetadata = ref<string>('');
 const isDraggingOver = ref<boolean>(false);
 
 const props = defineProps<{
-  recover: boolean
+  recover: boolean,
+  uvf?: boolean // create a Universal Vault Format vault instead of the default Vault Format 8
 }>();
 
 onMounted(initialize);
@@ -543,6 +544,7 @@ async function initialize() {
     state.value = State.EnterRecoveryKey;
   } else {
     settings.value = await backend.settings.get();
+    vaultType.value = props.uvf ? VaultType.UniversalVaultFormat : VaultType.VaultFormat8;
     switch (vaultType.value) {
       case VaultType.VaultFormat8:
         vaultFormat8.value = await VaultFormat8.create();
