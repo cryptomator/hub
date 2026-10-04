@@ -184,6 +184,50 @@ describe('JWE', () => {
     });
   });
 
+  describe('JWE with "crit" header parameter', () => {
+    const orig = { hello: 'world' };
+    const protectedHeader: JWEHeader = { crit: ['org.example.ext'], 'org.example.ext': 42 };
+    let recipient: Recipient;
+
+    beforeEach(async () => {
+      const kek = await crypto.subtle.generateKey({ name: 'AES-KW', length: 256 }, false, ['wrapKey', 'unwrapKey']);
+      recipient = Recipient.a256kw('kw', kek);
+    });
+
+    it('decrypts if all critical params are understood', async () => {
+      const jwe = await JWE.build(orig, protectedHeader).encrypt(recipient);
+
+      const decrypted = await jwe.decrypt(recipient, ['org.example.ext']);
+      expect(decrypted).to.deep.eq(orig);
+    });
+
+    it('rejects if a critical param is not understood', async () => {
+      const jwe = await JWE.build(orig, protectedHeader).encrypt(recipient);
+
+      await expect(jwe.decrypt(recipient)).rejects.toThrow('Unsupported critical header parameter: org.example.ext');
+    });
+
+    it('rejects if a critical param is listed but missing', async () => {
+      const jwe = await JWE.build(orig, { crit: ['org.example.ext'] }).encrypt(recipient);
+
+      await expect(jwe.decrypt(recipient, ['org.example.ext'])).rejects.toThrow('Critical header parameter is missing: org.example.ext');
+    });
+
+    it('rejects if "crit" lists a registered param', async () => {
+      const jwe = await JWE.build(orig, { crit: ['enc'] }).encrypt(recipient);
+
+      await expect(jwe.decrypt(recipient, ['enc'])).rejects.toThrow('must not list registered header parameter: enc');
+    });
+
+    it('rejects if "crit" is not integrity protected', async () => {
+      const jwe = await JWE.build(orig).encrypt(recipient);
+      const json = jwe.jsonSerialization();
+      json.recipients[0].header.crit = ['org.example.ext'];
+
+      await expect(JWE.parseJson(json).decrypt(recipient, ['org.example.ext'])).rejects.toThrow('"crit" must be integrity protected');
+    });
+  });
+
   describe('PBES2', () => {
     /**
      * Test vectors from https://www.rfc-editor.org/rfc/rfc7517#appendix-C.4

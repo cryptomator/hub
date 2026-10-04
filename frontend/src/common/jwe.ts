@@ -288,10 +288,8 @@ export class JWE {
 
   public static parseCompact(token: string): EncryptedJWE {
     const [protectedHeader, encryptedKey, iv, ciphertext, tag] = token.split('.', 5);
-    const utf8 = new TextDecoder();
-    const header: JWEHeader = JSON.parse(utf8.decode(base64urlnopad.decode(protectedHeader)));
-
-    return new EncryptedJWE(protectedHeader, [{ encrypted_key: encryptedKey, header: header }], iv, ciphertext, tag);
+    // compact serialization has no per-recipient header, all parameters are in the protected header
+    return new EncryptedJWE(protectedHeader, [{ encrypted_key: encryptedKey, header: {} }], iv, ciphertext, tag);
   }
 
   public static parseJson(jwe: JsonJWE): EncryptedJWE {
@@ -317,9 +315,10 @@ export class JWE {
       };
     } else {
       protectedHeader.enc = perRecipientData[0].header.enc;
-      for (const key of Object.keys(protectedHeader)) {
-        perRecipientData.forEach(r => delete r.header[key]);
-      }
+    }
+    // header parameter names in the protected and per-recipient headers must be disjoint (RFC 7516, Section 2):
+    for (const key of Object.keys(protectedHeader)) {
+      perRecipientData.forEach(r => delete r.header[key]);
     }
 
     const encodedProtectedHeader = base64urlnopad.encode(UTF8.encode(JSON.stringify(protectedHeader)));
@@ -379,11 +378,27 @@ export class EncryptedJWE {
     return `${this.protectedHeader}.${this.perRecipient[0].encrypted_key}.${this.iv}.${this.ciphertext}.${this.tag}`;
   }
 
-  public async decrypt(recipient: Recipient): Promise<any> {
-    const protectedHeader: JWEHeader = JSON.parse(UTF8.decode(base64urlnopad.decode(this.protectedHeader)));
+  /**
+   * The decoded protected header of this JWE.
+   * @returns protected header parameters
+   */
+  public get header(): JWEHeader {
+    return JSON.parse(UTF8.decode(base64urlnopad.decode(this.protectedHeader)));
+  }
+
+  /**
+   * Decrypts the JWE for the given recipient.
+   * @param recipient the recipient whose key is used to decrypt the CEK
+   * @param understoodCriticalParams names of the extension header parameters this caller processes; the JWE is rejected if its `crit` header lists any other parameter (RFC 7516, Section 4.1.13)
+   * @returns the decrypted JSON payload
+   * @throws Error if the JWE is malformed, uses unsupported critical header parameters or can not be decrypted
+   */
+  public async decrypt(recipient: Recipient, understoodCriticalParams: string[] = []): Promise<any> {
+    const protectedHeader = this.header;
     const perRecipientData = (this.perRecipient.length === 1)
       ? this.perRecipient[0]
       : this.perRecipientWithKid(recipient.kid);
+    EncryptedJWE.checkCriticalParams(protectedHeader, perRecipientData.header, understoodCriticalParams);
     const combinedHeader: JWEHeader = { ...perRecipientData.header, ...protectedHeader };
     const cek = await recipient.decrypt(combinedHeader, perRecipientData.encrypted_key);
     const ciphertext = base64urlnopad.decode(this.ciphertext);
@@ -400,6 +415,34 @@ export class EncryptedJWE {
       ciphertextAndTag
     ));
     return JSON.parse(UTF8.decode(cleartext));
+  }
+
+  // header parameters registered by RFC 7516 (Section 4.1) and RFC 7518 (Sections 4.6.1, 4.7.1, 4.8.1), which MUST NOT be listed in `crit`
+  private static readonly REGISTERED_HEADER_PARAMS: ReadonlySet<string> = new Set(['alg', 'enc', 'zip', 'jku', 'jwk', 'kid', 'x5u', 'x5c', 'x5t', 'x5t#S256', 'typ', 'cty', 'crit', 'epk', 'apu', 'apv', 'iv', 'tag', 'p2s', 'p2c']);
+
+  // enforces the `crit` header parameter as defined in RFC 7516, Section 4.1.13 (which refers to RFC 7515, Section 4.1.11)
+  private static checkCriticalParams(protectedHeader: JWEHeader, perRecipientHeader: JWEHeader, understoodCriticalParams: string[]): void {
+    if ('crit' in perRecipientHeader) {
+      throw new Error('Header parameter "crit" must be integrity protected');
+    }
+    if (!('crit' in protectedHeader)) {
+      return;
+    }
+    const crit = protectedHeader.crit;
+    if (!Array.isArray(crit) || crit.length === 0 || !crit.every(name => typeof name === 'string')) {
+      throw new Error('Header parameter "crit" must be a non-empty array of strings');
+    }
+    for (const name of crit) {
+      if (EncryptedJWE.REGISTERED_HEADER_PARAMS.has(name)) {
+        throw new Error(`Header parameter "crit" must not list registered header parameter: ${name}`);
+      }
+      if (!(name in protectedHeader)) {
+        throw new Error(`Critical header parameter is missing: ${name}`);
+      }
+      if (!understoodCriticalParams.includes(name)) {
+        throw new Error(`Unsupported critical header parameter: ${name}`);
+      }
+    }
   }
 
   private perRecipientWithKid(kid: string): PerRecipientProperties {

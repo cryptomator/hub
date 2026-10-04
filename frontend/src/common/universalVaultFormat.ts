@@ -5,7 +5,7 @@ import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMemb
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, UTF8, wordEncoder } from './util';
 
-type MetadataPayload = {
+export type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
   nameFormat: 'AES-SIV-512-B64URL';
   seeds: Record<string, string>;
@@ -233,6 +233,18 @@ export class DecodeUvfRecoveryKeyError extends Error {
 
 // #endregion
 
+/**
+ * Thrown when a `vault.uvf` file uses a file format, name format or KDF that is not supported by this implementation.
+ */
+export class UnsupportedVaultFormatError extends Error {
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnsupportedVaultFormatError';
+  }
+
+}
+
 // #region Vault metadata
 /**
  * The UVF Metadata file
@@ -265,7 +277,7 @@ export class VaultMetadata {
     crypto.getRandomValues(initialSeedId);
     crypto.getRandomValues(initialSeedValue);
     crypto.getRandomValues(kdfSalt);
-    const initialSeedNo = new DataView(initialSeedId.buffer).getInt32(0, false);
+    const initialSeedNo = new DataView(initialSeedId.buffer).getUint32(0, false);
     const seeds: Map<number, Uint8Array<ArrayBuffer>> = new Map<number, Uint8Array<ArrayBuffer>>();
     seeds.set(initialSeedNo, initialSeedValue);
     return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
@@ -292,9 +304,7 @@ export class VaultMetadata {
    * @returns Decrypted vault metadata
    */
   public static async decryptWithMemberKey(uvfMetadataFile: string, memberKey: MemberKey): Promise<VaultMetadata> {
-    const json: JsonJWE = JSON.parse(uvfMetadataFile);
-    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key));
-    return VaultMetadata.createFromJson(payload);
+    return VaultMetadata.decrypt(uvfMetadataFile, Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key));
   }
 
   /**
@@ -308,21 +318,54 @@ export class VaultMetadata {
       throw new Error('Recovery key does not have a private key');
     }
     const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprintStr(recoveryKey.publicKey)}`;
+    return VaultMetadata.decrypt(uvfMetadataFile, Recipient.ecdhEs(recoveryKeyID, recoveryKey.privateKey));
+  }
+
+  // decrypts the `vault.uvf` JWE for the given recipient, enforcing the critical `uvf.spec.version` header
+  private static async decrypt(uvfMetadataFile: string, recipient: Recipient): Promise<VaultMetadata> {
     const json: JsonJWE = JSON.parse(uvfMetadataFile);
-    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.ecdhEs(recoveryKeyID, recoveryKey.privateKey));
+    const jwe = JWE.parseJson(json);
+    const specVersion = jwe.header['uvf.spec.version'];
+    if (specVersion !== 1) {
+      throw new Error(`Unsupported UVF spec version: ${JSON.stringify(specVersion)}`);
+    }
+    const payload: MetadataPayload = await jwe.decrypt(recipient, ['uvf.spec.version']);
     return VaultMetadata.createFromJson(payload);
   }
 
+  /**
+   * Parses the decrypted payload of a `vault.uvf` file.
+   * @param payload the decrypted JWE payload
+   * @returns vault metadata
+   * @throws UnsupportedVaultFormatError if `fileFormat`, `nameFormat` or `kdf` are not supported by this implementation
+   * @throws Error if the payload is malformed
+   */
   public static createFromJson(payload: MetadataPayload): VaultMetadata {
+    // the spec requires implementations to halt on formats not defined in the spec version denoted by `uvf.spec.version`
+    if (payload.fileFormat !== 'AES-256-GCM-32k') {
+      throw new UnsupportedVaultFormatError(`Unsupported fileFormat: ${JSON.stringify(payload.fileFormat)}`);
+    }
+    if (payload.nameFormat !== 'AES-SIV-512-B64URL') {
+      throw new UnsupportedVaultFormatError(`Unsupported nameFormat: ${JSON.stringify(payload.nameFormat)}`);
+    }
+    if (payload.kdf !== 'HKDF-SHA512') {
+      throw new UnsupportedVaultFormatError(`Unsupported kdf: ${JSON.stringify(payload.kdf)}`);
+    }
     const seeds = new Map<number, Uint8Array<ArrayBuffer>>();
     for (const key in payload.seeds) {
       const num = parseSeedId(key);
       const value = base64urlnopad.decode(payload.seeds[key]) as Uint8Array<ArrayBuffer>;
+      if (value.length !== 32) {
+        throw new Error(`Malformed seed: ${key}`);
+      }
       seeds.set(num, value);
     }
     const initialSeedId = parseSeedId(payload['initialSeed']);
     const latestSeedId = parseSeedId(payload['latestSeed']);
     const kdfSalt = base64urlnopad.decode(payload['kdfSalt']) as Uint8Array<ArrayBuffer>;
+    if (kdfSalt.length !== 32) {
+      throw new Error('Malformed kdfSalt');
+    }
     return new VaultMetadata(
       payload['org.cryptomator.automaticAccessGrant'],
       seeds,
@@ -481,7 +524,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     if (!seed) {
       throw new Error('Seed not found');
     }
-    if (content.length > 32 * 1024) {
+    if (content.length >= 32740) { // max single-block cleartext size without needing an additional EOF block
       throw new Error('Only files up to 32k are supported.');
     }
     const fileKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
@@ -493,8 +536,8 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     view.setUint32(4, seedId);
 
     // format-specific header:
-    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
-    const headerKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: UTF8.encode('fileHeader') }, initialSeed, { name: 'AES-GCM', length: 256 }, false, ['wrapKey']);
+    const headerKeySeed = await crypto.subtle.importKey('raw', seed, { name: 'HKDF' }, false, ['deriveKey']);
+    const headerKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: UTF8.encode('fileHeader') }, headerKeySeed, { name: 'AES-GCM', length: 256 }, false, ['wrapKey']);
     const headerNonce = new Uint8Array(12);
     crypto.getRandomValues(headerNonce);
     const encryptedFileKeyAndTag = await crypto.subtle.wrapKey('raw', fileKey, headerKey, { name: 'AES-GCM', iv: headerNonce, additionalData: generalHeader });
@@ -505,7 +548,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     // encrypt chunk 0:
     const blockNonce = new Uint8Array(12);
     crypto.getRandomValues(blockNonce);
-    const blockAd = new Uint8Array([0x00, 0x00, 0x00, 0x00, ...headerNonce]);
+    const blockAd = new Uint8Array([0x00, 0x00, 0x00, 0x00, ...headerNonce]); // block number 0 + header nonce
     const blockCiphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: blockNonce, additionalData: blockAd }, fileKey, content);
 
     // result:
@@ -519,7 +562,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     const dirFile = await this.encryptFile(rootDirId, this.metadata.initialSeedId);
     const zip = new JSZip();
     zip.file('vault.uvf', this.createMetadataFile(apiURL, vault));
-    const rootDir = zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2)); // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
+    const rootDir = zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2));
     rootDir?.file('dir.uvf', dirFile);
     return zip.generateAsync({ type: 'blob' });
   }
@@ -546,7 +589,7 @@ function parseSeedId(encoded: string): number {
   if (bytes.length != 4) {
     throw new Error('Malformed seed ID');
   }
-  return new DataView(bytes.buffer).getInt32(0, false);
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, false);
 }
 
 /**
@@ -556,6 +599,6 @@ function parseSeedId(encoded: string): number {
  */
 function stringifySeedId(id: number): string {
   const bytes = new Uint8Array(4);
-  new DataView(bytes.buffer).setInt32(0, id, false);
+  new DataView(bytes.buffer).setUint32(0, id, false);
   return base64urlnopad.encode(bytes);
 }
