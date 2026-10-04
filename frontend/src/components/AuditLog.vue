@@ -1,8 +1,4 @@
 <template>
-  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mb-12">
-    {{ t('trial.paidFeature.description') }} <!-- TODO: link to feature comparison? -->
-  </ContentBanner>
-
   <div v-if="state == State.Loading">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
@@ -137,6 +133,10 @@
         </PopoverGroup>
       </div>
     </div>
+
+    <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mt-5">
+      {{ t('trial.paidFeature.description') }} <!-- TODO: link to feature comparison? -->
+    </ContentBanner>
 
     <div class="mt-5 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

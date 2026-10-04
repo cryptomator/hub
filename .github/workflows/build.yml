@@ -17,6 +17,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required for checkout
     # gate for dependabot issue, see https://github.com/cryptomator/hub/pull/459
     if: ${{ !(startsWith(github.head_ref, 'dependabot/npm_and_yarn/') || startsWith(github.ref_name, 'dependabot/npm_and_yarn/')) }}
     steps:

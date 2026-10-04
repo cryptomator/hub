@@ -392,7 +392,6 @@
   "legacyDeviceList.lastAccess": "Utolsó tároló hozzáférés",
   "legacyDeviceList.lastAccess.toolTip": "Hiányozhat olyan eszközöknél, amelyeket régebbi verzióval érnek el.",
   "legacyDeviceBanner.title": "A régi eszközök támogatása megszűnik",
-  "legacyDeviceBanner.user.description": "A következő főverzióban a régebbi eszközeit már nem fogja támogatni a program. Kérjük, frissítse a Cryptomator programot ezeken az eszközökön, vagy távolítsa el őket.",
   "legacyDeviceBanner.admin.description": "Egy vagy több felhasználónak még mindig vannak régebbi típusú eszközei. A régebbi típusú eszközök támogatása a következő főverzióban megszűnik. Kérjük, kérje meg az érintett felhasználókat, hogy frissítsék a Cryptomator programot, vagy távolítsák el a régebbi típusú eszközeiket.",
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "A fiók kulcsára van szükség a bejelentkezéshez más alkalmazásokból vagy böngészőkből.",

@@ -16,7 +16,7 @@ export default defineConfig({
       }
     }),
     vueI18nPlugin({
-      include: path.resolve(__dirname, './src/i18n/*.json')
+      include: path.resolve(import.meta.dirname, './src/i18n/*.json')
     }),
     tailwindcss(),
   ],
