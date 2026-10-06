@@ -551,7 +551,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	public String getUvfKeys(@PathParam("vaultId") UUID vaultId) {
 		var vault = vaultRepo.findById(vaultId);
-		if (vault == null || vault.getUvfMetadataFile() == null) {
+		if (vault == null || vault.getUvfKeySet() == null) {
 			throw new NotFoundException();
 		}
 		return vault.getUvfKeySet();

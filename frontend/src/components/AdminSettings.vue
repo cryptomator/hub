@@ -367,7 +367,6 @@ async function fetchData() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
-    latestVersion.value = await versionAvailable;
     enableAutomaticAccessGrant.value = settings.enableAutomaticAccessGrant;
     autoGrantTrustThreshold.value = settings.automaticAccessGrantTrustThreshold;
     allowAutomaticAccessGrantOverride.value = settings.allowAutomaticAccessGrantOverride;
@@ -376,6 +375,8 @@ async function fetchData() {
       automaticAccessGrantTrustThreshold: autoGrantTrustThreshold.value,
       allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value
     };
+    // awaited last: a failed update check must not prevent the settings above from being initialized
+    latestVersion.value = await versionAvailable;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -583,12 +584,12 @@ async function saveAutomaticAccessGrant() {
       allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value,
       hubId: billing.value.hubId
     };
-    initialAutomaticAccessGrantSettings.value = {
-      enableAutomaticAccessGrant: enableAutomaticAccessGrant.value,
-      automaticAccessGrantTrustThreshold: autoGrantTrustThreshold.value,
-      allowAutomaticAccessGrantOverride: allowAutomaticAccessGrantOverride.value
-    };
     await backend.settings.update(settings);
+    initialAutomaticAccessGrantSettings.value = {
+      enableAutomaticAccessGrant: settings.enableAutomaticAccessGrant,
+      automaticAccessGrantTrustThreshold: settings.automaticAccessGrantTrustThreshold,
+      allowAutomaticAccessGrantOverride: settings.allowAutomaticAccessGrantOverride
+    };
     autoGrantUpdated.value = true;
     debouncedAutoGrantUpdated();
   } catch (error) {

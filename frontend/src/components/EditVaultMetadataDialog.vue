@@ -114,6 +114,7 @@ async function updateVaultMetadata() {
       throw new FormValidationFailedError();
     }
     const dto = { ...props.vault };
+    dto.name = vaultName.value;
     dto.description = vaultDescription.value;
     const updatedVault = await backend.vaults.createOrUpdateVault(dto);
     emit('updated', updatedVault);

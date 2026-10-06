@@ -141,7 +141,7 @@
                   <p v-if="(onCreateError instanceof FormValidationFailedError)">
                     {{ t('createVault.error.formValidationFailed','') }} 
                   </p>
-                  <p v-if="(onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError)">
+                  <p v-else-if="(onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError)">
                     {{ t('createVault.error.invalidRecoveryKey','') }} 
                   </p>
                   <p v-else>
@@ -597,7 +597,7 @@ async function validateAndSetMetadataFile(file: File | undefined) {
   try {
     if (!file) {
       throw new NoFileError();
-    } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
+    } else if (!/^vault\.(cryptomator|uvf)$/.test(file.name)) {
       throw new WrongFileNameError();
     } else if (file.size > 8000) {
       throw new FileTooBigError();
@@ -606,6 +606,7 @@ async function validateAndSetMetadataFile(file: File | undefined) {
     vaultType.value = file.name.endsWith('.uvf') ? VaultType.UniversalVaultFormat : VaultType.VaultFormat8;
     vaultMetadata.value = await file.text();
   } catch (error) {
+    vaultMetadata.value = '';
     onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.');
   }
 }

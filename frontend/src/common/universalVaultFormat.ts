@@ -141,10 +141,13 @@ export class RecoveryKey {
     }
 
     const paddingLength = decoded[decoded.length - 1];
-    if (paddingLength > 0x03) {
+    if (paddingLength < 0x01 || paddingLength > 0x03 || decoded.length < paddingLength) {
       throw new DecodeUvfRecoveryKeyError('Invalid padding');
     }
     const unpadded = decoded.subarray(0, -paddingLength);
+    if (unpadded.length < 2) {
+      throw new DecodeUvfRecoveryKeyError('Invalid recovery key length.');
+    }
     const checksum = unpadded.subarray(-2);
     const rawkey = unpadded.slice(0, -2);
     const crc32 = CRC32.compute(rawkey);

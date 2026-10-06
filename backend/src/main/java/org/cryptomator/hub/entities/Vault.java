@@ -128,9 +128,11 @@ public class Vault {
 	private Map<String, String> emergencyKeyShares = new HashMap<>();
 
 	@Column(name = "uvf_metadata_file")
+	@Nullable
 	private String uvfMetadataFile;
 
 	@Column(name = "uvf_jwks")
+	@Nullable
 	private String uvfKeySet;
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
@@ -263,19 +265,19 @@ public class Vault {
 		this.emergencyKeyShares.putAll(emergencyKeyShares);
 	}
 
-	public String getUvfMetadataFile() {
+	public @Nullable String getUvfMetadataFile() {
 		return uvfMetadataFile;
 	}
 
-	public void setUvfMetadataFile(String uvfMetadataFile) {
+	public void setUvfMetadataFile(@Nullable String uvfMetadataFile) {
 		this.uvfMetadataFile = uvfMetadataFile;
 	}
 
-	public String getUvfKeySet() {
+	public @Nullable String getUvfKeySet() {
 		return uvfKeySet;
 	}
 
-	public void setUvfKeySet(String uvfKeySet) {
+	public void setUvfKeySet(@Nullable String uvfKeySet) {
 		this.uvfKeySet = uvfKeySet;
 	}
 

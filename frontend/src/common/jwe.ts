@@ -376,9 +376,9 @@ export class PendingJWE {
       cek,
       m
     ));
-    console.assert(m.byteLength > 16, 'result of GCM encryption expected to contain 128bit tag');
-    const ciphertext = ciphertextAndTag.slice(0, m.byteLength - 16);
-    const tag = ciphertextAndTag.slice(m.byteLength - 16);
+    console.assert(ciphertextAndTag.byteLength > 16, 'result of GCM encryption expected to contain 128bit tag');
+    const ciphertext = ciphertextAndTag.slice(0, ciphertextAndTag.byteLength - 16);
+    const tag = ciphertextAndTag.slice(ciphertextAndTag.byteLength - 16);
 
     const encodedIv = base64urlnopad.encode(iv);
     const encodedCiphertext = base64urlnopad.encode(ciphertext);

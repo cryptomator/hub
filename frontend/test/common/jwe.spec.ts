@@ -46,7 +46,7 @@ describe('JWE', () => {
     const jwe = new EncryptedJWE('protectedHeader', recipients, 'iv', 'ciphertext', 'tag');
 
     it('compactSerialization', () => {
-      expect(jwe.toCompact).to.throw();
+      expect(() => jwe.toCompact()).to.throw('requires exactly one recipient');
     });
 
     it('jsonSerialization', () => {
