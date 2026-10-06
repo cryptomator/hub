@@ -116,7 +116,7 @@
           <div class="mt-6 px-4 space-y-6">
             <div>
               <label for="vaultName" class="block text-sm font-medium text-gray-700 text-left">{{ t('createVault.enterVaultDetails.vaultName') }}</label>
-              <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?&quot;<>\|])+(?<![ \.])$" required />
+              <input id="vaultName" v-model="vault.name" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?&quot;<>\|])+(?<![ \.])$" required />
               <p v-if="(onCreateError instanceof FormValidationFailedError)" class="text-sm text-red-900 text-left mt-2">
                 {{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, &gt;, |
               </p>
@@ -127,7 +127,7 @@
                 {{ t('createVault.enterVaultDetails.vaultDescription') }}
                 <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
               </label>
-              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="[^*<>&quot;]*" />
+              <input id="vaultDescription" v-model="vault.description" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="[^*<>&quot;]*" />
               <p v-if="(onCreateError instanceof FormValidationFailedError)" class="text-sm text-red-900 text-left mt-2">
                 {{ t('createVault.error.illegalVaultDescription') }} *, &lt;, &gt;, "
               </p>
@@ -501,8 +501,6 @@ const onUploadError = ref<Error>();
 const state = ref(State.Initial);
 const processing = ref(false);
 const settings = ref<SettingsDto>();
-const vaultName = ref('');
-const vaultDescription = ref<string | undefined>();
 const vault = ref<VaultDto>({
   id: crypto.randomUUID(),
   name: '',
