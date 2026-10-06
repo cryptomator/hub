@@ -158,13 +158,13 @@ describe('crypto', () => {
     };
 
     // https://datatracker.ietf.org/doc/html/rfc7638#section-3.1
-    it('compute example thumbprint from RFC 7638, Section 3.1', async () => {
+    it('compute example thumbprint from RFC 7638, Section 3.1 (byte array)', async () => {
       const thumbprint = await getJwkThumbprint(input);
 
       expect(base64urlnopad.encode(thumbprint)).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
 
-    it('compute example thumbprint from RFC 7638, Section 3.1', async () => {
+    it('compute example thumbprint from RFC 7638, Section 3.1 (string)', async () => {
       const thumbprintStr = await getJwkThumbprintStr(input);
 
       expect(thumbprintStr).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');

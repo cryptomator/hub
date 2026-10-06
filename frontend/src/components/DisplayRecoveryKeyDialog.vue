@@ -66,11 +66,10 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { KeyIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
 import { debounce } from '../common/util';
-import { computed } from 'vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

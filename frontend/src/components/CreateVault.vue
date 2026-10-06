@@ -46,7 +46,7 @@
               @dragleave="handleDragLeave()"
               @drop.prevent="event => handleDrop(event)"
             >
-              <input id="file-upload" ref="fileUpload" name="file-upload" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="event => handleUpload(event)" />
+              <input id="metadata-file" ref="fileUpload" name="metadata-file" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="event => handleUpload(event)" />
               <div v-if="(vaultMetadata?.length ?? 0) == 0" class="text-center">
                 <ArrowUpOnSquareIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
                 <p class="mt-2 block text-sm font-semibold text-gray-900">

@@ -1,8 +1,7 @@
 import { VaultDto } from './backend';
-import { aessiv } from '@noble/ciphers/aes.js';
-import { base16, base32, base64, base64urlnopad } from '@scure/base';
+import { base16, base64, base64urlnopad } from '@scure/base';
 import { JWE, Recipient } from './jwe';
-import { CRC32, DB, UTF8, wordEncoder } from './util';
+import { DB, UTF8 } from './util';
 
 /**
  * Represents a JSON Web Key (JWK) as defined in RFC 7517.

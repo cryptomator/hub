@@ -57,7 +57,6 @@ import { useI18n } from 'vue-i18n';
 import backend, { ActivatedUser, SettingsDto, didCompleteSetup } from '../../common/backend';
 import { RecoveryKeyProducing } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
-import { wordEncoder } from '../../common/util';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 

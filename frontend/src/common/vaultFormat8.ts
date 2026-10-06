@@ -157,7 +157,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
       message
     );
     const base64urlDigest = base64urlnopad.encode(new Uint8Array(digest));
-    if (!(signature === base64urlDigest)) {
+    if (signature !== base64urlDigest) {
       throw new Error('Recovery key does not match vault file.');
     }
 
@@ -256,8 +256,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       // aes-siv requires mac key first and then the enc key:
-      const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
-      const macKey = rawkey.subarray(rawkey.length / 2 | 0);
+      const encKey = rawkey.subarray(0, Math.trunc(rawkey.length / 2));
+      const macKey = rawkey.subarray(Math.trunc(rawkey.length / 2));
       const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
       const ciphertext = aessiv(shiftedRawKey).encrypt(dirHash) as Uint8Array<ArrayBuffer>;
       // hash is only used as deterministic scheme for the root dir
