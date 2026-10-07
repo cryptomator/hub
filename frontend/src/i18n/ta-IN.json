@@ -14,6 +14,7 @@
   "common.share": "பகிர்",
   "common.show": "காட்டு",
   "admin.webOfTrust.save": "சேமி",
+  "admin.automaticAccessGrant.save": "சேமி",
   "auditLog.details.vault.create": "பெட்டகத்தை உருவாக்கவும்",
   "claimVaultOwnershipDialog.error.wrongPassword": "தவறான கடவுச்சொல்",
   "createVault.enterVaultDetails.title": "பெட்டகத்தை உருவாக்கவும்",
