@@ -6,11 +6,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.http.HttpServerRequest;
-import org.jboss.logging.Logger;
-import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -26,7 +23,6 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -69,6 +65,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.jboss.logging.Logger;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.time.Duration;
@@ -817,8 +815,8 @@ public class VaultResource {
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
 						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
-						   @JsonProperty("uvfMetadataFile") String uvfMetadataFile,
-						   @JsonProperty("uvfKeySet") String uvfKeySet,
+						   @JsonProperty("uvfMetadataFile") @Nullable String uvfMetadataFile,
+						   @JsonProperty("uvfKeySet") @Nullable String uvfKeySet,
 						   // Legacy properties ("Vault Admin Password"):
 						   @JsonProperty("masterkey") @OnlyBase64Chars @Nullable String masterkey, @JsonProperty("iterations") @Nullable Integer iterations, @JsonProperty("salt") @OnlyBase64Chars @Nullable String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars @Nullable String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars @Nullable String authPrivateKey

@@ -49,7 +49,7 @@ public class VaultMembersJoinedBroadcaster {
 		public void awaitChange(Duration timeout) throws InterruptedException {
 			try {
 				future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-			} catch (TimeoutException | ExecutionException ignored) {
+			} catch (TimeoutException | ExecutionException _) {
 				// timeout: no event arrived in time — caller re-queries either way.
 				// execution: future completed exceptionally — same behavior.
 			}
