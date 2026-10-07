@@ -534,11 +534,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	public String getUvfMetadata(@PathParam("vaultId") UUID vaultId) {
-		var vault = vaultRepo.findById(vaultId);
-		if (vault == null || vault.getUvfMetadataFile() == null) {
-			throw new NotFoundException();
-		}
-		return vault.getUvfMetadataFile();
+		return vaultRepo.findByIdOptional(vaultId).map(Vault::getUvfMetadataFile).orElseThrow(NotFoundException::new);
 	}
 
 	@GET
@@ -550,11 +546,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	public String getUvfKeys(@PathParam("vaultId") UUID vaultId) {
-		var vault = vaultRepo.findById(vaultId);
-		if (vault == null || vault.getUvfKeySet() == null) {
-			throw new NotFoundException();
-		}
-		return vault.getUvfKeySet();
+		return vaultRepo.findByIdOptional(vaultId).map(Vault::getUvfKeySet).orElseThrow(NotFoundException::new);
 	}
 
 	@POST
