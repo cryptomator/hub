@@ -388,13 +388,14 @@ export class VaultMetadata {
    */
   public async encrypt(apiURL: string, vault: VaultDto, memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
     const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprintStr(recoveryKey.publicKey)}`;
+    const apiBase = apiURL.endsWith('/') ? apiURL.slice(0, -1) : apiURL; // tolerate both `.../api` and `.../api/`
     // see https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
     const protectedHeader: JWEHeader = {
       // enc: 'A256GCM', // will be set by JWE.build()
       cty: 'json',
       crit: ['uvf.spec.version'],
       'uvf.spec.version': 1,
-      'org.cryptomator.hub.canonical': `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`, // single source of truth for this vault
+      'org.cryptomator.hub.canonical': `${apiBase}/vaults/${vault.id}/uvf/vault.uvf`, // single source of truth for this vault
       jku: 'jwks.json', // URL relative to org.cryptomator.hub.canonical
     };
     const json = await JWE.build(this.payload(), protectedHeader).withRecipients(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey)).toJson();
