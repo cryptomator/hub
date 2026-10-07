@@ -1,5 +1,6 @@
 package org.cryptomator.hub.keycloak;
 
+import jakarta.enterprise.event.Event;
 import jakarta.persistence.PersistenceException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -10,6 +11,7 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.events.VaultMembersJoined;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.jspecify.annotations.NonNull;
@@ -61,6 +63,7 @@ class KeycloakAuthorityPullerTest {
 	private final Group.Repository groupRepo = Mockito.mock(Group.Repository.class);
 	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo = Mockito.mock(EffectiveGroupMembership.Repository.class);
 	private final KeycloakRealmRoles realmRoles = Mockito.mock(KeycloakRealmRoles.class);
+	private final Event<VaultMembersJoined> vaultMembersJoinedEvent = Mockito.mock();
 
 	private final List<User> persistedUsers = new ArrayList<>();
 	private final List<Group> persistedGroups = new ArrayList<>();
@@ -69,7 +72,7 @@ class KeycloakAuthorityPullerTest {
 
 	@BeforeEach
 	void setUp() {
-		remoteUserPuller = new KeycloakAuthorityPuller(keycloak, userRepo, groupRepo, remoteUserProvider, effectiveGroupMembershipRepo, realmRoles, "cryptomator");
+		remoteUserPuller = new KeycloakAuthorityPuller(keycloak, userRepo, groupRepo, remoteUserProvider, effectiveGroupMembershipRepo, realmRoles, vaultMembersJoinedEvent, "cryptomator");
 		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
 			Iterable<User> iterable = invocation.getArgument(0);

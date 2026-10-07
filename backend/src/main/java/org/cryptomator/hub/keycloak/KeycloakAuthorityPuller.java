@@ -6,6 +6,7 @@ import io.quarkus.cache.CacheKey;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
@@ -31,6 +32,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.cryptomator.hub.events.VaultMembersJoined;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -54,17 +56,19 @@ public class KeycloakAuthorityPuller {
 	private final KeycloakAuthorityProvider remoteUserProvider;
 	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	private final KeycloakRealmRoles realmRoles;
+	private final Event<VaultMembersJoined> vaultMembersJoinedEvent;
 
 	// visible for testing
 	RealmResource realm;
 
 	@Inject
-	KeycloakAuthorityPuller(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+	KeycloakAuthorityPuller(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles, Event<VaultMembersJoined> vaultMembersJoinedEvent, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
 		this.userRepo = userRepo;
 		this.groupRepo = groupRepo;
 		this.remoteUserProvider = remoteUserProvider;
 		this.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
 		this.realmRoles = realmRoles;
+		this.vaultMembersJoinedEvent = vaultMembersJoinedEvent;
 
 		this.realm = keycloak.realm(keycloakRealm);
 	}
@@ -99,7 +103,15 @@ public class KeycloakAuthorityPuller {
 		// sync groups:
 		syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
 		var deletedGroupIds = syncDeletedGroups(keycloakGroups, databaseGroups);
-		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
+		var membersJoinedGroups = syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
+
+		// Only an existing group gaining members can turn someone into a vault member still lacking an access token
+		// (newly added users/groups carry no vault access yet, and removals/role changes never create pending grants).
+		// So wake long-pollers (e.g. the automatic access grant agent) only when that actually happened. Best-effort:
+		// observers re-query the database to determine the concrete pending grants.
+		if (membersJoinedGroups) {
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
+		}
 	}
 
 	//visible for testing
@@ -160,9 +172,10 @@ public class KeycloakAuthorityPuller {
 	}
 
 	//visible for testing
-	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, Authority> allAuthorities) {
+	boolean syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, Authority> allAuthorities) {
 		var toUpdateIds = diff(databaseGroups.keySet(), deletedGroupIds);
 		var idsOfGroupsWithChangedMembers = new HashSet<String>();
+		var membersJoined = false;
 		for (var id : toUpdateIds) {
 			var databaseGroup = databaseGroups.get(id);
 			var keycloakGroup = keycloakGroups.get(id);
@@ -171,8 +184,10 @@ public class KeycloakAuthorityPuller {
 			if (!diff.isEmpty()) {
 				idsOfGroupsWithChangedMembers.add(id);
 			}
+			membersJoined |= !diff.added.isEmpty();
 		}
 		effectiveGroupMembershipRepo.updateGroups(idsOfGroupsWithChangedMembers);
+		return membersJoined;
 	}
 
 	private void applyUser(User dbUser, KeycloakUserDto keycloakUser) {

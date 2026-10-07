@@ -79,9 +79,10 @@ function show() {
 
 async function archiveVault() {
   onArchiveVaultError.value = undefined;
-  const v = props.vault;
+  const dto = { ...props.vault };
+  dto.archived = true;
   try {
-    const vaultDto = await backend.vaults.setArchived(v.id, true);
+    const vaultDto = await backend.vaults.setArchived(props.vault.id, true);
     emit('archived', vaultDto);
     open.value = false;
   } catch (error) {
