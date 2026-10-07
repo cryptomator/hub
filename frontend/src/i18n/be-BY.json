@@ -17,6 +17,7 @@
   "common.share": "Абагуліць",
   "common.show": "Паказаць",
   "admin.webOfTrust.save": "Захаваць",
+  "admin.automaticAccessGrant.save": "Захаваць",
   "auditLog.filter": "Фільтр",
   "auditLog.details.vault.create": "Стварыць скарбніцу",
   "claimVaultOwnershipDialog.error.wrongPassword": "Няправільны пароль",
