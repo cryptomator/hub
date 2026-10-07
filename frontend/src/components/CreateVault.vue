@@ -141,7 +141,7 @@
                   <p v-if="(onCreateError instanceof FormValidationFailedError)">
                     {{ t('createVault.error.formValidationFailed','') }} 
                   </p>
-                  <p v-else-if="(onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError)">
+                  <p v-else-if="(onCreateError instanceof DecodeUvfRecoveryKeyError || onCreateError instanceof DecodeVf8RecoveryKeyError)">
                     {{ t('createVault.error.invalidRecoveryKey','') }} 
                   </p>
                   <p v-else>
