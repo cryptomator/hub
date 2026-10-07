@@ -185,6 +185,7 @@
   "createVault.error.illegalVaultDescription": "Die Beschreibung darf keines der folgenden Zeichen beinhalten:",
   "createVault.error.formValidationFailed": "Bitte überprüfe das Formular und versuche es erneut.",
   "createVault.error.invalidRecoveryKey": "Wiederherstellungsschlüssel ist ungültig.",
+  "createVault.error.keyDoesNotMatchMetadata": "Der angegebene Wiederherstellungsschlüssel stimmt nicht mit der hochgeladenen Tresor-Metadatendatei überein.",
   "createVault.error.vaultAlreadyExists": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
   "createVault.error.downloadTemplateFailed": "Download der Tresorvorlage fehlgeschlagen: {0}",
   "createVault.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
