@@ -70,6 +70,7 @@
   "admin.licenseInfo.manageSubscription": "管理訂閱",
   "admin.webOfTrust.information": "了解更多。",
   "admin.webOfTrust.save": "儲存",
+  "admin.automaticAccessGrant.save": "儲存",
   "admin.emergencyAccess.learnMore": "了解更多。",
   "auditLog.filter": "過濾",
   "auditLog.type": "事件",
