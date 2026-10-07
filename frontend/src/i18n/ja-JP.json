@@ -64,6 +64,8 @@
   "admin.webOfTrust.information": "さらに詳しく",
   "admin.webOfTrust.save": "保存",
   "admin.webOfTrust.saved": "保存しました！",
+  "admin.automaticAccessGrant.save": "保存",
+  "admin.automaticAccessGrant.saved": "保存しました！",
   "admin.emergencyAccess.learnMore": "さらに詳しく",
   "archiveVaultDialog.confirm": "アーカイブする",
   "auditLog.title": "監査ログ",
