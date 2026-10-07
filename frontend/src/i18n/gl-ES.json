@@ -14,6 +14,7 @@
   "common.save": "Gardar",
   "common.share": "Compartir",
   "admin.webOfTrust.save": "Gardar",
+  "admin.automaticAccessGrant.save": "Gardar",
   "claimVaultOwnershipDialog.error.wrongPassword": "Contrasinal incorrecto",
   "groupList.edit.group.button": "Editar",
   "user.detail.edit": "Editar",
