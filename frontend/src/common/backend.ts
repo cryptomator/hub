@@ -129,7 +129,7 @@ export type ActivatedUser = UserDto & {
   ecdsaPublicKey: string;
 };
 
-export function didCompleteSetup(user: UserDto): user is ActivatedUser {
+export function didCompleteSetup<T extends UserDto>(user: T): user is T & ActivatedUser {
   return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
 }
 

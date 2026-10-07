@@ -768,13 +768,12 @@ async function completeRecovery() {
 
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
-      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id) as UserDto[])
-        .filter(didCompleteSetup);
+      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id)).filter(didCompleteSetup);
 
       const accessGrants: AccessGrant[] = await Promise.all(
         activatedUsersToGrant.map(async u => {
           const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
-          const jwe = await vaultKeys.encryptForUser(publicKey);
+          const jwe = await vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
           return { userId: u.id, token: jwe };
         })
       );
