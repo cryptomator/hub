@@ -68,7 +68,7 @@ async function computeTrustLevel(trust?: TrustDto) {
     trustLevel.value = 0; // Self
   } else if (trust && props.trustedUser.ecdhPublicKey && props.trustedUser.ecdsaPublicKey) {
     try {
-      await wot.verify(trust.signatureChain, { ecdhPublicKey: props.trustedUser.ecdhPublicKey, ecdsaPublicKey: props.trustedUser.ecdsaPublicKey });
+      await wot.verify(trust.signatureChain, props.trustedUser.id, { ecdhPublicKey: props.trustedUser.ecdhPublicKey, ecdsaPublicKey: props.trustedUser.ecdsaPublicKey });
       trustLevel.value = trust.signatureChain.length;
     } catch (error) {
       console.error('WoT signature verification failed.', error);

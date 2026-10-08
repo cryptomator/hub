@@ -23,8 +23,9 @@ import wot from '../common/wot';
  * Security model — every input to the grant decision comes from a source the server cannot forge:
  *  - The trust threshold (`trustThreshold`) and the on/off switch (`enabled`) are read from the vault's encrypted,
  *    tamper-proof UVF metadata, NOT from /api/settings. An evil DB admin therefore cannot lower the bar.
- *  - The trust path is cryptographically verified with `wot.verify`, which also confirms that the chain attests the
- *    recipient's actual public keys — so the server cannot substitute an attacker-controlled key.
+ *  - The trust path is cryptographically verified with `wot.verify`, which also confirms that the chain's identity
+ *    claims (iss/sub) coherently lead to the recipient and that it attests the recipient's actual public keys — so the
+ *    server can neither substitute an attacker-controlled key nor replay a chain issued for someone else.
  *  - The vault key is only ever available because *this* user is already a member and could share it manually anyway.
  */
 
@@ -158,9 +159,10 @@ async function isTrusted(userId: string, ecdhPublicKey: string, ecdsaPublicKey: 
     return false; // no trust path, or the candidate is too distant
   }
   try {
-    // Verifies the chain starts at my key and ends at the candidate's reported keys; throws on any mismatch, which
-    // would mean the server tried to feed us a forged chain or substitute a key.
-    await wot.verify(trust.signatureChain, { ecdhPublicKey, ecdsaPublicKey });
+    // Verifies the chain starts at my key, that each signer attested the next signer's identity (iss/sub linkage up to
+    // the candidate's id), and that it ends at the candidate's reported keys; throws on any mismatch, which would mean
+    // the server tried to feed us a forged or replayed chain or substitute a key.
+    await wot.verify(trust.signatureChain, userId, { ecdhPublicKey, ecdsaPublicKey });
     return true;
   } catch (error) {
     console.warn(`Refusing automatic grant to ${userId}: trust chain verification failed.`, error);

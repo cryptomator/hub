@@ -76,7 +76,11 @@ onMounted(async () => {
 
   try {
     const signerPublicKey = await asPublicKey(base64.decode(props.event.signerKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
-    const [_, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
+    const [header, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
+    if (header.iss !== props.event.signerId || header.sub !== props.event.userId) {
+      // the signature is genuine but was issued for a different (signer, user) pair than the event claims:
+      throw new Error('Signature does not match the attributed identities');
+    }
     signedFingerprint.value = await wot.computeFingerprint({ ecdhPublicKey: signedKeys.ecdhPublicKey, ecdsaPublicKey: signedKeys.ecdsaPublicKey });
     if (props.event.signerKey === signingUser?.ecdsaPublicKey && signedFingerprint.value === currentFingerprint.value) {
       signatureStatus.value = SignatureStatus.STILL_VALID;
