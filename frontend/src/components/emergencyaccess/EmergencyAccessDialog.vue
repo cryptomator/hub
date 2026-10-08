@@ -664,9 +664,10 @@ async function startRecovery() {
       throw new Error(t('recoveryDialog.error.invalidRecoveryType'));
     }
 
-    const processKeyPair = await EmergencyAccess.startRecovery(councilMembers);
+    const processId = crypto.randomUUID();
+    const processKeyPair = await EmergencyAccess.startRecovery(processId, councilMembers);
     const process: RecoveryProcessDto = {
-      id: crypto.randomUUID(),
+      id: processId,
       vaultId: props.vault.id,
       ...data,
       requiredKeyShares: props.vault.requiredEmergencyKeyShares,
@@ -741,14 +742,14 @@ async function completeRecovery() {
     const keyShares = Object.values(process.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
 
     const processPrivateKey = process.recoveredKeyShares[props.me.id].processPrivateKey;
-    const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
+    const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, { vaultId: props.vault.id, processId: process.id }, props.me.id, userKeys.ecdhKeyPair.privateKey);
     const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes);
 
     if (process.type === 'COUNCIL_CHANGE') {
       if (councilMembers.value.length < process.details.newRequiredKeyShares) {
         throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.value.length, process.details.newRequiredKeyShares]));
       }
-      const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...councilMembers.value);
+      const keyShares = await EmergencyAccess.split(props.vault.id, recoveredKeyBytes, process.details.newRequiredKeyShares, ...councilMembers.value);
       await backend.vaults.createOrUpdateVault({
         ...props.vault,
         requiredEmergencyKeyShares: process.details.newRequiredKeyShares,
@@ -791,17 +792,19 @@ async function completeRecovery() {
   }
 }
 
-type SignedProcessInfoPayload = Pick<RecoveryProcessDto, 'type' | 'details'> & {
+type SignedProcessInfoPayload = Pick<RecoveryProcessDto, 'type' | 'details' | 'vaultId' | 'processPublicKey' | 'requiredKeyShares'> & {
   iss: string;
   sub: string;
   iat: number;
 };
 
 async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {
+  // the per-process copy is a consistent snapshot of one Shamir split, even if the vault's canonical shares rotate
+  // while this process is pending; its `ctx` binding guarantees it is a genuine share for this vault and member:
   const encryptedShare = process.recoveredKeyShares[props.me.id].unrecoveredKeyShare;
-  const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
+  const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, { vaultId: props.vault.id, processId: process.id }, props.me.id, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
 
-  const processInfo = R.pick(process, ['type', 'details']);
+  const processInfo = R.pick(process, ['type', 'details', 'vaultId', 'processPublicKey', 'requiredKeyShares']);
   const payload: SignedProcessInfoPayload = {
     iss: props.me.id,
     sub: process.id,
@@ -823,6 +826,10 @@ async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Prom
 }
 
 async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> {
+  if (process.vaultId !== props.vault.id) {
+    console.error(`Recovery process ${process.id} does not belong to vault ${props.vault.id}.`);
+    return false;
+  }
   const councilMemberIds = Object.keys(process.recoveredKeyShares);
   const authorities = await backend.authorities.listSome(councilMemberIds);
   const councilMembers = R.indexBy(
@@ -848,6 +855,10 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
       return false;
     }
     if (payload.type !== process.type || !R.isDeepEqual(payload.details, process.details)) {
+      console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
+      return false;
+    }
+    if (payload.vaultId !== process.vaultId || payload.processPublicKey !== process.processPublicKey || payload.requiredKeyShares !== process.requiredKeyShares) {
       console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
       return false;
     }

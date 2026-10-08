@@ -86,6 +86,8 @@ INSERT INTO "emergency_key_shares" ("vault_id", "council_member_id", "emergency_
 VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'jwe.jwe.jwe.emergency.user1');
 
+UPDATE "vault" SET "required_emergency_key_shares" = 2 WHERE "id" = '7E57C0DE-0000-4000-8000-000100001111';
+
 -- A pre-existing recovery process on vault 1, started by council member user1
 INSERT INTO "emergency_recovery_processes" ("id", "vault_id", "type", "details", "required_key_shares", "process_public_key")
 VALUES
