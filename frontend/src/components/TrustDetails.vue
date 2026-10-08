@@ -38,7 +38,6 @@ import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid'
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { TrustDto, UserDto } from '../common/backend';
-import userdata from '../common/userdata';
 import wot from '../common/wot';
 import SignUserKeysDialog from './SignUserKeysDialog.vue';
 
@@ -62,21 +61,8 @@ const trustLevel = ref<number>(-1);
 
 watch(trust, computeTrustLevel, { immediate: true });
 
-async function computeTrustLevel(trust?: TrustDto) {
-  const me = await userdata.me;
-  if (me.id === props.trustedUser.id) {
-    trustLevel.value = 0; // Self
-  } else if (trust && props.trustedUser.ecdhPublicKey && props.trustedUser.ecdsaPublicKey) {
-    try {
-      await wot.verify(trust.signatureChain, props.trustedUser.id, { ecdhPublicKey: props.trustedUser.ecdhPublicKey, ecdsaPublicKey: props.trustedUser.ecdsaPublicKey });
-      trustLevel.value = trust.signatureChain.length;
-    } catch (error) {
-      console.error('WoT signature verification failed.', error);
-      trustLevel.value = -1; // Unverified
-    }
-  } else {
-    trustLevel.value = -1; // Unverified
-  }
+async function computeTrustLevel() {
+  trustLevel.value = await wot.computeTrustLevel(props.trustedUser, props.trusts);
 }
 
 function showSignUserKeysDialog() {

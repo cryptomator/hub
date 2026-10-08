@@ -98,6 +98,43 @@ async function verifyRescursive(signatureChain: string[], signerPublicKey: Crypt
   }
 }
 
+export type TrustCheckableUser = Pick<UserDto, 'id' | 'ecdhPublicKey' | 'ecdsaPublicKey'>;
+
+/**
+ * Computes the trust level of a user based on a preloaded list of trusts.
+ * @param user The user whose trust level to compute
+ * @param trusts The current user's trust list (as returned by `backend.trust.listTrusted()`)
+ * @returns `0` for myself, the length of the verified signature chain for a trusted user, or `-1` if the user is untrusted or verification fails
+ */
+async function computeTrustLevel(user: TrustCheckableUser, trusts: TrustDto[]): Promise<number> {
+  const me = await userdata.me;
+  if (me.id === user.id) {
+    return 0; // Self
+  }
+  const trust = trusts.find(t => t.trustedUserId === user.id);
+  if (trust && user.ecdhPublicKey && user.ecdsaPublicKey) {
+    try {
+      await verify(trust.signatureChain, user.id, { ecdhPublicKey: user.ecdhPublicKey, ecdsaPublicKey: user.ecdsaPublicKey });
+      return trust.signatureChain.length;
+    } catch (error) {
+      console.error('WoT signature verification failed.', error);
+      return -1; // Unverified
+    }
+  }
+  return -1; // Unverified
+}
+
+/**
+ * Batch variant of {@link computeTrustLevel}.
+ * @param users The users whose trust levels to compute
+ * @param trusts The current user's trust list (as returned by `backend.trust.listTrusted()`)
+ * @returns A map of user id to trust level
+ */
+async function computeTrustLevels(users: TrustCheckableUser[], trusts: TrustDto[]): Promise<Map<string, number>> {
+  const entries = await Promise.all(users.map(async user => [user.id, await computeTrustLevel(user, trusts)] as const));
+  return new Map(entries);
+}
+
 /**
  * Creates a unique fingerprint for a user by hashing the concatenated thumbprints of their public keys.
  * @param user The user whose fingerprint to compute
@@ -121,4 +158,4 @@ async function computeFingerprint(user: { ecdhPublicKey?: string; ecdsaPublicKey
   return digestHexStr;
 }
 
-export default { sign, verify, computeFingerprint, createSignature };
+export default { sign, verify, computeTrustLevel, computeTrustLevels, computeFingerprint, createSignature };
