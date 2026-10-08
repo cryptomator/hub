@@ -161,6 +161,13 @@
                         </span>
                       </div>
                     </div>
+                    <UntrustedRecipientsWarning v-if="!showSuccess && (untrustedSelected.length > 0 || selectedGroups.length > 0)" v-model:confirmed="confirmedUntrusted" :require-confirmation="phase !== 'complete'" class="mt-4">
+                      <p v-if="untrustedSelected.length > 0">{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedSelected.map(u => u.name).join(', ')]) }}</p>
+                      <p v-if="selectedGroups.length > 0">{{ t('emergencyAccessDialog.warning.groupRecipients', [selectedGroups.map(g => g.name).join(', ')]) }}</p>
+                    </UntrustedRecipientsWarning>
+                    <UntrustedRecipientsWarning v-if="!showSuccess && untrustedGrantees.length > 0" v-model:confirmed="confirmedUntrustedGrantees" require-confirmation class="mt-4">
+                      <p>{{ t('emergencyAccessDialog.warning.untrustedGrantees', [untrustedGrantees.map(u => u.name).join(', ')]) }}</p>
+                    </UntrustedRecipientsWarning>
                     <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
                       <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
                         <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
@@ -210,7 +217,7 @@
                   <button
                     type="button"
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                    :disabled="!canStartRecovery"
+                    :disabled="!canStartRecovery || needsUntrustedConfirmation"
                     @click="startRecovery()"
                   >
                     {{ t('emergencyAccessDialog.action.start') }}
@@ -222,7 +229,8 @@
                   <button
                     v-if="canSeeApprove"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    :disabled="needsUntrustedConfirmation"
                     @click="approveRecovery()"
                   >
                     {{ t('emergencyAccessDialog.action.approve') }}
@@ -235,7 +243,8 @@
                     v-if="canSeeComplete"
                     ref="completeButton"
                     type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    :disabled="untrustedGrantees.length > 0 && !confirmedUntrustedGrantees"
                     @click="completeRecovery()"
                   >
                     {{ t('emergencyAccessDialog.action.completeProcess') }}
@@ -263,15 +272,17 @@ import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@h
 import { CheckCircleIcon, PlayIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
-import { computed, nextTick, ref, Ref, toRaw } from 'vue';
+import { computed, nextTick, ref, Ref, toRaw, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { AccessTokenProducing, asPublicKey, UserKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
+import wot from '../../common/wot';
 import { wordEncoder } from '../../common/util';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
+import UntrustedRecipientsWarning from '../UntrustedRecipientsWarning.vue';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import SegmentRing from './SegmentRing.vue';
@@ -438,6 +449,34 @@ const selectedNewmembers = computed<AuthorityDto[]>(() => {
 // COUNCIL CHANGE
 const councilMembers = ref<ActivatedUser[]>([]);
 
+// WEB OF TRUST: a CHANGE_PERMISSIONS process re-wraps the recovered vault key to the selected users' public keys on
+// completion, so unverified identities must be surfaced to every involved council member (start, approval, completion):
+const trusts = ref<TrustDto[]>([]);
+const trustLevels = ref<Map<string, number>>(new Map());
+const confirmedUntrusted = ref(false);
+const untrustedGrantees = ref<UserDto[]>([]);
+const confirmedUntrustedGrantees = ref(false);
+
+const grantRelevantAuthorities = computed<AuthorityDto[]>(() => {
+  if ((props.recoveryProcess?.type ?? processType.value) !== 'CHANGE_PERMISSIONS') {
+    return [];
+  }
+  return [...selectedNewOwners.value, ...selectedNewmembers.value];
+});
+
+watch([grantRelevantAuthorities, trusts], async () => {
+  const users = grantRelevantAuthorities.value.filter(a => a.type === 'USER') as UserDto[];
+  trustLevels.value = await wot.computeTrustLevels(users, trusts.value);
+});
+
+// only users who will actually receive a key (i.e. have an ecdhPublicKey) are relevant for the warning:
+const untrustedSelected = computed(() => grantRelevantAuthorities.value.filter((a): a is UserDto => a.type === 'USER' && !!(a as UserDto).ecdhPublicKey && trustLevels.value.get(a.id) === -1));
+
+// members of selected groups cannot be individually verified before completion:
+const selectedGroups = computed(() => grantRelevantAuthorities.value.filter(a => a.type === 'GROUP'));
+
+const needsUntrustedConfirmation = computed(() => (untrustedSelected.value.length > 0 || selectedGroups.value.length > 0) && !confirmedUntrusted.value);
+
 const canStartRecovery = computed(() => {
   if (processType.value === undefined) return false;
   if (conflictingProcessExists.value) return false;
@@ -502,6 +541,10 @@ async function show() {
   await initOwnersAndMembers();
   await loadAuthoritiesForCouncilAndProcesses();
   await initProcessSpecificState();
+  trusts.value = await backend.trust.listTrusted();
+  confirmedUntrusted.value = false;
+  untrustedGrantees.value = [];
+  confirmedUntrustedGrantees.value = false;
   showSuccess.value = false;
   open.value = true;
   await nextTick();
@@ -770,6 +813,16 @@ async function completeRecovery() {
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
       const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id)).filter(didCompleteSetup);
+
+      // this authoritative recipient list may include members of groups that were never shown in any picker, so
+      // re-check trust right before wrapping the recovered vault key and pause for confirmation if necessary:
+      const granteeTrustLevels = await wot.computeTrustLevels(activatedUsersToGrant, await backend.trust.listTrusted());
+      const untrusted = activatedUsersToGrant.filter(u => granteeTrustLevels.get(u.id) === -1);
+      if (untrusted.length > 0 && !confirmedUntrustedGrantees.value) {
+        // nothing irreversible happened yet (no grants, process not completed); confirming the warning re-runs this method:
+        untrustedGrantees.value = untrusted;
+        return;
+      }
 
       const accessGrants: AccessGrant[] = await Promise.all(
         activatedUsersToGrant.map(async u => {
