@@ -174,7 +174,7 @@
   "fetchError.title": "Falha ao buscar os dados",
   "createVault.enterRecoveryKey.title": "Recuperar cofre",
   "createVault.enterRecoveryKey.recoveryKey": "Chave de recuperação do seu cofre",
-  "createVault.enterRecoveryKey.uploadSuccessCaption": "Arquivo \"{0}\" carregado com sucesso.",
+  "createVault.enterRecoveryKey.uploadSuccessCaption": "Arquivo \"{0}\" enviado com sucesso.",
   "createVault.enterRecoveryKey.submit": "Recuperar cofre",
   "createVault.enterVaultDetails.title": "Criar cofre",
   "createVault.enterVaultDetails.description": "Digite um nome e uma descrição para o seu novo cofre. Você pode alterá-los depois.",
