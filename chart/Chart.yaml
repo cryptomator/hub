@@ -12,7 +12,22 @@ sources:
 keywords:
   - cryptomator
   - cryptomator hub
+maintainers:
+  - name: Skymatic GmbH
+    url: https://skymatic.de
 annotations:
+  # Artifact Hub metadata, see https://artifacthub.io/docs/topics/annotations/helm/
+  # artifacthub.io/images and artifacthub.io/prerelease are added by the helm-chart.yml workflow when publishing,
+  # so the image tags always match the templates and the published appVersion.
+  artifacthub.io/license: AGPL-3.0-only
+  artifacthub.io/category: security
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://docs.cryptomator.org/hub/
+    - name: Cryptomator Hub
+      url: https://cryptomator.org/hub/
+    - name: support
+      url: https://github.com/cryptomator/hub/issues
   # Rancher catalog metadata, see https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/helm-charts-in-rancher/create-apps
   catalog.cattle.io/display-name: Cryptomator Hub
   catalog.cattle.io/kube-version: ">=1.27.0-0"
