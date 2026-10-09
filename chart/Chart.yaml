@@ -24,6 +24,8 @@ annotations:
   artifacthub.io/links: |
     - name: Documentation
       url: https://docs.cryptomator.org/hub/
+    - name: Kubernetes deployment guide
+      url: https://docs.cryptomator.org/hub/self-hosting-guide/deployment/kubernetes/
     - name: Cryptomator Hub
       url: https://cryptomator.org/hub/
     - name: support
