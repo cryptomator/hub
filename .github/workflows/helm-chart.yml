@@ -91,6 +91,32 @@ jobs:
           echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
           echo "publish_app_version=${publish_app_version}" >> "$GITHUB_OUTPUT"
 
+      - name: Add Artifact Hub annotations
+        env:
+          PUBLISH_VERSION: ${{ steps.version.outputs.publish_version }}
+          PUBLISH_APP_VERSION: ${{ steps.version.outputs.publish_app_version }}
+        run: |
+          set -euo pipefail
+          # List the images the chart runs with its default values. Artifact Hub can't find them itself: its dry run
+          # uses the default values, which fail without urls.*.public. The hub tag follows the published appVersion.
+          images=$(helm template hub chart \
+              --set urls.hub.public=https://hub.example.com \
+              --set urls.kc.public=https://kc.example.com \
+              --set hub.image.tag="$PUBLISH_APP_VERSION" \
+            | yq -N 'select(.kind == "Deployment" or .kind == "StatefulSet") | .spec.template.spec.containers[].image' \
+            | sort -u \
+            | awk '{ name = $0; sub(/:[^:\/]*$/, "", name); sub(/.*\//, "", name); printf "- name: %s\n  image: %s\n", name, $0 }')
+          if [[ -z "$images" ]]; then
+            echo "::error::No container images found in the rendered chart" >&2
+            exit 1
+          fi
+          IMAGES="$images" yq -i '.annotations["artifacthub.io/images"] = strenv(IMAGES)' chart/Chart.yaml
+          # Release candidates and untagged branch builds (0.0.0-<sha>) must not show as the latest version.
+          if [[ "$PUBLISH_VERSION" == *-* ]]; then
+            yq -i '.annotations["artifacthub.io/prerelease"] = "true"' chart/Chart.yaml
+          fi
+          yq '.annotations' chart/Chart.yaml
+
       - name: Package chart
         run: |
           mkdir -p dist
