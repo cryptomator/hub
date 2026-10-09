@@ -28,7 +28,7 @@ annotations:
       url: https://docs.cryptomator.org/hub/self-hosting-guide/deployment/kubernetes/
     - name: Cryptomator Hub
       url: https://cryptomator.org/hub/
-    - name: support
+    - name: Support
       url: https://github.com/cryptomator/hub/issues
   # Rancher catalog metadata, see https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/helm-charts-in-rancher/create-apps
   catalog.cattle.io/display-name: Cryptomator Hub
