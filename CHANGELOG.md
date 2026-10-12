@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
+
+### Fixed
+
+- Fixed licenses being rejected once the certificate that signed them was rotated out: the certificate chain is now required to be valid at the license's issue date instead of at verification time
+- If the stored license fails verification during startup, Hub now requests a refreshed license from the license server once before falling back to setup mode
+- The license setup page no longer offers trial and community edition licenses on managed instances
+
 ## [2.1.1](https://github.com/cryptomator/hub/compare/2.1.0...2.1.1) (2026-09-24)
 
 ### Fixed
