@@ -78,7 +78,11 @@ public class LicenseHolder {
 		var state = this.loadLicense();
 		this.cachedState.set(state);
 		if (state.unconfigured()) {
-			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
+			var storedToken = this.loadStoredLicenseKey();
+			if (storedToken == null || !this.recoverStoredLicense(storedToken)) {
+				return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
+			}
+			state = this.state(); // recovered by installing a refreshed license
 		}
 		// refresh upon startup:
 		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
@@ -109,8 +113,8 @@ public class LicenseHolder {
 			try {
 				return LicenseState.from(validateExistingLicense(settings));
 			} catch (JWTVerificationException e) {
-				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}. Starting in setup mode; an admin needs to provide a valid license via the web interface.", settings.getHubId());
-				return unconfigured; // keep the stored license key untouched, so it remains available for inspection
+				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}.", settings.getHubId());
+				return unconfigured; // keep the stored license key untouched, so it remains available for a recovery attempt and for inspection
 			}
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
 			try {
@@ -122,6 +126,32 @@ public class LicenseHolder {
 		} else {
 			LOG.warn("No license configured. Starting in setup mode; an admin needs to obtain a license via the web interface.");
 			return unconfigured;
+		}
+	}
+
+	@Transactional
+	@Nullable String loadStoredLicenseKey() {
+		return settingsRepo.get().getLicenseKey();
+	}
+
+	/**
+	 * Attempts to recover from a stored license that no longer verifies (e.g. because the certificate that signed it has been rotated out since)
+	 * by requesting a refreshed license from the license server, which is the authority on whether the stored token is still acceptable.
+	 * Attempted once during startup only; if it fails, the instance starts in setup mode and an admin needs to provide a valid license via the web interface.
+	 *
+	 * @param storedToken The stored license token that failed verification
+	 * @return {@code true} if a refreshed license has been installed, {@code false} if the instance remains in setup mode
+	 */
+	boolean recoverStoredLicense(String storedToken) {
+		LOG.info("Attempting to recover by requesting a refreshed license from the license server...");
+		try {
+			var refreshedLicense = requestLicenseRefresh(storedToken);
+			set(refreshedLicense);
+			LOG.info("Successfully recovered by installing a refreshed license.");
+			return true;
+		} catch (LicenseRefreshFailedException | JWTVerificationException e) {
+			LOG.error("Failed to recover from invalid stored license. Starting in setup mode; an admin needs to provide a valid license via the web interface.", e);
+			return false;
 		}
 	}
 

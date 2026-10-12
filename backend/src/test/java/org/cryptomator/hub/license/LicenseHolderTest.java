@@ -163,6 +163,81 @@ class LicenseHolderTest {
 			Assertions.assertTrue(licenseHolderSpy.isSetupRequired());
 			Assertions.assertFalse(licenseHolderSpy.isExpired()); // dummy expires in year 3000
 			verify(licenseHolderSpy, never()).refreshLicense();
+			verify(licenseHolderSpy, never()).requestLicenseRefresh(any());
+		}
+	}
+
+	@Nested
+	@DisplayName("Testing recovery from invalid stored license during init()")
+	class TestStartupRecovery {
+
+		private Settings settings;
+		private LicenseHolder licenseHolderSpy;
+
+		@BeforeEach
+		void setup() throws LicenseHolder.LicenseRefreshFailedException {
+			settings = mock(Settings.class);
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			Mockito.doReturn(settings).when(settingsRepo).get();
+			Mockito.doReturn("storedToken").when(settings).getLicenseKey();
+			Mockito.doReturn("42").when(settings).getHubId();
+			Mockito.doThrow(new JWTVerificationException("certificate chain expired")).when(validator).validate("storedToken", "42");
+		}
+
+		@Test
+		@DisplayName("install refreshed license, if the license server accepts the stored token")
+		void testRecoverySucceeds() throws LicenseHolder.LicenseRefreshFailedException {
+			var refreshedLicense = mockLicense();
+			Mockito.doReturn(Instant.now()).when(refreshedLicense).getIssuedAtAsInstant();
+			Mockito.doReturn("refreshedToken").when(licenseHolderSpy).requestLicenseRefresh("storedToken");
+			Mockito.doReturn(refreshedLicense).when(validator).validate("refreshedToken", "42");
+
+			licenseHolderSpy.init();
+
+			Assertions.assertFalse(licenseHolderSpy.isSetupRequired());
+			Assertions.assertEquals(refreshedLicense, licenseHolderSpy.get());
+			verify(settings).setLicenseKey("refreshedToken");
+			verify(settingsRepo).persistAndFlush(settings);
+			verify(licenseHolderSpy, never()).refreshLicense(); // freshly issued, no second refresh
+		}
+
+		@Test
+		@DisplayName("stay in setup mode, if the refresh request fails")
+		void testRecoveryFailsOnRequest() throws LicenseHolder.LicenseRefreshFailedException {
+			Mockito.doThrow(new LicenseHolder.LicenseRefreshFailedException("http error 500")).when(licenseHolderSpy).requestLicenseRefresh("storedToken");
+
+			licenseHolderSpy.init();
+
+			Assertions.assertTrue(licenseHolderSpy.isSetupRequired());
+			verify(licenseHolderSpy).requestLicenseRefresh("storedToken");
+			verify(settings, never()).setLicenseKey(any()); // stored license key remains untouched
+			verify(settingsRepo, never()).persistAndFlush(any());
+		}
+
+		@Test
+		@DisplayName("stay in setup mode, if the refreshed license is invalid")
+		void testRecoveryFailsOnValidation() throws LicenseHolder.LicenseRefreshFailedException {
+			Mockito.doReturn("refreshedToken").when(licenseHolderSpy).requestLicenseRefresh("storedToken");
+			Mockito.doThrow(new JWTVerificationException("invalid")).when(validator).validate("refreshedToken", "42");
+
+			licenseHolderSpy.init();
+
+			Assertions.assertTrue(licenseHolderSpy.isSetupRequired());
+			verify(settings, never()).setLicenseKey(any());
+			verify(settingsRepo, never()).persistAndFlush(any());
+		}
+
+		@Test
+		@DisplayName("do not attempt recovery, if the init license from config is invalid")
+		void testNoRecoveryForInvalidInitLicense() throws LicenseHolder.LicenseRefreshFailedException {
+			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.of("42"), Optional.of("initToken")));
+			Mockito.doReturn(null).when(settings).getLicenseKey();
+			Mockito.doThrow(new JWTVerificationException("invalid")).when(validator).validate("initToken", "42");
+
+			licenseHolderSpy.init();
+
+			Assertions.assertTrue(licenseHolderSpy.isSetupRequired());
+			verify(licenseHolderSpy, never()).requestLicenseRefresh(any());
 		}
 	}
 
