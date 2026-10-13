@@ -1,61 +1,63 @@
 <template>
-  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
-    <Dialog as="div" class="fixed inset-0 z-50 overflow-y-auto" @close="open = false">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
-      </TransitionChild>
+  <HubDialog
+    v-model:open="open"
+    role="alertdialog"
+    :title="title"
+    :icon="icon ?? ExclamationTriangleIcon"
+    :tone="tone"
+    :size="size"
+    :busy="processing"
+    :error="error"
+    :initial-focus="cancelButton"
+    @submit="confirm"
+    @closed="$emit('close')"
+  >
+    <DialogDescription as="p" class="mt-2 text-sm text-gray-500">
+      {{ description }}
+    </DialogDescription>
+    <div v-if="$slots.default" class="mt-4">
+      <slot />
+    </div>
 
-      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-          <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-100 sm:max-w-lg">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div class="sm:flex sm:items-start">
-                <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                  <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
-                </div>
-                <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                  <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                    {{ title }}
-                  </DialogTitle>
-                  <div class="mt-2">
-                    <p class="text-sm text-gray-500">
-                      {{ description }}
-                    </p>
-                  </div>
-                  <div class="mt-2">
-                    <slot />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" @click.stop="confirm">
-                {{ confirmLabel }}
-              </button>
-              <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click.stop="close">
-                {{ t('common.cancel') }}
-              </button>
-            </div>
-          </DialogPanel>
-        </TransitionChild>
-      </div>
-    </Dialog>
-  </TransitionRoot>
+    <template #footer>
+      <button ref="cancelButton" type="button" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed" @click="open = false">
+        {{ cancelLabel ?? t('common.cancel') }}
+      </button>
+      <button type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 text-base font-medium text-white focus:outline-hidden focus:ring-2 focus:ring-offset-2 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed" :class="tone === 'danger' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:hover:bg-red-600' : 'bg-primary hover:bg-primary-d1 focus:ring-primary disabled:hover:bg-primary'">
+        {{ confirmLabel }}
+      </button>
+    </template>
+  </HubDialog>
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { DialogDescription } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
+import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import HubDialog from './HubDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
-defineProps<{
+const props = withDefaults(defineProps<{
   title: string
   description: string
   confirmLabel: string
-}>();
+  action?: () => Promise<void>
+  tone?: 'danger' | 'neutral'
+  icon?: Component
+  cancelLabel?: string
+  size?: 'default' | 'narrow'
+  failedMessage?: string
+}>(), {
+  action: undefined,
+  tone: 'danger',
+  icon: undefined,
+  cancelLabel: undefined,
+  size: 'default',
+  failedMessage: undefined
+});
 
 const emit = defineEmits<{
   close: []
@@ -63,19 +65,36 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
+const processing = ref(false);
+const error = ref<string>();
+const cancelButton = ref<HTMLButtonElement>();
 
 defineExpose({ show });
 
 function show() {
+  error.value = undefined;
   open.value = true;
 }
 
-function close() {
-  open.value = false;
-}
-
-function confirm() {
-  emit('confirmed');
-  open.value = false;
+async function confirm() {
+  if (processing.value || !open.value) {
+    return;
+  }
+  error.value = undefined;
+  try {
+    processing.value = true;
+    await props.action?.();
+    emit('confirmed');
+    open.value = false;
+  } catch (e) {
+    console.error('Confirmed action failed.', e);
+    error.value = props.failedMessage ?? t('common.unexpectedError', [e instanceof Error ? e.message : String(e)]);
+  } finally {
+    processing.value = false;
+  }
+  if (error.value) {
+    await nextTick();
+    cancelButton.value?.focus();
+  }
 }
 </script>

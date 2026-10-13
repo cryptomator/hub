@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.7.5
+- Redesigned confirmation dialogs: they name the affected user, group or vault, focus Cancel instead of the destructive action, show errors inside the dialog and lock their buttons while the action runs
 
 ## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
 
