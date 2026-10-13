@@ -13,8 +13,10 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -22,13 +24,23 @@ final class X509Helper {
 
 	private X509Helper() {}
 
-	public static X509Certificate validateX5cChain(List<String> x5c, X509Certificate trustedRootCertificate) throws GeneralSecurityException {
+	/**
+	 * Validates the given leaf-first certificate chain against the trusted root and returns its leaf certificate.
+	 *
+	 * @param x5c                    The base64 DER-encoded certificates, leaf first, as found in a JWS {@code x5c} header
+	 * @param trustedRootCertificate The trust anchor the chain must lead to
+	 * @param validAt                The point in time at which every certificate in the chain must be valid, i.e. the time the signature was made
+	 * @return The leaf certificate
+	 * @throws GeneralSecurityException If the chain can not be decoded, is not valid at the given time or does not lead to the trusted root
+	 */
+	public static X509Certificate validateX5cChain(List<String> x5c, X509Certificate trustedRootCertificate, Instant validAt) throws GeneralSecurityException {
 		if (x5c == null || x5c.isEmpty()) {
 			throw new CertPathValidatorException("null or empty x5c chain");
 		}
+		var validationDate = Date.from(validAt);
 		var chain = new ArrayList<>(decodeCertificates(x5c));
 		for (var cert : chain) {
-			cert.checkValidity();
+			cert.checkValidity(validationDate);
 		}
 
 		// JWS x5c is leaf-first. Remove trust anchor if present at the end.
@@ -42,6 +54,7 @@ final class X509Helper {
 		var certPath = CertificateFactory.getInstance("X.509").generateCertPath(chain);
 		var pkixParams = new PKIXParameters(Set.of(new TrustAnchor(trustedRootCertificate, null)));
 		pkixParams.setRevocationEnabled(false);
+		pkixParams.setDate(validationDate);
 		CertPathValidator.getInstance("PKIX").validate(certPath, pkixParams);
 
 		return chain.getFirst();

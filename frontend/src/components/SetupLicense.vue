@@ -35,7 +35,7 @@
         <h1 class="text-lg leading-6 font-medium text-gray-900 my-3 sm:my-5">{{ t('setupLicense.title') }}</h1>
         <p v-if="onSessionError" class="mb-3 text-sm text-red-900">{{ t('setupLicense.session.error') }}</p>
 
-        <form class="flex flex-col items-center" @submit.prevent="getTrialLicense()">
+        <form v-if="!isManagedInstance" class="flex flex-col items-center" @submit.prevent="getTrialLicense()">
           <p class="mt-1 text-sm text-gray-500">{{ t('setupLicense.trial.description') }}</p>
           <altcha-widget class="mt-3" :challenge="challengeUrl" auto="onsubmit" type="native" display="invisible" @statechange="onAltchaStateChange" />
           <button type="submit" :disabled="processing || altchaVerifying" class="mt-3 inline-flex cursor-pointer items-center justify-center rounded-md border border-transparent bg-primary px-20 py-2 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -46,10 +46,10 @@
         </form>
       </section>
 
-      <details class="mt-5 sm:mt-6">
+      <details class="mt-5 sm:mt-6" :open="isManagedInstance">
         <summary class="cursor-pointer text-center text-sm font-medium text-gray-500 hover:text-gray-700">{{ t('setupLicense.moreOptions') }}</summary>
         <div class="mt-5 sm:mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <section class="flex flex-col bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+          <section class="flex flex-col bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6" :class="{ 'md:col-span-2': isManagedInstance }">
             <h4 class="text-base font-medium text-gray-900">{{ t('setupLicense.buy.title') }}</h4>
             <p class="mt-1 text-sm text-gray-500">{{ t('setupLicense.buy.description') }}</p>
             <div class="mt-auto pt-3">
@@ -60,7 +60,7 @@
             </div>
           </section>
 
-          <section class="flex flex-col bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+          <section v-if="!isManagedInstance" class="flex flex-col bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
             <h4 class="text-base font-medium text-gray-900">{{ t('setupLicense.community.title') }}</h4>
             <p class="mt-1 text-sm text-gray-500">{{ t('setupLicense.community.description') }}</p>
             <div class="mt-auto pt-3">
@@ -133,6 +133,8 @@ const onTrialError = ref<Error>();
 const onApplyError = ref<Error>();
 
 const challengeUrl = computed(() => `${config.get().licenseApiUrl}/hub/challenge`);
+
+const isManagedInstance = computed(() => billing.value?.managedInstance ?? false); // trial and community licenses are not available for managed instances
 
 function onAltchaStateChange(event: Event) {
   const { state, payload } = (event as CustomEvent<{ payload?: string, state: string }>).detail;

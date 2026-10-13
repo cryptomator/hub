@@ -2,6 +2,7 @@ package org.cryptomator.hub.license;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
@@ -40,7 +41,13 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 			return fallback.verify(decodedJWT);
 		}
 
-		var leafPublicKey = verifyCertChain(x5cChain);
+		// The chain must have been valid when the license was signed, not necessarily now (same principle as timestamped code signing):
+		// intermediate certificates are rotated regularly, which must not invalidate licenses signed before the rotation.
+		var issuedAt = decodedJWT.getIssuedAtAsInstant();
+		if (issuedAt == null) {
+			throw new InvalidClaimException("The claim iat is required for tokens with an x5c header.");
+		}
+		var leafPublicKey = verifyCertChain(x5cChain, issuedAt);
 		var expiresLeeway = Instant.now().getEpochSecond();
 		var x5cVerifier = JWT.require(Algorithm.ECDSA512(leafPublicKey, null))
 				.acceptExpiresAt(expiresLeeway) // this will make sure to accept tokens that expired in the past (beginning from 1970)
@@ -49,9 +56,9 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 		return x5cVerifier.verify(decodedJWT);
 	}
 
-	private ECPublicKey verifyCertChain(List<String> x5cChain) throws JWTVerificationException {
+	private ECPublicKey verifyCertChain(List<String> x5cChain, Instant validAt) throws JWTVerificationException {
 		try {
-			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate);
+			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate, validAt);
 			if (!licenseChainRequiredCn.isEmpty()) {
 				verifyCNIsPartOfChain(licenseChainRequiredCn, x5cChain);
 			}
