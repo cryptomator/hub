@@ -9,7 +9,7 @@
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg md:max-w-2xl">
-              <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
+              <form ref="form" novalidate @submit.prevent="recoverVault()">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div class="sm:flex sm:items-start">
                     <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -21,25 +21,23 @@
                           {{ t('recoverVaultDialog.description') }}
                         </p>
                         <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="mt-2 block w-full rounded-md border-gray-300 shadow-xs focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onVaultRecoverError instanceof FormValidationFailedError }" required />
+                        <p v-if="onVaultRecoverError instanceof FormValidationFailedError" class="mt-2 text-sm text-red-900">
+                          {{ t('recoverVaultDialog.error.formValidationFailed') }}
+                        </p>
+                        <p v-else-if="onVaultRecoverError" class="mt-2 text-sm text-red-900">
+                          {{ t('recoverVaultDialog.error.invalidRecoveryKey') }}
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                  <button type="submit" :disabled="processingVaultRecovery" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed sm:ml-3 sm:w-auto sm:text-sm">
                     {{ t('recoverVaultDialog.submit') }}
                   </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
+                  <button type="button" :disabled="processingVaultRecovery" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
-                  <div v-if="onVaultRecoverError">
-                    <p v-if="onVaultRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900">
-                      {{ t('recoverVaultDialog.error.formValidationFailed') }}
-                    </p>
-                    <p v-else class="text-sm text-red-900">
-                      {{ t('recoverVaultDialog.error.invalidRecoveryKey') }}
-                    </p>
-                  </div>
                 </div>
               </form>
             </DialogPanel>
@@ -95,16 +93,12 @@ function show() {
   open.value = true;
 }
 
-async function validateRecoveryKey() {
-  if (!form.value?.checkValidity()) {
-    throw new FormValidationFailedError();
-  }
-  await recoverVault();
-}
-
 async function recoverVault() {
   onVaultRecoverError.value = undefined;
   try {
+    if (!form.value?.checkValidity()) {
+      throw new FormValidationFailedError();
+    }
     processingVaultRecovery.value = true;
     const vaultKeys: AccessTokenProducing = isUvfVault(props.vault)
       ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveryKey.value)
