@@ -481,6 +481,17 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100006666 returns 400 due to missing emergencyKeyShares")
+		void testCreateVaultWithoutEmergencyKeyShares() {
+			var body = Map.of("id", "7E57C0DE-0000-4000-8000-000100006666", "name", "My Vault");
+
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100006666")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
 		void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");

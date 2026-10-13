@@ -814,7 +814,7 @@ public class VaultResource {
 						   @JsonProperty("description") @NoHtmlOrScriptChars @Nullable String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
-						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
+						   @JsonProperty("emergencyKeyShares") @NotNull Map<String, String> emergencyKeyShares,
 						   @JsonProperty("uvfMetadataFile") @Nullable String uvfMetadataFile,
 						   @JsonProperty("uvfKeySet") @Nullable String uvfKeySet,
 						   // Legacy properties ("Vault Admin Password"):
