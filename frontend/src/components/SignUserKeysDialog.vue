@@ -25,7 +25,7 @@
                         </p>
                       </div>
                       <div class="my-2">
-                        <label for="fingerprint" class="block text-sm font-medium leading-6 text-gray-900">Fingerprint</label>
+                        <label for="fingerprint" class="block text-sm font-medium leading-6 text-gray-900">{{ t('signUserKeysDialog.fingerprint') }}</label>
                         <div class="relative mt-2 rounded-md shadow-xs">
                           <input id="fingerprint" v-model="enteredFingerprint" type="text" name="fingerprint" :readonly="minVerificationLen === 0" class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary text-sm sm:leading-6" @keyup="tryAutocomplete()" />
                           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">

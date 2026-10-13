@@ -271,6 +271,7 @@
   "emergencyAccess.startProcess": "Start process",
   "emergencyAccess.notPossible": "Not possible",
   "emergencyAccess.vaultCouncil": "Vault Council",
+  "emergencyAccess.vaultAccess": "Vault Access",
   "emergencyAccess.noRedundancy": "No Redundancy",
   "emergencyAccess.label.councilMembers": "Council Members",
   "emergencyAccess.label.newCouncilMembers": "New Council Members",
@@ -356,7 +357,6 @@
   "editVaultMetadataDialog.vaultName": "Vault Name",
   "editVaultMetadataDialog.vaultDescription": "Description",
   "editVaultMetadataDialog.error.formValidationFailed": "Vault name must not be empty.",
-  "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
 
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
@@ -422,6 +422,7 @@
 
   "signUserKeysDialog.title": "Verify {0}'s Identity",
   "signUserKeysDialog.description": "Enter the first {0} characters of {1}'s fingerprint in order to confirm the authenticity of their public keys. The fingerprint can be found in the user's profile.",
+  "signUserKeysDialog.fingerprint": "Fingerprint",
   "signUserKeysDialog.submit": "Confirm this User's Identity",
 
   "untrustedRecipientsWarning.untrustedUsers": "The identity of the following users has not been verified: {0}. A compromised server could have substituted their keys to gain access to the vault key.",

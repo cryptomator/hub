@@ -231,6 +231,10 @@
           {{ t('common.unexpectedError', [onReactivateError.message]) }}
         </p>
       </div>
+
+      <p v-if="onClaimOwnershipError" class="text-sm text-red-900 text-right mt-1">
+        {{ t('common.unexpectedError', [onClaimOwnershipError.message]) }}
+      </p>
     </div>
   </div>
 
@@ -253,7 +257,7 @@
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultFormat8 || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="downloadingVaultTemplate = false" />
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" ref="displayRecoveryKeyDialog" :vault="vault" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
-  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="onClaimOwnershipError = undefined; fetchOwnerData()" />
   <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && (vaultFormat8 || uvfVault) && settings" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" :settings="settings" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
 
@@ -308,6 +312,7 @@ const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.valu
 const onUpdateVaultMembershipError = ref< { [id: string]: Error } >({});
 const onAddUserError = ref<Error>();
 const onReactivateError = ref<Error>();
+const onClaimOwnershipError = ref<Error>();
 
 const cfg = config.get();
 const settings = ref<SettingsDto>();
@@ -404,6 +409,7 @@ const emergencyAccessMembers = computed(() =>
 );
 
 async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
+  onClaimOwnershipError.value = undefined;
   if (!me.value) {
     throw new Error('illegal state.');
   }
@@ -417,6 +423,7 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
     vault.value = await backend.vaults.claimOwnership(props.vaultId, proof);
   } catch (error) {
     console.error('Failed to claim ownership of vault.', error);
+    onClaimOwnershipError.value = error instanceof Error ? error : new Error('Unknown Error');
     return;
   }
 
@@ -429,6 +436,7 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
       console.debug('User already member of this vault.');
     } else {
       console.error('Failed to grant access to self.', error);
+      onClaimOwnershipError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }
 

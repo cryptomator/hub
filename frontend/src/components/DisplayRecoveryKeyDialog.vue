@@ -53,6 +53,9 @@
                 <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                   {{ t('common.close') }}
                 </button>
+                <p v-if="onShowRecoveryKeyError" class="text-sm text-red-900">
+                  {{ t('common.unexpectedError', [onShowRecoveryKeyError.message]) }}
+                </p>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -76,6 +79,7 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const recoveryKey = ref<string>('');
 const copiedRecoveryKey = ref(false);
+const onShowRecoveryKeyError = ref<Error>();
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const textAreaRows = computed(() => recoveryKey.value.length > 390 ? 14 : 6);
 
@@ -92,8 +96,14 @@ defineExpose({
 });
 
 async function show(recoveryKeyPromise: Promise<string>) {
+  onShowRecoveryKeyError.value = undefined;
   open.value = true;
-  recoveryKey.value = await recoveryKeyPromise;
+  try {
+    recoveryKey.value = await recoveryKeyPromise;
+  } catch (error) {
+    console.error('Displaying recovery key failed.', error);
+    onShowRecoveryKeyError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
 }
 
 async function copyRecoveryKey() {
