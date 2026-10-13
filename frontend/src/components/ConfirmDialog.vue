@@ -20,10 +20,10 @@
     </div>
 
     <template #footer>
-      <button ref="cancelButton" type="button" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed" @click="open = false">
+      <button ref="cancelButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
         {{ cancelLabel ?? t('common.cancel') }}
       </button>
-      <button type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 text-base font-medium text-white focus:outline-hidden focus:ring-2 focus:ring-offset-2 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed" :class="tone === 'danger' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:hover:bg-red-600' : 'bg-primary hover:bg-primary-d1 focus:ring-primary disabled:hover:bg-primary'">
+      <button type="submit" :disabled="processing" :class="tone === 'danger' ? dangerButton : primaryButton">
         {{ confirmLabel }}
       </button>
     </template>
@@ -33,9 +33,10 @@
 <script setup lang="ts">
 import { DialogDescription } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { nextTick, ref } from 'vue';
+import { ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { dangerButton, primaryButton, secondaryButton } from './dialogButtons';
 import HubDialog from './HubDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -91,10 +92,6 @@ async function confirm() {
     error.value = props.failedMessage ?? t('common.unexpectedError', [e instanceof Error ? e.message : String(e)]);
   } finally {
     processing.value = false;
-  }
-  if (error.value) {
-    await nextTick();
-    cancelButton.value?.focus();
   }
 }
 </script>

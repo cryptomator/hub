@@ -6,7 +6,7 @@
     :icon="confirming ? ExclamationTriangleIcon : undefined"
     tone="danger"
     :busy="processing"
-    :error="onRegenerateError ? t('common.unexpectedError', [onRegenerateError.message]) : undefined"
+    :error="onRegenerateError && t('common.unexpectedError', [onRegenerateError.message])"
     :initial-focus="confirming ? cancelButton : copyButton"
     @submit="regenerateSetupCode()"
     @closed="$emit('close')"
@@ -39,10 +39,10 @@
     </div>
 
     <template #footer>
-      <button ref="cancelButton" type="button" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed" @click="open = false">
+      <button ref="cancelButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
         {{ confirming ? t('common.cancel') : t('common.close') }}
       </button>
-      <button v-if="confirming" type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-red-600 disabled:cursor-not-allowed">
+      <button v-if="confirming" type="submit" :disabled="processing" :class="dangerButton">
         {{ t('regenerateAccountKeyDialog.submit') }}
       </button>
     </template>
@@ -53,12 +53,13 @@
 import { DialogDescription } from '@headlessui/vue';
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { computed, nextTick, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { JWE, Recipient } from '../common/jwe';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
+import { dangerButton, secondaryButton } from './dialogButtons';
 import HubDialog from './HubDialog.vue';
 
 enum State {
@@ -126,10 +127,6 @@ async function regenerateSetupCode() {
     onRegenerateError.value = error instanceof Error ? error : new Error('Unknown Error');
   } finally {
     processing.value = false;
-  }
-  if (onRegenerateError.value) {
-    await nextTick();
-    cancelButton.value?.focus();
   }
 }
 
