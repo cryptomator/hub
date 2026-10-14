@@ -131,7 +131,7 @@
   "createVault.showRecoveryKey.title": "Kľúč pre obnovenie",
   "createVault.showRecoveryKey.submit": "Vytvoriť trezor",
   "createVault.error.illegalVaultDescription": "Popis nesmie obsahovať žiadny z nasledujúcich znakov:",
-  "createVault.error.uploadTooBig": "Súbor s metadátami trezoru je príliš veľký. Podporované sú súbory s veľkosťou do 8 kB.",
+  "createVault.error.uploadTooBig": "Súbor s metadátami trezoru je príliš veľký. Podporované sú súbory s veľkosťou do 8 KB.",
   "createVault.error.failedUpload": "Súbor s metadátami trezoru sa nepodarilo nahrať.",
   "createVault.error.wrongFileName": "Nahraný súbor nie je pomenovaný ako súbor s metadátami trezoru. Povolené názvy sú „vault.cryptomator“ alebo „vault.uvf“.",
   "createVault.error.keyDoesNotMatchMetadata": "Zadaný kľúč na obnovenie sa nezhoduje s nahraným súborom metadát trezoru.",
