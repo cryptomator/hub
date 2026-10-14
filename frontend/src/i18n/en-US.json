@@ -43,6 +43,7 @@
   "common.search.placeholder": "Search…",
   "common.search.searching": "Searching…",
   "common.search.empty": "No users found.",
+  "common.select": "Select",
   "common.select.placeholder": "Select…",
   "common.share": "Share",
   "common.show": "Show",
@@ -263,7 +264,7 @@
   "deviceType.mobile": "Mobile",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
+  "downloadVaultTemplateDialog.description": "Unpack the ZIP file once to a location your team can reach, for example a shared cloud folder.",
 
   "emergencyAccess.requiredKeyShares": "Required Key Shares",
   "emergencyAccess.processCouncil": "Process Council",
@@ -336,10 +337,10 @@
   "emergencyAccessDialog.warning.groupRecipients": "Groups are selected ({0}). Their individual members cannot be verified; on completion, the vault key will be shared with all group members.",
   "emergencyAccessDialog.warning.untrustedGrantees": "Completing this process will share the vault key with recipients whose identity has not been verified: {0}.",
 
-  "grantEmergencyAccessDialog.title": "Grant Emergency Access",
-  "grantEmergencyAccessDialog.description.selectCouncil": "Select council members to grant emergency access for this vault.",
-  "grantEmergencyAccessDialog.description.default": "Grant emergency access for this vault.",
-  "grantEmergencyAccessDialog.grant": "Grant",
+  "grantEmergencyAccessDialog.title": "Set Up Emergency Access",
+  "grantEmergencyAccessDialog.description.selectCouncil": "Choose the council for \"{0}\". In an emergency, {1} of them have to approve to restore the vault.",
+  "grantEmergencyAccessDialog.description.default": "Set up emergency access for \"{0}\". In an emergency, {1} council members have to approve to restore the vault.",
+  "grantEmergencyAccessDialog.grant": "Set Up Emergency Access",
   "grantEmergencyAccessDialog.error.keySharesRequired": "At least 2 Emergency Key Shares are required.",
   "grantEmergencyAccessDialog.error.councilMembersRequired": "At least 2 Council Members are required.",
   "grantEmergencyAccessDialog.error.tooFewCouncilMembers": "Too few Council Members. Add more or lower the required Emergency Key Shares.",
@@ -387,10 +388,13 @@
   "group.members.add":"Add Members",
   "group.members.search.empty": "Nothing found",
 
-  "group.addMembers.title": "Add Members",
+  "group.addMembers.title": "Add Members to {0}",
+  "group.addMembers.description": "Selected users get access to all vaults of this group.",
   "group.addMembers.searchLabel": "Search by username or full name",
-  "group.addMembers.selectedUser": "User(s) selected",
-  "group.addMembers.error.failed": "Failed to add member to group.",
+  "group.addMembers.selected": "Selected · {0}",
+  "group.addMembers.empty": "No member selected yet.",
+  "group.addMembers.submit": "Add Members",
+  "group.addMembers.submitCount": "Add {0} Member(s)",
 
   "group.member.remove.title": "Remove {0} from {1}?",
   "group.member.remove.description": "{0} will lose access to all vaults shared through {1}.",
@@ -496,8 +500,8 @@
   "nav.closeMenu": "Close menu",
   "nav.sidebar.title": "Navigation",
 
-  "recoveryKeyDialog.title": "Recovery Key",
-  "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
+  "recoveryKeyDialog.title": "Recovery Key for \"{0}\"",
+  "recoveryKeyDialog.description": "Keep it somewhere safe. If Hub is unavailable, it is the only way back to your data.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "recoverVaultDialog.title": "Recover Vault Access",
@@ -538,10 +542,13 @@
   "user.detail.username": "Username",
   "user.detail.error.enableFailed": "Failed to update user.",
 
-  "user.addGroups.title": "Add Groups",
+  "user.addGroups.title": "Add {0} to Groups",
+  "user.addGroups.description": "{0} gets access to all vaults of the selected groups.",
   "user.addGroups.searchLabel": "Search by group name",
-  "user.addGroups.selectedGroups": "Group(s) selected",
-  "user.addGroups.error.failed": "Failed to add to group.",
+  "user.addGroups.selected": "Selected · {0}",
+  "user.addGroups.empty": "No group selected yet.",
+  "user.addGroups.submit": "Add Groups",
+  "user.addGroups.submitCount": "Add {0} Group(s)",
 
   "userEditCreate.title.create": "Create New User",
   "userEditCreate.title.edit": "Edit User",
