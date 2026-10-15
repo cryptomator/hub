@@ -114,18 +114,25 @@ async function addMembers() {
     return;
   }
   onAddMembersError.value = undefined;
+  const added: AuthorityDto[] = [];
   try {
     processing.value = true;
     for (const member of newMembers.value) {
       await backend.groups.addMember(props.group.id, member.id);
+      added.push(member);
     }
-    emit('saved', [...newMembers.value]);
     open.value = false;
   } catch (error) {
     console.error('Adding members failed.', error);
     onAddMembersError.value = error instanceof Error ? error : new Error('Unknown Error');
+    // members added before the failure are saved already, so only the rest stays selected for a retry:
+    const addedIds = new Set(added.map(member => member.id));
+    newMembers.value = newMembers.value.filter(member => !addedIds.has(member.id));
   } finally {
     processing.value = false;
+    if (added.length > 0) {
+      emit('saved', added);
+    }
   }
 }
 </script>
