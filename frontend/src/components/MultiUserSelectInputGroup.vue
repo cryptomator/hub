@@ -42,6 +42,7 @@
         </span>
         <div v-if="inputVisible" class="text-gray-500 hover:text-red-600">&times;</div>
       </button>
+      <slot />
       <!-- Combobox -->
       <Combobox :disabled="!inputVisible" @update:model-value="onSelect">
         <div class="flex-1 relative">
@@ -120,7 +121,7 @@ import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
 
 export type MultiUserSelectExpose = {
-  focus: () => Promise<void> | void;
+  focusTarget?: HTMLElement;
 };
 
 const trusts = ref<TrustDto[]>([]);
@@ -150,15 +151,8 @@ let searchSeq = 0;
 
 const inputEl = ref<HTMLInputElement>();
 
-async function focus() {
-  selectedPillIndex.value = undefined;
-  await nextTick();
-
-  if (props.inputVisible) inputEl.value?.focus();
-}
-
-defineExpose<MultiUserSelectExpose>({
-  focus
+defineExpose({
+  focusTarget: inputEl
 });
 
 const focusInput = () => {

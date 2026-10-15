@@ -1,5 +1,5 @@
 <template>
-  <ConfirmDialog ref="confirmDialog" size="narrow" :title="t('processAbortDialog.title')" :description="t('processAbortDialog.description')" :confirm-label="t('processAbortDialog.confirm')" :cancel-label="t('common.back')" :action="abortProcess" @confirmed="emit('confirmed')" @close="emit('close')" />
+  <ConfirmDialog ref="confirmDialog" size="narrow" :title="t('processAbortDialog.title')" :description="t('processAbortDialog.description')" :confirm-label="t('processAbortDialog.confirm')" :cancel-label="t('common.back')" :action="abortProcess" @confirmed="emit('confirmed')" />
 </template>
 
 <script setup lang="ts">
@@ -17,7 +17,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  close: []
   confirmed: []
 }>();
 
