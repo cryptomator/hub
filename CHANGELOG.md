@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 26.7.5
 - Redesigned confirmation dialogs: they name the affected user, group or vault, focus Cancel instead of the destructive action, show errors inside the dialog and lock their buttons while the action runs
 - Redesigned the Edit Vault, Update License, Claim Vault Ownership and Recover Vault Access dialogs: they name the affected vault, show input errors next to the field and lock their inputs while the action runs
-- Redesigned the Add Members, Add to Groups, Set Up Emergency Access, Recovery Key and Download Vault Template dialogs: they name the affected group, user or vault, list the current selection with its count and lock their controls while the action runs
+- Redesigned the Add Members, Add to Groups, Set Up Emergency Access, Recovery Key and Download Vault Template dialogs
 
 ## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
 
