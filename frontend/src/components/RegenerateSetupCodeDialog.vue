@@ -105,7 +105,7 @@ async function show() {
 }
 
 async function regenerateSetupCode() {
-  if (processing.value || !confirming.value) {
+  if (processing.value || !open.value || !confirming.value) {
     return;
   }
   onRegenerateError.value = undefined;
