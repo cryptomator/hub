@@ -316,7 +316,7 @@
   "emergencyAccessDialog.label.newOwners": "New Owners",
   "emergencyAccessDialog.label.newMembers": "New Members",
   "emergencyAccessDialog.context.vault": "Vault \"{0}\"",
-  "emergencyAccessDialog.context.startedBy": "started by {0} on {1}",
+  "emergencyAccessDialog.context.vaultStartedBy": "Vault \"{0}\" · started by {1} on {2}",
   "emergencyAccessDialog.approvals.count": "{0} of {1} approvals",
   "emergencyAccessDialog.approvals.you": "{0} (you)",
   "emergencyAccessDialog.section.ownership": "What Changes",
@@ -371,7 +371,6 @@
   "grantPermissionDialog.title": "Grant Vault Access",
   "grantPermissionDialog.description": "Shares the key of \"{0}\" with {1} newly added member(s).",
   "grantPermissionDialog.submit": "Grant Access",
-  "grantPermissionDialog.verify": "verify",
   "grantPermissionDialog.warning.unverifiedUser": "Identity not verified",
 
   "groups.title": "Groups",

@@ -14,7 +14,7 @@
             <template v-if="member.ecdsaPublicKey">
               ·
               <button type="button" :disabled="processing" class="rounded-sm font-medium underline hover:text-yellow-900 focus:outline-hidden focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" @click="verify(member)">
-                {{ t('grantPermissionDialog.verify') }}<span class="sr-only"> {{ member.name }}</span>
+                {{ t('trustDetails.showSignDialogBtn') }}<span class="sr-only"> {{ member.name }}</span>
               </button>
             </template>
           </p>

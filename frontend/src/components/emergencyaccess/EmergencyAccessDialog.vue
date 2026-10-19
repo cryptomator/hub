@@ -60,7 +60,7 @@
 
     <template v-else>
       <DialogDescription as="p" class="mt-1 text-sm text-gray-500">
-        {{ t('emergencyAccessDialog.context.vault', [vault.name]) }}<template v-if="starter"> · {{ t('emergencyAccessDialog.context.startedBy', [starter.name, d(starter.startedAt, 'short')]) }}</template>
+        {{ starter ? t('emergencyAccessDialog.context.vaultStartedBy', [vault.name, starter.name, d(starter.startedAt, 'short')]) : t('emergencyAccessDialog.context.vault', [vault.name]) }}
       </DialogDescription>
 
       <div class="group relative mt-3 inline-flex items-center gap-2">
@@ -145,7 +145,7 @@
         {{ t('emergencyAccessDialog.action.abortProcess') }}
       </button>
       <button ref="closeButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
-        {{ t('common.close') }}
+        {{ t(phase === 'start' ? 'common.cancel' : 'common.close') }}
       </button>
       <button v-if="primaryAction" type="submit" :disabled="processing || !primaryAction.enabled" :class="primaryButton">
         {{ primaryAction.label }}
@@ -468,7 +468,7 @@ const primaryAction = computed(() => {
   } else if (canSeeApprove.value) {
     return { label: t('emergencyAccessDialog.action.approve'), enabled: !needsUntrustedConfirmation.value, run: approveRecovery };
   } else if (canSeeComplete.value) {
-    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: !(untrustedGrantees.value.length > 0 && !confirmedUntrustedGrantees.value), run: completeRecovery };
+    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value, run: completeRecovery };
   } else {
     return undefined;
   }
@@ -493,8 +493,8 @@ async function show() {
   await initOwnersAndMembers();
   await loadAuthoritiesForCouncilAndProcesses();
   await initProcessSpecificState();
-  await loadProcessInfos();
-  trusts.value = await backend.trust.listTrusted();
+  const [, trustList] = await Promise.all([loadProcessInfos(), backend.trust.listTrusted()]);
+  trusts.value = trustList;
   untrustedGrantees.value = [];
   confirmedUntrustedGrantees.value = false;
   showSuccess.value = false;
@@ -619,6 +619,12 @@ const phaseTitle = computed(() => {
 async function startRecovery() {
   onError.value = undefined;
   try {
+    const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
+    const councilMembers = await loadActivatedUsers(recoveryCouncilMemberIds);
+    if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
+      throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.length, props.vault.requiredEmergencyKeyShares]));
+    }
+
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
     if (processType.value === 'CHANGE_PERMISSIONS') {
       if (newOwnerIds.value.length === 0) {
@@ -644,12 +650,6 @@ async function startRecovery() {
       };
     } else {
       throw new Error(t('recoveryDialog.error.invalidRecoveryType'));
-    }
-
-    const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
-    const councilMembers = await loadActivatedUsers(recoveryCouncilMemberIds);
-    if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
-      throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.length, props.vault.requiredEmergencyKeyShares]));
     }
 
     const processId = crypto.randomUUID();
