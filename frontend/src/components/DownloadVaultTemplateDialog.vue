@@ -1,5 +1,5 @@
 <template>
-  <HubDialog v-model:open="open" :title="t('downloadVaultTemplateDialog.title')" :busy="processing" :error="onDownloadError && t('common.unexpectedError', [onDownloadError.message])" :initial-focus="downloadButton" @submit="downloadVault()" @closed="$emit('close')">
+  <HubDialog v-model:open="open" :title="t('downloadVaultTemplateDialog.title', [vault.name])" :busy="processing" :error="onDownloadError && t('common.unexpectedError', [onDownloadError.message])" :initial-focus="downloadButton" @submit="downloadVault()" @closed="$emit('close')">
     <DialogDescription as="p" class="mt-2 text-sm text-gray-500">
       {{ t('downloadVaultTemplateDialog.description') }}
     </DialogDescription>

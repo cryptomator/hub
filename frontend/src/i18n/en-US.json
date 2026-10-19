@@ -263,7 +263,7 @@
   "deviceType.desktop": "Desktop",
   "deviceType.mobile": "Mobile",
 
-  "downloadVaultTemplateDialog.title": "Download Vault Template",
+  "downloadVaultTemplateDialog.title": "Download Vault Template for \"{0}\"",
   "downloadVaultTemplateDialog.description": "Unpack the ZIP file once to a location your team can reach, for example a shared cloud folder.",
 
   "emergencyAccess.requiredKeyShares": "Required Key Shares",
