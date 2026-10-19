@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.7.5
-- Redesigned all dialogs
+- Redesigned all dialogs (#506)
 
 ## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
 
