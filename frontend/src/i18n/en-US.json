@@ -138,7 +138,7 @@
   "admin.emergencyAccess.errors.sharesMustNotExceedMembers": "Required key shares must not exceed minimum members.",
 
   "archiveVaultDialog.title": "Archive \"{0}\"?",
-  "archiveVaultDialog.description": "The vault becomes inactive and its occupied seats are freed. You can reactivate it at any time.",
+  "archiveVaultDialog.description": "The vault becomes inactive, which may free up occupied seats. You can reactivate it at any time.",
   "archiveVaultDialog.confirm": "Archive Vault",
 
   "auditLog.title": "Audit Logs",
@@ -506,7 +506,7 @@
   "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
 
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key?",
-  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "Afterwards, you can only add new devices with the new Account Key. Your existing devices stay signed in.",
+  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "Afterwards, you can only add new devices with the new Account Key. Your existing devices remain intact.",
   "regenerateAccountKeyDialog.saveAccountKey.title": "Save Account Key",
   "regenerateAccountKeyDialog.saveAccountKey.description": "Be sure to save this new key. You'll need it to sign in to new devices. You can safely delete the old one.",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Account Key",
