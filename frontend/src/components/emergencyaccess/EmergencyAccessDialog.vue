@@ -24,7 +24,7 @@
           leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
         >
           <DialogPanel
-            class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg"
+            class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg md:max-w-2xl"
           >
             <div class="relative rounded-lg bg-white z-10">
               <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -193,11 +193,11 @@
                 </p>
               </div>
 
-              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex">
+              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:items-center">
                 <!-- ABORT -->
                 <template v-if="phase !== 'start' && (isMeInProcessCouncil || isMeInCouncil) && !showSuccess">
                   <button
-                    class=" text-sm text-red-600 hover:underline sm:mr-auto focus:outline-none focus:underline rounded"
+                    class=" text-sm text-red-600 hover:underline sm:mr-auto sm:text-left focus:outline-none focus:underline rounded"
                     @click.stop="requestCancel()"
                   >
                     {{ t('emergencyAccessDialog.action.abortProcess') }}
@@ -207,7 +207,7 @@
                 <button
                   ref="closeButton"
                   type="button"
-                  class="mt-3 inline-flex w-full justify-center sm:ml-auto rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                  class="mt-3 inline-flex w-full justify-center sm:ml-auto whitespace-nowrap rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
                   @click.stop="open = false" 
                 >
                   {{ t('common.close') }}
@@ -216,7 +216,7 @@
                 <template v-if="phase === 'start'">
                   <button
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    class="inline-flex w-full justify-center whitespace-nowrap rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
                     :disabled="!canStartRecovery || needsUntrustedConfirmation"
                     @click="startRecovery()"
                   >
@@ -229,7 +229,7 @@
                   <button
                     v-if="canSeeApprove"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    class="inline-flex w-full justify-center whitespace-nowrap rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
                     :disabled="needsUntrustedConfirmation"
                     @click="approveRecovery()"
                   >
@@ -243,7 +243,7 @@
                     v-if="canSeeComplete"
                     ref="completeButton"
                     type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    class="inline-flex w-full sm:w-auto justify-center whitespace-nowrap rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
                     :disabled="untrustedGrantees.length > 0 && !confirmedUntrustedGrantees"
                     @click="completeRecovery()"
                   >
