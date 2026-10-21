@@ -696,7 +696,7 @@ async function validateVaultEmergencyAccess() {
         throw new Error('Invalid state');
     }
 
-    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(recoveryKeyProducer);
+    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(vault.value.id, recoveryKeyProducer);
     vault.value.requiredEmergencyKeyShares = requiredKeyShares;
     vault.value.emergencyKeyShares = { ...keyShares };
     state.value = State.ShowRecoveryKey;

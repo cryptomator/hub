@@ -128,7 +128,7 @@ async function splitRecoveryKey() {
 
   onAddCouncilMemberError.value = undefined;
   try {
-    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(props.vaultKeys);
+    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(props.vault.id, props.vaultKeys);
 
     const updatedVault = await backend.vaults.createOrUpdateVault({
       ...props.vault,

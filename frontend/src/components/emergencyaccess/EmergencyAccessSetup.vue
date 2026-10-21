@@ -117,7 +117,7 @@ onMounted(async () => {
   await initialize();
 });
 
-async function split(vaultKeys: RecoveryKeyProducing): Promise<SplitResult> {
+async function split(vaultId: string, vaultKeys: RecoveryKeyProducing): Promise<SplitResult> {
   if (props.requiredKeyShares < 1) {
     throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
   }
@@ -136,6 +136,7 @@ async function split(vaultKeys: RecoveryKeyProducing): Promise<SplitResult> {
 
   const recoveryKeyBytes = await vaultKeys.createPaddedRecoveryKeyBytes();
   const keyShares = await EmergencyAccess.split(
+    vaultId,
     recoveryKeyBytes,
     props.requiredKeyShares,
     ...emergencyCouncilMembers.value

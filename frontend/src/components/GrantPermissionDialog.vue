@@ -26,22 +26,28 @@
                     <div class="mt-2 h-48 overflow-y-auto">
                       <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
                         <template v-for="member in users.values()" :key="member.id">
-                          <li class="py-3 flex flex-col">
+                          <li class="py-3 flex flex-col" :class="{ 'bg-yellow-50': isUntrusted(member) }">
                             <div class="flex items-center whitespace-nowrap w-full">
                               <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                              <p class="ml-4 text-sm font-medium text-gray-900 w-full">{{ member.name }}</p>
+                              <div class="ml-4 w-full">
+                                <p class="text-sm font-medium text-gray-900">{{ member.name }}</p>
+                                <p v-if="isUntrusted(member)" class="text-xs text-yellow-700">{{ t('grantPermissionDialog.warning.unverifiedUser') }}</p>
+                              </div>
                               <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
                             </div>
                           </li>
                         </template>
                       </ul>
                     </div>
+                    <UntrustedRecipientsWarning v-if="untrustedUsers.length > 0" v-model:confirmed="confirmedUntrusted" require-confirmation class="mt-3">
+                      <p>{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedUsers.map(u => u.name).join(', ')]) }}</p>
+                    </UntrustedRecipientsWarning>
                   </div>
                 </div>
               </div>
               <form novalidate @submit.prevent="grantAccess">
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                  <button type="submit" :disabled="untrustedUsers.length > 0 && !confirmedUntrusted" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-red-600 disabled:cursor-not-allowed">
                     {{ t('grantPermissionDialog.submit', [users.length]) }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
@@ -67,16 +73,20 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64 } from '@scure/base';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
 import { AccessTokenProducing } from '../common/crypto';
+import wot from '../common/wot';
 import TrustDetails from './TrustDetails.vue';
+import UntrustedRecipientsWarning from './UntrustedRecipientsWarning.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const trusts = ref<TrustDto[]>([]);
+const trustLevels = ref<Map<string, number>>(new Map());
+const confirmedUntrusted = ref(false);
 const onGrantPermissionError = ref<Error>();
 
 const props = defineProps<{
@@ -102,6 +112,14 @@ async function fetchData() {
 
 async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
+  trustLevels.value = await wot.computeTrustLevels(props.users, trusts.value);
+}
+
+// only users who will actually receive a key (i.e. have an ecdhPublicKey) are relevant for the warning:
+const untrustedUsers = computed(() => props.users.filter(u => u.type === 'USER' && u.ecdhPublicKey && trustLevels.value.get(u.id) === -1));
+
+function isUntrusted(member: MemberDto & UserDto): boolean {
+  return member.type === 'USER' && !!member.ecdhPublicKey && trustLevels.value.get(member.id) === -1;
 }
 
 function show() {
@@ -111,6 +129,9 @@ function show() {
 async function grantAccess() {
   onGrantPermissionError.value = undefined;
   try {
+    if (untrustedUsers.value.length > 0 && !confirmedUntrusted.value) {
+      throw new Error('Sharing the vault key with unverified users requires explicit confirmation');
+    }
     await giveUsersAccess(props.users);
     emit('permissionGranted');
     open.value = false;

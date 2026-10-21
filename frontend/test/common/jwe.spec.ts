@@ -192,6 +192,41 @@ describe('JWE', () => {
       const decrypted = await JWE.parseCompact(jwe).decrypt(recipient);
       expect(decrypted).to.deep.eq(orig);
     });
+
+    it('refuses to encrypt with an out-of-range iteration count', () => {
+      expect(() => Recipient.pbes2('password', 'topsecret', PBES2.MIN_ITERATION_COUNT - 1)).toThrow('Unsupported PBKDF2 iteration count');
+      expect(() => Recipient.pbes2('password', 'topsecret', PBES2.MAX_ITERATION_COUNT + 1)).toThrow('Unsupported PBKDF2 iteration count');
+    });
+
+    describe('rejects unauthenticated p2c outside of the permitted range', () => {
+      const recipient = Recipient.pbes2('password', 'topsecret', 1000);
+
+      // re-encodes the protected header of a legitimate compact JWE with the given p2c, simulating a tampered token:
+      async function withTamperedP2c(p2c: unknown): Promise<EncryptedJWE> {
+        const [protectedHeader, ...rest] = (await JWE.build({ hello: 'world' }).withRecipients(recipient).toCompact()).split('.');
+        const header = JSON.parse(new TextDecoder().decode(base64urlnopad.decode(protectedHeader)));
+        const tamperedHeader = base64urlnopad.encode(new TextEncoder().encode(JSON.stringify({ ...header, p2c: p2c })));
+        return JWE.parseCompact([tamperedHeader, ...rest].join('.'));
+      }
+
+      it('rejects an excessive p2c without running the KDF', async () => {
+        const jwe = await withTamperedP2c(2 ** 31);
+
+        await expect(jwe.decrypt(recipient)).rejects.toThrow('Unsupported PBKDF2 iteration count');
+      });
+
+      it('rejects a downgraded p2c', async () => {
+        const jwe = await withTamperedP2c(PBES2.MIN_ITERATION_COUNT - 1);
+
+        await expect(jwe.decrypt(recipient)).rejects.toThrow('Unsupported PBKDF2 iteration count');
+      });
+
+      it('rejects a non-integer p2c', async () => {
+        const jwe = await withTamperedP2c(1000.5);
+
+        await expect(jwe.decrypt(recipient)).rejects.toThrow('Unsupported PBKDF2 iteration count');
+      });
+    });
   });
 
   describe('JWE using alg: A256KW', () => {

@@ -11,6 +11,11 @@ RUN ./mvnw -B package -DskipTests --no-transfer-progress --strict-checksums
 
 ## Stage 2 : create the docker final image
 FROM eclipse-temurin:25@sha256:68868d04fa9cfd5f5c6abec0b5cef86d8de2bf9c62c37c7d3e4f0f80f5cfd7ff
+# remove the CA roots distrusted after the eMudhra key compromise (2026-10-17) from the JDK trust store and from the Ubuntu CA bundle (the "!" prefix deselects a root in ca-certificates.conf)
+COPY src/main/docker/remove-distrusted-cacerts.sh /tmp/remove-distrusted-cacerts.sh
+RUN sh /tmp/remove-distrusted-cacerts.sh "$JAVA_HOME/lib/security/cacerts" && rm /tmp/remove-distrusted-cacerts.sh \
+  && sed -i -E 's#^(mozilla/(emSign_ECC_Root_CA_-_G3|AAA_Certificate_Services)\.crt)$#!\1#' /etc/ca-certificates.conf \
+  && update-ca-certificates
 COPY --from=builder /code/target/quarkus-app/ /work/
 WORKDIR /work/
 

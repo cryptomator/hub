@@ -331,6 +331,8 @@
   "emergencyAccessDialog.error.processTampered": "Recovery process has been tampered with.",
   "emergencyAccessDialog.error.noProcessToComplete": "No recovery process to complete.",
   "emergencyAccessDialog.error.unsupportedProcessType": "Unsupported state for recovery process type: {0}",
+  "emergencyAccessDialog.warning.groupRecipients": "Groups are selected ({0}). Their individual members cannot be verified; on completion, the vault key will be shared with all group members.",
+  "emergencyAccessDialog.warning.untrustedGrantees": "Completing this process will share the vault key with recipients whose identity has not been verified: {0}.",
 
   "grantEmergencyAccessDialog.title": "Grant Emergency Access",
   "grantEmergencyAccessDialog.description.selectCouncil": "Select council members to grant emergency access for this vault.",
@@ -359,6 +361,7 @@
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
+  "grantPermissionDialog.warning.unverifiedUser": "Identity not verified",
 
   "groups.title": "Groups",
   "group.detail.info": "Group Details",
@@ -375,6 +378,7 @@
   "groupList.edit.group.button": "Edit",
   "groupList.search.placeholder": "Search…",
   "groupList.groupImage": "Group Image",
+  "groupList.profileImage": "Group Profile Picture",
   "groupList.vaults.count": "Vaults",
   "groupList.create.button": "Create Group",
   "groupList.group.created": "Created on",
@@ -405,6 +409,7 @@
   "groupEditCreate.roles.choose": "Choose roles",
   "groupEditCreate.roles.addMore": "Add more",
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
+  "groupEditCreate.profilePicture": "Profile Picture",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
   "groupEditCreate.selectRolesPlaceholder": "Select role(s)",
   "groupEditCreate.error.alreadyExists": "This group already exists.",
@@ -418,6 +423,9 @@
   "signUserKeysDialog.title": "Verify {0}'s Identity",
   "signUserKeysDialog.description": "Enter the first {0} characters of {1}'s fingerprint in order to confirm the authenticity of their public keys. The fingerprint can be found in the user's profile.",
   "signUserKeysDialog.submit": "Confirm this User's Identity",
+
+  "untrustedRecipientsWarning.untrustedUsers": "The identity of the following users has not been verified: {0}. A compromised server could have substituted their keys to gain access to the vault key.",
+  "untrustedRecipientsWarning.confirm": "I understand the risk and want to proceed anyway.",
 
   "initialSetup.createUserKey.title": "Welcome to Cryptomator Hub",
   "initialSetup.createUserKey.description": "On first login, every user gets a unique Account Key:",
@@ -601,6 +609,8 @@
   "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
+  "vaultDetails.confirmRoleUpdate.grantOwnershipDescription": "Do you want to grant ownership of this vault to {0}? This shares the vault's owner keys with them.",
+  "vaultDetails.confirmRoleUpdate.revokeOwnershipDescription": "Do you want to revoke ownership of this vault from {0}? They will remain a regular member.",
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",
   "vaultDetails.actions.updatePermissions.reload": "Reload",

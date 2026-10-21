@@ -115,7 +115,7 @@ export abstract class Recipient {
    * 
    * @param kid The key ID used to distinguish multiple recipients
    * @param password The password to feed into the KDF
-   * @param iterations The PBKDF2 iteration count (defaults to {@link PBES2.DEFAULT_ITERATION_COUNT}) - ignored and read from the header's `p2c` value during decryption
+   * @param iterations The PBKDF2 iteration count within [{@link PBES2.MIN_ITERATION_COUNT}, {@link PBES2.MAX_ITERATION_COUNT}] (defaults to {@link PBES2.DEFAULT_ITERATION_COUNT}) - ignored and read from the header's `p2c` value during decryption
    * @returns A new recipient
    */
   public static pbes2(kid: string, password: string, iterations: number = PBES2.DEFAULT_ITERATION_COUNT): Recipient {
@@ -241,6 +241,7 @@ class Pbes2Recipient extends Recipient {
 
   constructor(readonly kid: string, private readonly password: string, private readonly iterations: number) {
     super(kid);
+    PBES2.validateIterationCount(iterations); // fail at encryption time already, otherwise we'd produce a JWE that decrypt() rejects
   }
 
   async encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties> {
@@ -264,6 +265,7 @@ class Pbes2Recipient extends Recipient {
     if (header.alg != 'PBES2-HS512+A256KW' || !header.p2s || !header.p2c) {
       throw new Error('Missing or invalid header parameters.');
     }
+    PBES2.validateIterationCount(header.p2c); // p2c is unauthenticated at this point, clamp it before running the KDF
     const salt = base64urlnopad.decode(header.p2s);
     const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c);
     try {
@@ -564,7 +566,20 @@ export class ECDH_ES {
 export class PBES2 {
 
   public static readonly DEFAULT_ITERATION_COUNT = 1000000;
+  public static readonly MIN_ITERATION_COUNT = 1000; // minimum recommended by RFC 7518, Section 4.8.1.2
+  public static readonly MAX_ITERATION_COUNT = 16777216; // 2^24, upper sanity bound to prevent resource exhaustion via an attacker-controlled p2c header
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
+
+  /**
+   * Checks that a PBKDF2 iteration count is an integer within [{@link PBES2.MIN_ITERATION_COUNT}, {@link PBES2.MAX_ITERATION_COUNT}].
+   * @param iterations The iteration count to validate
+   * @throws Error if the iteration count is unsupported
+   */
+  public static validateIterationCount(iterations: number): void {
+    if (!Number.isInteger(iterations) || iterations < PBES2.MIN_ITERATION_COUNT || iterations > PBES2.MAX_ITERATION_COUNT) {
+      throw new Error(`Unsupported PBKDF2 iteration count: ${iterations}`);
+    }
+  }
 
   public static async deriveWrappingKey(password: string, alg: 'PBES2-HS512+A256KW' | 'PBES2-HS256+A128KW', salt: Uint8Array, iterations: number, extractable: boolean = false): Promise<CryptoKey> {
     let hash, keyLen;
