@@ -155,6 +155,7 @@
           }
         },
         "resources": { "$ref": "#/definitions/resources" },
+        "extraArgs": { "type": "array", "items": { "type": "string" } },
         "config": {
           "type": "object",
           "additionalProperties": false,

@@ -49,6 +49,9 @@ hub:
       memory: 64Mi
     limits:
       memory: 64Mi
+  # Extra runtime arguments for the native binary, e.g. to bound heap and off-heap memory relative to the container limit:
+  # ["-Xmx24m", "-XX:MaxDirectMemorySize=8m"]. GraalVM runtime options (-X*, -XX:*) and system properties (-D*) are supported.
+  extraArgs: []
   config:
     keycloakRealm: cryptomator
     keycloakSyncerPeriod: 5m
