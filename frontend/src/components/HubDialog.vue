@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid';
+import { nextTick, watch } from 'vue';
 import type { Component } from 'vue';
 
 const open = defineModel<boolean>('open', { required: true });
@@ -68,6 +69,13 @@ defineEmits<{
   submit: []
   closed: []
 }>();
+
+// Controls are disabled while busy, which drops the focus; after a failed action (dialog still open) hand it back.
+watch(() => props.busy, (busy, wasBusy) => {
+  if (wasBusy && !busy && open.value) {
+    nextTick(() => props.initialFocus?.focus());
+  }
+});
 
 function requestClose() {
   if (!props.busy) {

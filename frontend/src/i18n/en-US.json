@@ -49,7 +49,6 @@
   "common.undo": "Undo",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.unsavedChanges": "Unsaved changes.",
-  "common.update": "Update",
   "common.xMembers": "{0} Members",
   "common.actions": "Actions",
   "common.group": "Group",
@@ -85,10 +84,11 @@
   "admin.licenseInfo.enterLicense": "Update License Manually",
 
   "enterLicenseDialog.title": "Update License",
-  "enterLicenseDialog.description": "License keys are normally updated automatically. If Cryptomator Support has provided you with a key, you can enter it here.",
+  "enterLicenseDialog.description": "License keys are normally updated automatically. Only paste a key here that Cryptomator Support has given you.",
   "enterLicenseDialog.licenseKey": "License Key",
   "enterLicenseDialog.error.invalidLicenseKey": "Invalid license key format.",
   "enterLicenseDialog.error.rejected": "License rejected: {0}",
+  "enterLicenseDialog.submit": "Save License",
 
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
@@ -182,11 +182,11 @@
   "auditLog.paymentRequired.openAdminSection": "Open Admin Section",
 
   "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
-  "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
+  "claimVaultOwnershipDialog.description": "Confirm with the vault admin password of \"{0}\" that you are allowed to manage this vault.",
   "claimVaultOwnershipDialog.password": "Vault Admin Password",
   "claimVaultOwnershipDialog.submit": "Claim Ownership",
-  "claimVaultOwnershipDialog.error.formValidationFailed": "Password must not be empty",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Wrong password",
+  "claimVaultOwnershipDialog.error.formValidationFailed": "Password must not be empty.",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Wrong password.",
 
   "fetchError.title": "Fetching data failed",
 
@@ -272,6 +272,7 @@
   "emergencyAccess.startProcess": "Start process",
   "emergencyAccess.notPossible": "Not possible",
   "emergencyAccess.vaultCouncil": "Vault Council",
+  "emergencyAccess.vaultAccess": "Vault Access",
   "emergencyAccess.noRedundancy": "No Redundancy",
   "emergencyAccess.label.councilMembers": "Council Members",
   "emergencyAccess.label.newCouncilMembers": "New Council Members",
@@ -352,12 +353,11 @@
   "recoveryDialog.error.noOwnerSelected": "Select at least one owner.",
   "recoveryDialog.error.notEnoughCouncilMembers": "Not enough council members selected.",
 
-  "editVaultMetadataDialog.title": "Edit Vault Metadata",
-  "editVaultMetadataDialog.description": "Update the name and description of the vault.",
+  "editVaultMetadataDialog.title": "Edit Vault",
+  "editVaultMetadataDialog.description": "All members of \"{0}\" see its name and description.",
   "editVaultMetadataDialog.vaultName": "Vault Name",
   "editVaultMetadataDialog.vaultDescription": "Description",
   "editVaultMetadataDialog.error.formValidationFailed": "Vault name must not be empty.",
-  "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
 
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
@@ -424,6 +424,7 @@
 
   "signUserKeysDialog.title": "Verify {0}'s Identity",
   "signUserKeysDialog.description": "Enter the first {0} characters of {1}'s fingerprint in order to confirm the authenticity of their public keys. The fingerprint can be found in the user's profile.",
+  "signUserKeysDialog.fingerprint": "Fingerprint",
   "signUserKeysDialog.submit": "Confirm this User's Identity",
 
   "untrustedRecipientsWarning.untrustedUsers": "The identity of the following users has not been verified: {0}. A compromised server could have substituted their keys to gain access to the vault key.",
@@ -499,11 +500,12 @@
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
-  "recoverVaultDialog.title": "Vault Recovery",
-  "recoverVaultDialog.description": "Type in the Recovery Key of this vault to regain access to it.",
+  "recoverVaultDialog.title": "Recover Vault Access",
+  "recoverVaultDialog.description": "Paste the Recovery Key of \"{0}\" to regain access to the vault.",
+  "recoverVaultDialog.recoveryKey": "Recovery Key",
   "recoverVaultDialog.submit": "Recover Vault",
-  "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
-  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
+  "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty.",
+  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key.",
 
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key?",
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "Afterwards, you can only add new devices with the new Account Key. Your existing devices remain intact.",

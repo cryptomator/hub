@@ -180,7 +180,7 @@
 
                 <!-- VAULT MEMBERS -->
                 <section class="flex flex-1 min-w-0 flex-col">
-                  <h4 class="mb-2 font-semibold text-gray-700">Vault Access</h4>
+                  <h4 class="mb-2 font-semibold text-gray-700">{{ t('emergencyAccess.vaultAccess') }}</h4>
                   <div class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-3 items-center mb-3">
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-500 whitespace-nowrap">{{ t('emergencyAccess.label.owners') }}:</div>
                     <UserListGroupVisualization :authorities="getVaultMembers(vault.id).filter(member => member.vaultRole === 'OWNER')" :max="8" />
