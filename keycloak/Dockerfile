@@ -15,5 +15,13 @@ LABEL maintainer="info@skymatic.de"
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 COPY --from=ubi-micro-build /mnt/rootfs /
 COPY /themes/cryptomator /opt/keycloak/themes/cryptomator
+
+# distrust the CA root affected by the eMudhra key compromise (2026-10-17), the distro bundle may not have dropped it yet.
+# The JVM's cacerts is a symlink to /etc/pki/ca-trust/extracted/java/cacerts, so update-ca-trust covers Keycloak's trust store, too.
+USER root
+RUN trust extract --format=pem-bundle --filter="pkcs11:object=emSign%20ECC%20Root%20CA%20-%20G3" --overwrite /etc/pki/ca-trust/source/blocklist/emsign-ecc-root-ca-g3.pem \
+  && update-ca-trust
+USER 1000
+
 WORKDIR /opt/keycloak
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
