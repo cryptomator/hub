@@ -521,18 +521,10 @@ function handleParentClose() { if (!wantAbort.value) open.value = false; }
 
 function handleAfterLeave() { if (!open.value) emit('close'); }
 
-async function handleRecoveryAborted() {
-  if (!props.recoveryProcess) return;
-  onError.value = undefined;
-  try {
-    await backend.emergencyAccess.abort(props.recoveryProcess.id);
-    emit('updated');
-    wantAbort.value = false;
-    open.value = false;
-  } catch (error) {
-    console.error('Cancelling emergency recovery failed.', error);
-    onError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
+function handleRecoveryAborted() {
+  emit('updated');
+  wantAbort.value = false;
+  open.value = false;
 }
 
 async function show() {

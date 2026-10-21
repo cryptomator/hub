@@ -15,6 +15,7 @@
 
   "common.add": "Add",
   "common.apply": "Apply",
+  "common.back": "Back",
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.copied": "Copied!",
@@ -136,9 +137,9 @@
   "admin.emergencyAccess.validation.minMembersAtLeastRequiredShares": "Must be greater than or equal to required key shares.",
   "admin.emergencyAccess.errors.sharesMustNotExceedMembers": "Required key shares must not exceed minimum members.",
 
-  "archiveVaultDialog.title": "Archive Vault",
-  "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
-  "archiveVaultDialog.confirm": "Archive",
+  "archiveVaultDialog.title": "Archive \"{0}\"?",
+  "archiveVaultDialog.description": "The vault becomes inactive, which may free up occupied seats. You can reactivate it at any time.",
+  "archiveVaultDialog.confirm": "Archive Vault",
 
   "auditLog.title": "Audit Logs",
   "auditLog.order.ascending": "Ascending",
@@ -231,19 +232,19 @@
   "createVault.success.download": "Download zipped vault folder",
   "createVault.success.return": "Return to vault list",
 
-  "deleteGroupDialog.title": "Delete Group",
-  "deleteGroupDialog.description": "Are you sure you want to permanently delete this group? It will be removed from all associated vaults. This action cannot be undone.",
-  "deleteGroupDialog.confirm": "Yes, delete group",
+  "deleteGroupDialog.title": "Delete {0}?",
+  "deleteGroupDialog.description": "The group will be removed from all vaults. Its members lose any access shared through the group. This cannot be undone.",
+  "deleteGroupDialog.confirm": "Delete Group",
   "deleteGroupDialog.error.failed": "Failed to delete group.",
 
-  "disableUserDialog.title": "Disable User",
-  "disableUserDialog.description": "This user will no longer be able to log in and will be excluded from the seat count. You can re-enable the user at any time.",
+  "disableUserDialog.title": "Disable {0}?",
+  "disableUserDialog.description": "{0} will no longer be able to log in and won't occupy a seat. You can re-enable {0} at any time.",
   "disableUserDialog.confirm": "Disable User",
   "disableUserDialog.error.failed": "Failed to update user.",
 
-  "deleteUserDialog.title": "Delete User Account",
-  "deleteUserDialog.description": "Are you sure you want to permanently delete this user? All associated vaults and devices will be removed. This action cannot be undone.",
-  "deleteUserDialog.confirm": "Yes, delete user",
+  "deleteUserDialog.title": "Delete {0}?",
+  "deleteUserDialog.description": "All vault access and devices of {0} will be removed. This cannot be undone.",
+  "deleteUserDialog.confirm": "Delete User",
   "deleteUserDialog.error.failed": "Failed to delete user.",
 
   "deviceList.empty.message": "No devices",
@@ -342,9 +343,9 @@
   "grantEmergencyAccessDialog.error.councilMembersRequired": "At least 2 Council Members are required.",
   "grantEmergencyAccessDialog.error.tooFewCouncilMembers": "Too few Council Members. Add more or lower the required Emergency Key Shares.",
 
-  "processAbortDialog.title": "Abort this Process",
-  "processAbortDialog.description": "Are you sure you want to abort this emergency access process? This action cannot be undone.",
-  "processAbortDialog.confirm": "Abort Process",
+  "processAbortDialog.title": "Abort Process for Everyone?",
+  "processAbortDialog.description": "All approvals given so far will be discarded for all council members. The process can then no longer be approved or completed and has to be started again.",
+  "processAbortDialog.confirm": "Abort for Everyone",
 
   "recoveryDialog.error.invalidRecoveryType": "Invalid recovery process type.",
   "recoveryDialog.error.processAlreadyExists": "A recovery process of this type already exists.",
@@ -391,9 +392,10 @@
   "group.addMembers.selectedUser": "User(s) selected",
   "group.addMembers.error.failed": "Failed to add member to group.",
 
-  "group.member.remove.title" : "Remove User from Group",
-  "group.member.remove.description": "Are you sure you want to remove this user from the group?",
-  "group.member.remove.confirm": "Yes, remove from group",
+  "group.member.remove.title": "Remove {0} from {1}?",
+  "group.member.remove.description": "{0} will lose access to all vaults shared through {1}.",
+  "group.member.remove.descriptionGroup": "Members of {0} will lose access to all vaults shared through {1}.",
+  "group.member.remove.confirm": "Remove from Group",
   "group.member.remove.error.failed": "Failed to remove from group.",
 
   "groupEditCreate.title.create" : "Create New Group",
@@ -503,15 +505,15 @@
   "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
   "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
 
-  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
-  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
+  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key?",
+  "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "Afterwards, you can only add new devices with the new Account Key. Your existing devices remain intact.",
   "regenerateAccountKeyDialog.saveAccountKey.title": "Save Account Key",
   "regenerateAccountKeyDialog.saveAccountKey.description": "Be sure to save this new key. You'll need it to sign in to new devices. You can safely delete the old one.",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Account Key",
   "regenerateAccountKeyDialog.submit": "Regenerate Key",
 
-  "resetUserAccountDialog.title": "Reset User Account",
-  "resetUserAccountDialog.description": "Only reset your account if you've lost your Account Key. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
+  "resetUserAccountDialog.title": "Reset Account?",
+  "resetUserAccountDialog.description": "Only necessary if you have lost your Account Key. You will lose access to all vaults until their owners grant it to you again.",
   "resetUserAccountDialog.submit": "Reset Account",
 
   "userkeyFingerprint.title": "User Key Fingerprint",
@@ -609,8 +611,10 @@
   "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
-  "vaultDetails.confirmRoleUpdate.grantOwnershipDescription": "Do you want to grant ownership of this vault to {0}? This shares the vault's owner keys with them.",
-  "vaultDetails.confirmRoleUpdate.revokeOwnershipDescription": "Do you want to revoke ownership of this vault from {0}? They will remain a regular member.",
+  "vaultDetails.confirmRoleUpdate.grantOwnershipTitle": "Grant Ownership to {0}?",
+  "vaultDetails.confirmRoleUpdate.grantOwnershipDescription": "This shares the vault's owner keys with {0}.",
+  "vaultDetails.confirmRoleUpdate.revokeOwnershipTitle": "Revoke Ownership from {0}?",
+  "vaultDetails.confirmRoleUpdate.revokeOwnershipDescription": "{0} will remain a regular member of this vault.",
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",
   "vaultDetails.actions.updatePermissions.reload": "Reload",

@@ -239,9 +239,11 @@
   <ConfirmDialog
     v-if="pendingRoleUpdate"
     ref="roleUpdateConfirmDialog"
-    :title="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.sharedWith.grantOwnership' : 'vaultDetails.sharedWith.revokeOwnership')"
+    :title="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.confirmRoleUpdate.grantOwnershipTitle' : 'vaultDetails.confirmRoleUpdate.revokeOwnershipTitle', [pendingRoleUpdate.member.name])"
     :description="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.confirmRoleUpdate.grantOwnershipDescription' : 'vaultDetails.confirmRoleUpdate.revokeOwnershipDescription', [pendingRoleUpdate.member.name])"
     :confirm-label="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.sharedWith.grantOwnership' : 'vaultDetails.sharedWith.revokeOwnership')"
+    :tone="pendingRoleUpdate.untrusted ? 'danger' : 'neutral'"
+    :icon="pendingRoleUpdate.untrusted ? undefined : KeyIcon"
     @confirmed="confirmPendingRoleUpdate()"
     @close="pendingRoleUpdate = undefined"
   >
@@ -260,6 +262,7 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
+import { KeyIcon } from '@heroicons/vue/24/outline';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
