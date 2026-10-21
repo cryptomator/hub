@@ -25,6 +25,13 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 	@Column(name = "authority_id")
 	private @Nullable String authorityId;
 
+	/**
+	 * Whether this grant was performed by a member's client under the automatic access grant policy (as opposed to a
+	 * deliberate manual grant by a vault owner). The cryptographic actor remains {@link #grantedBy} in both cases.
+	 */
+	@Column(name = "automatic", nullable = false)
+	private boolean automatic;
+
 	public @Nullable String getGrantedBy() {
 		return grantedBy;
 	}
@@ -49,6 +56,14 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 		this.authorityId = authorityId;
 	}
 
+	public boolean isAutomatic() {
+		return automatic;
+	}
+
+	public void setAutomatic(boolean automatic) {
+		this.automatic = automatic;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -57,12 +72,13 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 		return super.equals(that) //
 				&& Objects.equals(grantedBy, that.grantedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
-				&& Objects.equals(authorityId, that.authorityId);
+				&& Objects.equals(authorityId, that.authorityId) //
+				&& automatic == that.automatic;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), grantedBy, vaultId, authorityId);
+		return Objects.hash(super.getId(), grantedBy, vaultId, authorityId, automatic);
 	}
 
 }

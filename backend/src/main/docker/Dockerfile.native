@@ -1,5 +1,9 @@
 ## Stage 1 : build with maven builder image with native capabilities
 FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25@sha256:1a47e85f8b945cd6819a9551d3e481609ea7fa5a0163d62f666f5e291491837f AS builder
+# native-image embeds the build JDK's cacerts into the executable, so remove the CA roots distrusted after the eMudhra key compromise (2026-10-17) before building
+USER root
+COPY src/main/docker/remove-distrusted-cacerts.sh /tmp/remove-distrusted-cacerts.sh
+RUN sh /tmp/remove-distrusted-cacerts.sh "$JAVA_HOME/lib/security/cacerts" && rm /tmp/remove-distrusted-cacerts.sh
 COPY --chown=quarkus:quarkus --chmod=0755 mvnw /code/mvnw
 COPY --chown=quarkus:quarkus .mvn /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
@@ -21,6 +25,10 @@ FROM quay.io/quarkus/quarkus-micro-image:2.0@sha256:33d88f6b4f023dcea9a97df146a7
 COPY --from=builder /code/target/*-runner /work/application
 COPY --from=installer /mnt/rootfs /
 WORKDIR /work/
+
+# distrust the same CA root in the OS trust store (used by curl etc.), the distro bundle may not have dropped it yet
+RUN trust extract --format=pem-bundle --filter="pkcs11:object=emSign%20ECC%20Root%20CA%20-%20G3" --overwrite /etc/pki/ca-trust/source/blocklist/emsign-ecc-root-ca-g3.pem \
+  && update-ca-trust
 
 # set up permissions for user `1001`
 RUN chmod 775 /work /work/application \

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.3...HEAD)
+
+## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
+
+### Changed
+
+- Updated Keycloak to 26.7.5
+
+### Security
+
+Details on the vulnerabilities below will be published as GitHub security advisories once users had time to update. Please upgrade promptly.
+
+- Fixed a vulnerability in the emergency access feature (GHSA-m34v-6wr7-hxpp)
+- Fixed a vulnerability in Web of Trust signature verification (GHSA-6h99-f755-pjr7)
+- Fixed a vulnerability affecting Web of Trust checks when granting vault access (GHSA-58gr-v8jr-2g56)
+- Fixed a denial-of-service vulnerability in client-side key material parsing (GHSA-x8hg-xmc2-pvfq)
+- Removed the CA root `emSign ECC Root CA - G3` from the trust stores of the Hub and Keycloak images (JDK `cacerts` and OS bundle) after the eMudhra intermediate CA key compromise of 2026-10-17, see [Mozilla bug 2083449](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449). The Keycloak image is published as `26.7.5.1`.
+
 ## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
 
 ### Fixed

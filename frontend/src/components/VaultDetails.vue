@@ -61,12 +61,12 @@
                     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                       <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
                         <div class="py-1">
-                          <MenuItem v-if="member.vaultRole == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                          <MenuItem v-if="member.vaultRole == 'MEMBER'" v-slot="{ active }" @click="requestUpdateMemberRole(member, 'OWNER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.grantOwnership') }}
                             </div>
                           </MenuItem>
-                          <MenuItem v-if="member.vaultRole == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                          <MenuItem v-if="member.vaultRole == 'OWNER'" v-slot="{ active }" @click="requestUpdateMemberRole(member, 'MEMBER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                             </div>
@@ -167,10 +167,11 @@
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
-        <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <!-- displayRecoveryKey button (Vault Format 8 only) -->
+        <button v-if="vaultRole == 'OWNER' && vaultFormat8" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
+        <!-- TODO: regenerateRecoveryKey button (UVF only) -->
         <!-- reactivateVault button -->
         <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
           {{ t('vaultDetails.actions.reactivateVault') }}
@@ -181,10 +182,10 @@
       <div v-else class="mt-2 flex flex-col gap-2">
         <!-- grantAccess button -->
         <div v-if="vaultRole == 'OWNER'" class="flex gap-2">
-          <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+          <button :disabled="membersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
             {{ t('vaultDetails.actions.updatePermissions') }}
           </button>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadMembersRequiringAccessGrant()">
             <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
             <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
           </button>
@@ -198,7 +199,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER' && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
 
@@ -234,29 +235,47 @@
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault && vaultKeys" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <GrantPermissionDialog v-if="grantingPermission && vault && (vaultFormat8 || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="membersRequiringAccessGrant" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <ConfirmDialog
+    v-if="pendingRoleUpdate"
+    ref="roleUpdateConfirmDialog"
+    :title="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.sharedWith.grantOwnership' : 'vaultDetails.sharedWith.revokeOwnership')"
+    :description="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.confirmRoleUpdate.grantOwnershipDescription' : 'vaultDetails.confirmRoleUpdate.revokeOwnershipDescription', [pendingRoleUpdate.member.name])"
+    :confirm-label="t(pendingRoleUpdate.role === 'OWNER' ? 'vaultDetails.sharedWith.grantOwnership' : 'vaultDetails.sharedWith.revokeOwnership')"
+    @confirmed="confirmPendingRoleUpdate()"
+    @close="pendingRoleUpdate = undefined"
+  >
+    <UntrustedRecipientsWarning v-if="pendingRoleUpdate.untrusted">
+      <p>{{ t('untrustedRecipientsWarning.untrustedUsers', [pendingRoleUpdate.member.name]) }}</p>
+    </UntrustedRecipientsWarning>
+  </ConfirmDialog>
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="refreshVault" />
-  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && vaultKeys" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
-  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultFormat8 || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="downloadingVaultTemplate = false" />
+  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" ref="displayRecoveryKeyDialog" :vault="vault" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
-  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys && settings" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" :settings="settings" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
+  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && (vaultFormat8 || uvfVault) && settings" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" :settings="settings" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
 
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
+import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import config from '../common/config';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
+import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
+import { VaultFormat8 } from '../common/vaultFormat8';
+import { unwrapVaultKeys } from '../common/vaultKeys';
+import wot from '../common/wot';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
 import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
@@ -265,6 +284,7 @@ import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
+import UntrustedRecipientsWarning from './UntrustedRecipientsWarning.vue';
 import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -306,10 +326,13 @@ const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
 const recoveringVault = ref(false);
 const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
-const vaultKeys = ref<VaultKeys>();
+const vaultFormat8 = ref<VaultFormat8>();
+const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Record<string, MemberDto>>({});
+const membersRequiringAccessGrant = ref<(MemberDto & UserDto)[]>([]);
 const trusts = ref<TrustDto[]>([]);
-const usersRequiringAccessGrant = ref<UserDto[]>([]);
+const pendingRoleUpdate = ref<{ member: MemberDto, role: VaultRole, untrusted: boolean }>();
+const roleUpdateConfirmDialog = ref<typeof ConfirmDialog>();
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
@@ -350,14 +373,20 @@ async function fetchData() {
 }
 
 async function fetchOwnerData() {
+  if (!vault.value) {
+    throw new Error('Vault not initialized.');
+  }
   try {
     members.value = R.indexBy(await backend.vaults.getMembers(props.vaultId), m => m.id);
     await refreshTrusts();
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
-    const deviceId = await (await userdata.browserKeys)?.id();
-    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, deviceId, true);
-    vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
+    const vaultKeys = await unwrapVaultKeys(vault.value);
+    if (vaultKeys instanceof UniversalVaultFormat) {
+      uvfVault.value = vaultKeys;
+    } else if (vaultKeys instanceof VaultFormat8) {
+      vaultFormat8.value = vaultKeys;
+    }
   } catch (error) {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
@@ -374,14 +403,9 @@ const emergencyAccessMembers = computed(() =>
   Object.keys(vault.value?.emergencyKeyShares ?? {})
 );
 
-async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
-  const userKeys = await userdata.decryptUserKeysWithBrowser();
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
-}
-
-async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
+async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
   if (!me.value) {
-    throw new Error('illegal state');
+    throw new Error('illegal state.');
   }
 
   const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
@@ -412,9 +436,9 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
   await fetchOwnerData();
 }
 
-async function reloadDevicesRequiringAccessGrant() {
+async function reloadMembersRequiringAccessGrant() {
   try {
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Getting devices requiring access grant failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -431,7 +455,7 @@ async function addAuthority(authority: AuthorityDto) {
       vaultRole: 'MEMBER'
     };
     members.value[authority.id] = addedMember;
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
@@ -479,7 +503,10 @@ function showDownloadVaultTemplateDialog() {
 
 function showDisplayRecoveryKeyDialog() {
   displayingRecoveryKey.value = true;
-  nextTick(() => displayRecoveryKeyDialog.value?.show());
+  const recoveryKey: Promise<string> = uvfVault.value?.recoveryKey.createRecoveryKey()
+    ?? vaultFormat8.value?.createRecoveryKey()
+    ?? Promise.reject('No private key material present');
+  nextTick(() => displayRecoveryKeyDialog.value?.show(recoveryKey));
 }
 
 function showGrantEmergencyAccessDialog() {
@@ -511,7 +538,7 @@ function showRecoverVaultDialog() {
 }
 
 function permissionGranted() {
-  usersRequiringAccessGrant.value = [];
+  membersRequiringAccessGrant.value = [];
 }
 
 async function refreshTrusts() {
@@ -534,6 +561,20 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+async function requestUpdateMemberRole(member: MemberDto, role: VaultRole) {
+  // changing the role of a UVF vault member re-wraps the vault key (and, for owners, the recovery key) to their
+  // current public key, so additionally warn if their identity has not been verified:
+  const untrusted = !!uvfVault.value && member.type == 'USER' && !!member.ecdhPublicKey && await wot.computeTrustLevel(member, trusts.value) === -1;
+  pendingRoleUpdate.value = { member, role, untrusted };
+  nextTick(() => roleUpdateConfirmDialog.value?.show());
+}
+
+async function confirmPendingRoleUpdate() {
+  if (pendingRoleUpdate.value) {
+    await updateMemberRole(pendingRoleUpdate.value.member, pendingRoleUpdate.value.role);
+  }
+}
+
 async function updateMemberRole(member: MemberDto, role: VaultRole) {
   delete onUpdateVaultMembershipError.value[member.id];
   try {
@@ -549,6 +590,11 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     if (updatedMember) {
       updatedMember.vaultRole = role;
     }
+    if (uvfVault.value && member.type == 'USER' && member.ecdhPublicKey) {
+      const includeOwnerKeys = role == 'OWNER';
+      const updatedAccessToken = await uvfVault.value.encryptForUser(base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>, includeOwnerKeys);
+      await backend.vaults.grantAccess(props.vaultId, { userId: member.id, token: updatedAccessToken });
+    }
   } catch (error) {
     console.error('Updating member role failed.', error);
     //404 not expected from user perspective
@@ -562,7 +608,7 @@ async function removeMember(memberId: string) {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
     delete members.value[memberId];
     if (!licenseViolated.value) {
-      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+      membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
       await refreshLicense();
     }

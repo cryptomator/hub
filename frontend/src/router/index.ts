@@ -128,7 +128,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'vaults/create',
         component: CreateVault,
-        props: () => ({ recover: false }),
+        props: (route) => ({ recover: false, uvf: route.query.uvf === '1' }), // undocumented `?uvf=1` creates a Universal Vault Format vault instead of Vault Format 8
         beforeEnter: checkRole('create-vaults'),
       },
       {

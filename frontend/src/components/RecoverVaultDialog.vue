@@ -54,10 +54,11 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VaultDto } from '../common/backend';
-
-import { VaultKeys } from '../common/crypto';
+import backend, { VaultDto, isUvfVault } from '../common/backend';
+import { AccessTokenProducing } from '../common/crypto';
+import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
 
@@ -105,15 +106,15 @@ async function recoverVault() {
   onVaultRecoverError.value = undefined;
   try {
     processingVaultRecovery.value = true;
-    const vaultKeys = await VaultKeys.recover(recoveryKey.value);
+    const vaultKeys: AccessTokenProducing = isUvfVault(props.vault)
+      ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveryKey.value)
+      : await VaultFormat8.recover(recoveryKey.value);
     const me = await userdata.me;
-    if (vaultKeys) {
-      const publicKey = await userdata.ecdhPublicKey;
-      const jwe = await vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
-      emit('recovered');
-      open.value = false;
-    }
+    const publicKey = await userdata.ecdhPublicKey;
+    const jwe = await vaultKeys.encryptForUser(publicKey, true); // recovery is an owner-only action, so the owner's access token includes the recovery key
+    await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
+    emit('recovered');
+    open.value = false;
   } catch (error) {
     console.error('Recovering vault failed.', error);
     onVaultRecoverError.value = error instanceof Error ? error : new Error('Unknown reason');

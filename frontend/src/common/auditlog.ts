@@ -28,6 +28,14 @@ export type AuditEventSettingWotUpdateDto = AuditEventDtoBase & {
   wotIdVerifyLen: number;
 };
 
+export type AuditEventSettingAutoGrantUpdateDto = AuditEventDtoBase & {
+  type: 'SETTING_AUTO_GRANT_UPDATE',
+  updatedBy: string;
+  enabled: boolean;
+  trustThreshold: number;
+  allowOverride: boolean;
+};
+
 export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   type: 'SIGN_WOT_ID',
   userId: string;
@@ -74,6 +82,7 @@ export type AuditEventVaultAccessGrantDto = AuditEventDtoBase & {
   grantedBy: string;
   vaultId: string;
   authorityId: string;
+  automatic: boolean;
 };
 
 export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
@@ -162,7 +171,7 @@ export type AuditEventEmergencyAccessRecoveryAbortedDto = AuditEventDtoBase & {
   ipAddress: string;
 };
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto | AuditEventEmergencyAccessRecoveryAbortedDto;
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSettingAutoGrantUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto | AuditEventEmergencyAccessRecoveryAbortedDto;
 
 /* Authority-ID resolution */
 

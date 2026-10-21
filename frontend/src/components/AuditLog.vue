@@ -170,6 +170,7 @@
                   <AuditLogDetailsEmergencyAccessRecoveryCompleted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_COMPLETED'" :event="auditEvent" />
                   <AuditLogDetailsEmergencyAccessRecoveryAborted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_ABORTED'" :event="auditEvent" />
                   <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsSettingAutoGrantUpdate v-else-if="auditEvent.type == 'SETTING_AUTO_GRANT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
                   <AuditLogUserKeysChange v-else-if="auditEvent.type == 'USER_KEYS_CHANGE'" :event="auditEvent" />
@@ -235,6 +236,7 @@ import AuditLogDetailsEmergencyAccessRecoveryApproved from './AuditLogDetailsEme
 import AuditLogDetailsEmergencyAccessRecoveryCompleted from './AuditLogDetailsEmergencyAccessRecoveryCompleted.vue';
 import AuditLogDetailsEmergencyAccessRecoveryAborted from './AuditLogDetailsEmergencyAccessRecoveryAborted.vue';
 import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
+import AuditLogDetailsSettingAutoGrantUpdate from './AuditLogDetailsSettingAutoGrantUpdate.vue';
 import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
 import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
@@ -315,6 +317,7 @@ const eventTypeOptions = Object.fromEntries(
     EMERGENCY_ACCESS_RECOVERY_COMPLETED: t('auditLog.details.emergencyaccess.recoveryCompleted'),
     EMERGENCY_ACCESS_RECOVERY_ABORTED: t('auditLog.details.emergencyaccess.recoveryAborted'),
     SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
+    SETTING_AUTO_GRANT_UPDATE: t('auditLog.details.setting.autoGrant.update'),
     SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
     USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),
     USER_KEYS_CHANGE: t('auditLog.details.user.keys.change'),

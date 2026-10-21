@@ -81,6 +81,17 @@ public class EmergencyAccessResource {
 			// the council member who starts the process must, by definition, be part of the process
 			throw new BadRequestException("User is not a member of the recovery process");
 		}
+		if (dto.requiredKeyShares != vault.getRequiredEmergencyKeyShares()) {
+			throw new BadRequestException("Required key shares do not match the vault's emergency access settings");
+		}
+		for (var keyShare : dto.recoveredKeyShares.entrySet()) {
+			// each unrecovered key share must be a verbatim copy of the share stored for the vault, lest a malicious
+			// process starter tricks approving council members into decrypting a ciphertext of the starter's choosing:
+			var canonicalKeyShare = vault.getEmergencyKeyShares().get(keyShare.getKey());
+			if (canonicalKeyShare == null || !canonicalKeyShare.equals(keyShare.getValue().unrecoveredKeyShare())) {
+				throw new BadRequestException("Key share does not match the vault's emergency key share for member " + keyShare.getKey());
+			}
+		}
 
 		var process = new EmergencyRecoveryProcess();
 		process.setId(processId);
