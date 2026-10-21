@@ -59,7 +59,7 @@
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Groups -->
-        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved" />
+        <UserGroupsList :user="user" :groups="user.groups" @on-saved="handleGroupsSaved" />
         <!-- Vaults -->
         <VaultList :vaults="user.accessibleVaults" :visible="true" />
       </section>
@@ -68,7 +68,7 @@
       <!-- User Info -->
       <UserInfo :user="user" />
       <!-- Groups -->
-      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved" />
+      <UserGroupsList :user="user" :groups="user.groups" @on-saved="handleGroupsSaved" />
       <!-- Devices -->
       <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')" />
       <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')" />
@@ -88,7 +88,7 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { asError, GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
+import backend, { asError, UserDto, UserDtoWithDetails } from '../../common/backend';
 import userdata from '../../common/userdata';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import FetchError from '../FetchError.vue';
@@ -159,21 +159,32 @@ const fetchError = ref<Error>();
 const onEnableUserError = ref<Error>();
 const currentUserId = ref<string>('');
 
-async function handleGroupsSaved(newGroups: GroupDto[]) {
-  await fetchUser(); // reload user to get updated vault list
+let refreshSeq = 0;
+
+async function handleGroupsSaved() {
+  await refreshUser(); // reload user to get updated vault list, without the loading state so an open dialog stays mounted
 }
 
 async function fetchUser() {
   loading.value = true;
   fetchError.value = undefined;
+  await refreshUser();
+  loading.value = false;
+}
+
+async function refreshUser() {
+  const seq = ++refreshSeq;
   try {
-    user.value = await backend.users.getUser(props.id);
-    user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    const refreshedUser = await backend.users.getUser(props.id);
+    refreshedUser.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    if (seq === refreshSeq) {
+      user.value = refreshedUser;
+    }
   } catch (error) {
     console.error('Failed to fetch user:', error);
-    fetchError.value = asError(error);
-  } finally {
-    loading.value = false;
+    if (seq === refreshSeq) {
+      fetchError.value = asError(error);
+    }
   }
 }
 
