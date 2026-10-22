@@ -442,7 +442,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} catch (NoResultException _) {
-			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, null); // device ownership is unverified, so don't attribute the attempt to it
 			return Response.status(Response.Status.FORBIDDEN.getStatusCode(), "Access to this device not granted").build();
 		}
 	}
@@ -673,7 +673,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
-			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.")
+			description = "Creates or updates a vault with the given vault id. The id and creationTime in the vaultDto are always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
 	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
@@ -692,7 +692,7 @@ public class VaultResource {
 			}
 			// create new vault:
 			vault = new Vault();
-			vault.setId(vaultDto.id);
+			vault.setId(vaultId);
 			vault.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
 		// set regardless of whether vault is new or existing:
