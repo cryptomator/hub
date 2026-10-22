@@ -18,9 +18,12 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,13 +79,14 @@ import java.util.stream.Stream;
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokens", query = """
-		SELECT eva
-		FROM EffectiveVaultAccess eva
-			INNER JOIN FETCH eva.authority u
+@NamedQuery(name = "EffectiveVaultAccess.findUsersWithoutAccessTokens", query = """
+		SELECT u, eva.id.role
+		FROM User u
+			INNER JOIN EffectiveVaultAccess eva ON eva.id.authorityId = u.id
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
-			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
-		"""
+			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
+		""",
+		resultClass = EffectiveVaultAccess.UserWithRole.class
 )
 @NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", query = """
 		SELECT DISTINCT eva
@@ -123,6 +127,12 @@ public class EffectiveVaultAccess {
 
 	public VaultAccess.Role getRole() {
 		return id.role();
+	}
+
+	/**
+	 * Result row of {@code EffectiveVaultAccess.findUsersWithoutAccessTokens}: a user and one of their effective roles on the vault.
+	 */
+	public record UserWithRole(User user, VaultAccess.Role role) {
 	}
 
 	@Embeddable
@@ -166,12 +176,17 @@ public class EffectiveVaultAccess {
 		}
 
 		/**
+		 * Finds enabled users with a key pair who have effective access to the given vault but no access token for it yet.
+		 *
 		 * @param vaultId ID of a vault
-		 * @return ids of vault members who have no access token for the given vault yet
+		 * @return pending users mapped to their highest effective role on the vault (e.g. OWNER for a user that is MEMBER directly but OWNER via a group)
 		 * @see #findMembersWithoutAccessTokens(String)
 		 */
-		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokensForVault(UUID vaultId) {
-			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Map.of("vaultId", vaultId)).stream();
+		public Map<User, VaultAccess.Role> findUsersWithoutAccessTokensForVault(UUID vaultId) {
+			return getEntityManager().createNamedQuery("EffectiveVaultAccess.findUsersWithoutAccessTokens", UserWithRole.class)
+					.setParameter("vaultId", vaultId)
+					.getResultStream()
+					.collect(Collectors.toMap(UserWithRole::user, UserWithRole::role, BinaryOperator.maxBy(Comparator.naturalOrder()), LinkedHashMap::new)); // maxBy naturalOrder -> report "highest" role
 		}
 
 		/**

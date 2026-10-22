@@ -726,8 +726,33 @@ public class VaultResourceIT {
 		}
 
 		@Test
+		@Order(8)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains not disabled user2")
+		void testGetUsersRequiringAccessExcludesDisabledUser() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET ecdh_publickey='ecdh_public2', ecdsa_publickey='ecdsa_public2', privatekeys='private2', setupcode='setup2', enabled=FALSE
+						WHERE id='user2';
+						""");
+			}
+
+			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", not(hasItems("user2")));
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET ecdh_publickey=NULL, ecdsa_publickey=NULL, privatekeys=NULL, setupcode=NULL, enabled=TRUE
+						WHERE id='user2';
+						""");
+			}
+		}
+
+		@Test
 		@Order(10)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2 once with highest role")
 		void testGetUsersRequiringAccess2() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -737,9 +762,11 @@ public class VaultResourceIT {
 						""");
 			}
 
+			// user2 is OWNER via group2 and MEMBER directly (added in testGrantDirectAccessToSelf())
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
-					.body("id", hasItems("user2"));
+					.body("findAll { it.id == 'user2' }", hasSize(1))
+					.body("find { it.id == 'user2' }.vaultRole", is("OWNER"));
 
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""

@@ -396,14 +396,9 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId).map(access -> {
-			if (access.getAuthority() instanceof User u) {
-				return MemberDto.fromEntity(u, access.getRole());
-			} else {
-				// findMembersWithoutAccessTokens() should only return users, not groups.
-				throw new IllegalStateException();
-			}
-		}).toList();
+		return effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
 	}
 
 	/**
@@ -585,8 +580,8 @@ public class VaultResource {
 	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
 		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
-		var pendingUserIds = effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId)
-				.map(eva -> eva.getId().authorityId())
+		var pendingUserIds = effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).keySet().stream()
+				.map(User::getId)
 				.collect(Collectors.toSet());
 		if (!pendingUserIds.containsAll(tokens.keySet())) {
 			var notWaiting = tokens.keySet().stream()
