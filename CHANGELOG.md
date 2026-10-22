@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.3...HEAD)
 
+### Fixed
+
+- Fixed device registration when the device ID belongs to another user's legacy device
+
 ## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
 
 ### Changed
