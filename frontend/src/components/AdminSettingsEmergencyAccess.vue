@@ -104,48 +104,54 @@
       <!-- Allow Choosing Council + Min Members -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
         <span class="col-span-2"></span>
-        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex items-center h-9.5">
-          <input
-            id="allowChoosingCouncil"
-            v-model="allowChoosing"
-            :disabled="!enableEmergencyAccess"
-            type="checkbox"
-            class="peer h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          <label for="allowChoosingCouncil" class="ml-2 text-sm text-gray-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-            {{ t('admin.emergencyAccess.allowChoosing.label') }}
-            <label v-if="allowChoosing" for="minMembers"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
-          </label>
-
-          <div class="relative ml-2 flex-1">
-            <!-- Tooltip -->
-            <div
-              v-if="defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError"
-              class="absolute -top-2 left-0 translate-y-full z-10"
-            >
-              <div class="inline-block bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
-                {{ requiredMinMembersValidationText }}
-              </div>
-              <!-- Arrow -->
-              <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-            </div>
-
-            <!-- minMembers Input -->
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex flex-wrap items-center gap-x-2 gap-y-1 min-h-9.5">
+          <div class="flex items-center">
             <input
-              id="minMembers"
-              v-model.number="minMembers"
+              id="allowChoosingCouncil"
+              v-model="allowChoosing"
               :disabled="!enableEmergencyAccess"
-              type="number"
-              min="2"
-              max="255"
-              :hidden="!allowChoosing"
-              class="w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left disabled:cursor-not-allowed disabled:bg-gray-200"
-              :class="{
-                'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500':
-                  defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError
-              }"
-              :aria-label="t('admin.emergencyAccess.minMembers.ariaLabel')"
+              type="checkbox"
+              class="peer h-4 w-4 shrink-0 text-primary focus:ring-primary border-gray-300 rounded disabled:cursor-not-allowed disabled:opacity-50"
             />
+            <label for="allowChoosingCouncil" class="ml-2 text-sm text-gray-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+              {{ t('admin.emergencyAccess.allowChoosing.label') }}
+            </label>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-2">
+            <label v-if="allowChoosing" for="minMembers" class="text-sm text-gray-500 whitespace-nowrap" :class="{ 'cursor-not-allowed opacity-50': !enableEmergencyAccess }">
+              {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}
+            </label>
+            <div class="relative">
+              <!-- Tooltip -->
+              <div
+                v-if="defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError"
+                class="absolute -top-2 left-0 translate-y-full z-10 w-max max-w-xs"
+              >
+                <div class="inline-block bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                  {{ requiredMinMembersValidationText }}
+                </div>
+                <!-- Arrow -->
+                <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
+              </div>
+
+              <!-- minMembers Input -->
+              <input
+                id="minMembers"
+                v-model.number="minMembers"
+                :disabled="!enableEmergencyAccess"
+                type="number"
+                min="2"
+                max="255"
+                :hidden="!allowChoosing"
+                class="w-20 rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left disabled:cursor-not-allowed disabled:bg-gray-200"
+                :class="{
+                  'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500':
+                    defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError
+                }"
+                :aria-label="t('admin.emergencyAccess.minMembers.ariaLabel')"
+              />
+            </div>
           </div>
         </div>
       </div>

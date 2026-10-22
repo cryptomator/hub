@@ -1,5 +1,5 @@
 import { aessiv } from '@noble/ciphers/aes.js';
-import { base32, base64, base64nopad, base64urlnopad } from '@scure/base';
+import { base32, base64, base64urlnopad } from '@scure/base';
 import JSZip from 'jszip';
 import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
@@ -93,7 +93,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
       {
         name: 'PBKDF2',
         hash: 'SHA-256',
-        salt: base64nopad.decode(salt) as Uint8Array<ArrayBuffer>,
+        salt: base64.decode(salt) as Uint8Array<ArrayBuffer>,
         iterations: iterations
       },
       await pwKey,
