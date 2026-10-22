@@ -191,21 +191,26 @@ public class EffectiveVaultAccess {
 
 		/**
 		 * Finds the pending access grants the given user could perform, grouped by vault id. Limited to vaults the user
-		 * holds an access token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision and the vault's
+		 * holds an access token for (i.e. can decrypt and therefore re-share). Vault owners are excluded, because automatic
+		 * grants don't carry the recovery key owners need. The Web-of-Trust decision and the vault's
 		 * own (encrypted, tamper-proof) trust threshold / enabled flag are evaluated client-side — deliberately not here:
 		 * the {@code effective_wot} view is a recursive transitive-closure computation that would be too costly to join
 		 * on this long-poll hot path, and the client already avoids re-evaluating ruled-out candidates via its blocklists.
 		 *
 		 * @param currentUserId ID of the currently logged-in user
-		 * @return ids of vault members who have no access token yet, on vaults the user can decrypt, grouped by vault id
+		 * @return ids of vault members (excluding owners) who have no access token yet, on vaults the user can decrypt, grouped by vault id
 		 * @see #findMembersWithoutAccessTokensForVault(UUID)
 		 */
 		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
-			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Map.of("currentUser", currentUserId))
+			var pending = find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Map.of("currentUser", currentUserId))
 					.stream()
+					.map(EffectiveVaultAccess::getId)
+					.collect(Collectors.toSet());
+			return pending.stream()
+					.filter(id -> !pending.contains(new Id(id.vaultId(), id.authorityId(), VaultAccess.Role.OWNER)))
 					.collect(Collectors.groupingBy(
-							eva -> eva.getId().vaultId(),
-							Collectors.mapping(eva -> eva.getId().authorityId(), Collectors.toSet())));
+							Id::vaultId,
+							Collectors.mapping(Id::authorityId, Collectors.toSet())));
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {
