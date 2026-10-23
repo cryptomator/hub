@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -132,6 +133,7 @@ public class EffectiveVaultAccess {
 	/**
 	 * Result row of {@code EffectiveVaultAccess.findUsersWithoutAccessTokens}: a user and one of their effective roles on the vault.
 	 */
+	@RegisterForReflection
 	public record UserWithRole(User user, VaultAccess.Role role) {
 	}
 
