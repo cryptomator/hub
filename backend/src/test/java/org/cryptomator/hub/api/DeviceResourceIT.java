@@ -158,6 +158,24 @@ public class DeviceResourceIT {
 
 		@Test
 		@Order(2)
+		@DisplayName("PUT /devices/legacyDevice2 returns 409 (legacy device owned by other user)")
+		void testCreateWithLegacyDeviceIdOfOtherUser() throws SQLException {
+			var deviceDto = new DeviceResource.DeviceDto("legacyDevice2", "Computer 2", Device.Type.DESKTOP, "publickey2", "jwe.jwe.jwe.user1.legacyDevice2", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
+
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "legacyDevice2")
+					.then().statusCode(409);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'legacyDevice2';
+						""");
+				Assertions.assertTrue(rs.next());
+			}
+		}
+
+		@Test
+		@Order(2)
 		@DisplayName("PUT /devices/deviceX returns 201 (creating new device with same name as device1)")
 		void testCreateX() {
 			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
