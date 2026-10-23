@@ -40,6 +40,9 @@ public class ValidationTestResource {
 		return Response.ok().build();
 	}
 
+	record ValidIdDto(@JsonProperty("id") @ValidId String id) {
+	}
+
 	record NoHtmlOrScriptCharsDto(@JsonProperty("data") @NoHtmlOrScriptChars String data) {
 	}
 

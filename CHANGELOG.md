@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed automatic access grants leaving vault owners without the vault's recovery key: owners now always need to be granted access manually (#505)
 
+### Fixed
+
+- Failed unlock attempts with a legacy device no longer show up as that device's last access
+
 ## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
 
 ### Changed

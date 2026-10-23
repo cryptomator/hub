@@ -413,10 +413,19 @@ public class VaultResourceIT {
 			}
 
 			@Test
-			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice2 returns 403")
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice2 returns 403 and creates audit log without device")
 			void testUnlock4() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "legacyDevice2")
 						.then().statusCode(403);
+
+				Mockito.verify(eventLogger).logVaultKeyRetrieved(
+						any(),
+						eq("user1"),
+						eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")),
+						eq(VaultKeyRetrievedEvent.Result.UNAUTHORIZED),
+						anyString(),
+						isNull()
+				);
 			}
 
 			@Test
@@ -470,10 +479,10 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201 ignoring body id")
 		void testCreateVault1() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var bodyId = UUID.fromString("7E57C0DE-0000-4000-8000-000100007777");
+			var vaultDto = new VaultResource.VaultDto(bodyId, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
