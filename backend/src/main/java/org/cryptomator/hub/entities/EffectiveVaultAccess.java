@@ -90,14 +90,17 @@ import java.util.stream.Stream;
 		resultClass = EffectiveVaultAccess.UserWithRole.class
 )
 @NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", query = """
-		SELECT DISTINCT eva
+		SELECT eva.id.vaultId, eva.id.authorityId
 		FROM EffectiveVaultAccess eva
 			INNER JOIN eva.authority u
 			INNER JOIN Vault v ON v.id = eva.id.vaultId
 			INNER JOIN AccessToken callerToken ON callerToken.id.vaultId = eva.id.vaultId AND callerToken.id.userId = :currentUser
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
 			WHERE v.archived = false AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
-		"""
+			GROUP BY eva.id.vaultId, eva.id.authorityId
+			HAVING every(eva.id.role <> OWNER)
+		""",
+		resultClass = EffectiveVaultAccess.PendingAccessGrant.class
 )
 public class EffectiveVaultAccess {
 
@@ -135,6 +138,13 @@ public class EffectiveVaultAccess {
 	 */
 	@RegisterForReflection
 	public record UserWithRole(User user, VaultAccess.Role role) {
+	}
+
+	/**
+	 * Result row of {@code EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults}: a vault and a member without an access token for it.
+	 */
+	@RegisterForReflection
+	public record PendingAccessGrant(UUID vaultId, String authorityId) {
 	}
 
 	@Embeddable
@@ -193,21 +203,23 @@ public class EffectiveVaultAccess {
 
 		/**
 		 * Finds the pending access grants the given user could perform, grouped by vault id. Limited to vaults the user
-		 * holds an access token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision and the vault's
+		 * holds an access token for (i.e. can decrypt and therefore re-share). Vault owners are excluded, because automatic
+		 * grants don't carry the recovery key owners need. The Web-of-Trust decision and the vault's
 		 * own (encrypted, tamper-proof) trust threshold / enabled flag are evaluated client-side — deliberately not here:
 		 * the {@code effective_wot} view is a recursive transitive-closure computation that would be too costly to join
 		 * on this long-poll hot path, and the client already avoids re-evaluating ruled-out candidates via its blocklists.
 		 *
 		 * @param currentUserId ID of the currently logged-in user
-		 * @return ids of vault members who have no access token yet, on vaults the user can decrypt, grouped by vault id
+		 * @return ids of vault members (excluding owners) who have no access token yet, on vaults the user can decrypt, grouped by vault id
 		 * @see #findMembersWithoutAccessTokensForVault(UUID)
 		 */
 		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
-			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Map.of("currentUser", currentUserId))
-					.stream()
+			return getEntityManager().createNamedQuery("EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", PendingAccessGrant.class)
+					.setParameter("currentUser", currentUserId)
+					.getResultStream()
 					.collect(Collectors.groupingBy(
-							eva -> eva.getId().vaultId(),
-							Collectors.mapping(eva -> eva.getId().authorityId(), Collectors.toSet())));
+							PendingAccessGrant::vaultId,
+							Collectors.mapping(PendingAccessGrant::authorityId, Collectors.toSet())));
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {

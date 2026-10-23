@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed an error when loading the vault members that still need to be granted access
 
+### Fixed
+
+- Fixed automatic access grants leaving vault owners without the vault's recovery key: owners now always need to be granted access manually (#505)
+
 ## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
 
 ### Changed
