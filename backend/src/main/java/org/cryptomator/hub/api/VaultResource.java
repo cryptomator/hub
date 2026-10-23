@@ -187,9 +187,9 @@ public class VaultResource {
 	@Operation(summary = "list pending access grants the caller could perform, grouped by vault",
 			description = """
 					Long-polling endpoint for the automatic access grant flow. Returns members without an access token on
-					vaults the caller holds a token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision
-					and the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
-					see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
+					vaults the caller holds a token for (i.e. can decrypt and therefore re-share) and has access to. The
+					Web-of-Trust decision and the vault's encrypted trust threshold / enabled flag are evaluated client-side —
+					the server cannot see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
 					pending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty
 					map on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when
 					only such candidates remain). Best effort — events on other backend instances will not wake this call.""")
@@ -554,14 +554,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
-		// check number of available seats
-		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
-
-		if (occupiedSeats + usersWithoutSeat > license.getEntitlements().seats()) {
-			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
-		}
-
 		grantAccessTokens(vaultId, tokens, false);
 		return Response.ok().build();
 	}
@@ -575,6 +567,7 @@ public class VaultResource {
 	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
 	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an access grant for this vault")
+	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
@@ -600,8 +593,15 @@ public class VaultResource {
 	 * @param vaultId   the vault to grant access to
 	 * @param tokens    map from user id to the per-user-encrypted vault key
 	 * @param automatic whether the grant is performed by the automatic access grant flow (recorded in the audit log)
+	 * @throws PaymentRequiredException if the grant would exceed the available license seats
 	 */
 	private void grantAccessTokens(UUID vaultId, Map<String, String> tokens, boolean automatic) {
+		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+		if (occupiedSeats + usersWithoutSeat > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+		}
+
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();

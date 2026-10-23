@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.3...HEAD)
 
+### Fixed
+
+- Automatic access grants now respect the license's seat limit, like manual grants do
+- Fixed access tokens being accepted for vaults the user has no access to
+
 ## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
 
 ### Changed

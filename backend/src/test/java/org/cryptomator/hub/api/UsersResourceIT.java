@@ -16,6 +16,7 @@ import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +72,12 @@ class UsersResourceIT {
 			@Claim(key = "sub", value = "user1")
 	})
 	class AsAuthorzedUser1 {
+
+		@BeforeEach
+		void setup() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		}
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
@@ -140,6 +147,53 @@ class UsersResourceIT {
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens skips vaults the user has no access to")
+		void testPostAccessTokensForInaccessibleVault() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "archived")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000BBBB', 'Vault B', 'This is a testvault.', '2020-02-20 20:20:20', FALSE);
+						""");
+			}
+
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-00010000BBBB": "jwe.jwe.jwe.vaultB.user1"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(200);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "access_token" WHERE "vault_id" = '7E57C0DE-0000-4000-8000-00010000BBBB';
+						""");
+				Assertions.assertFalse(rs.next());
+
+				s.execute("""
+						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-00010000BBBB';
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 402 if license seats are exceeded")
+		void testPostAccessTokensExceedingSeats() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(1L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(402);
 		}
 
 		@Test
