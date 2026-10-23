@@ -89,14 +89,17 @@ import java.util.stream.Stream;
 		resultClass = EffectiveVaultAccess.UserWithRole.class
 )
 @NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", query = """
-		SELECT DISTINCT eva
+		SELECT eva.id.vaultId, eva.id.authorityId
 		FROM EffectiveVaultAccess eva
 			INNER JOIN eva.authority u
 			INNER JOIN Vault v ON v.id = eva.id.vaultId
 			INNER JOIN AccessToken callerToken ON callerToken.id.vaultId = eva.id.vaultId AND callerToken.id.userId = :currentUser
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
 			WHERE v.archived = false AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
-		"""
+			GROUP BY eva.id.vaultId, eva.id.authorityId
+			HAVING every(eva.id.role <> OWNER)
+		""",
+		resultClass = EffectiveVaultAccess.PendingAccessGrant.class
 )
 public class EffectiveVaultAccess {
 
@@ -133,6 +136,12 @@ public class EffectiveVaultAccess {
 	 * Result row of {@code EffectiveVaultAccess.findUsersWithoutAccessTokens}: a user and one of their effective roles on the vault.
 	 */
 	public record UserWithRole(User user, VaultAccess.Role role) {
+	}
+
+	/**
+	 * Result row of {@code EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults}: a vault and a member without an access token for it.
+	 */
+	public record PendingAccessGrant(UUID vaultId, String authorityId) {
 	}
 
 	@Embeddable
@@ -202,15 +211,12 @@ public class EffectiveVaultAccess {
 		 * @see #findMembersWithoutAccessTokensForVault(UUID)
 		 */
 		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
-			var pending = find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Map.of("currentUser", currentUserId))
-					.stream()
-					.map(EffectiveVaultAccess::getId)
-					.collect(Collectors.toSet());
-			return pending.stream()
-					.filter(id -> !pending.contains(new Id(id.vaultId(), id.authorityId(), VaultAccess.Role.OWNER)))
+			return getEntityManager().createNamedQuery("EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", PendingAccessGrant.class)
+					.setParameter("currentUser", currentUserId)
+					.getResultStream()
 					.collect(Collectors.groupingBy(
-							Id::vaultId,
-							Collectors.mapping(Id::authorityId, Collectors.toSet())));
+							PendingAccessGrant::vaultId,
+							Collectors.mapping(PendingAccessGrant::authorityId, Collectors.toSet())));
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {
