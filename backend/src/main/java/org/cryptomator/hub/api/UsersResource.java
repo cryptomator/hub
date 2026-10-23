@@ -162,7 +162,7 @@ public class UsersResource {
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
-		var accessibleVaults = vaultRepo.findAccessibleByUser(user.getId()).collect(Collectors.toMap(Vault::getId, Function.identity()));
+		var accessibleVaults = vaultRepo.findAccessibleByUser(jwt.getSubject()).collect(Collectors.toMap(Vault::getId, Function.identity()));
 		for (var entry : tokens.entrySet()) {
 			var vault = accessibleVaults.get(entry.getKey());
 			if (vault == null) {
