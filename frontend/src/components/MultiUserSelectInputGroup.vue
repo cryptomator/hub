@@ -14,6 +14,7 @@
       <button
         v-for="(user, index) in selectedUsers"
         :key="user.id"
+        type="button"
         tabindex="-1"
         :disabled="!inputVisible"
         class="inline-flex items-center text-sm text-gray-800 rounded-full px-2 py-1 mt-1 mb-1 mr-1 border transition-colors shadow-sm gap-1"
@@ -41,6 +42,7 @@
         </span>
         <div v-if="inputVisible" class="text-gray-500 hover:text-red-600">&times;</div>
       </button>
+      <slot />
       <!-- Combobox -->
       <Combobox :disabled="!inputVisible" @update:model-value="onSelect">
         <div class="flex-1 relative">
@@ -119,7 +121,7 @@ import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
 
 export type MultiUserSelectExpose = {
-  focus: () => Promise<void> | void;
+  focusTarget?: HTMLElement;
 };
 
 const trusts = ref<TrustDto[]>([]);
@@ -149,15 +151,8 @@ let searchSeq = 0;
 
 const inputEl = ref<HTMLInputElement>();
 
-async function focus() {
-  selectedPillIndex.value = undefined;
-  await nextTick();
-
-  if (props.inputVisible) inputEl.value?.focus();
-}
-
-defineExpose<MultiUserSelectExpose>({
-  focus
+defineExpose({
+  focusTarget: inputEl
 });
 
 const focusInput = () => {
@@ -285,6 +280,9 @@ function onKeyDown(e: KeyboardEvent) {
       activeIndex.value = (activeIndex.value - 1 + filteredUsers.value.length) % filteredUsers.value.length;
     }
   } else if (e.key === 'Enter' || e.key === 'Tab') {
+    if (e.key === 'Enter' && !e.isComposing) {
+      e.preventDefault(); // never submit an enclosing form from the search field
+    }
     if (activeIndex.value >= 0 && filteredUsers.value[activeIndex.value]) {
       e.preventDefault();
       onSelect(filteredUsers.value[activeIndex.value] as T);
