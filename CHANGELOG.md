@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.4...HEAD)
 
+### Changed
+
+- Updated Keycloak to 26.8.1
+
 ### Fixed
 
 - Fixed automatic access grants leaving vault owners without the vault's recovery key: owners now always need to be granted access manually (#505)
