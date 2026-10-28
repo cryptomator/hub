@@ -173,7 +173,11 @@ export class UserKeys {
     };
     await UserKeys.assertMatchingKeyPair(ecdhKeyPair, 'ECDH');
     let ecdsaKeyPair: CryptoKeyPair;
-    if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
+    if (jwe.ecdsaPrivateKey) {
+      if (!ecdsaPublicKey) {
+        // the user demonstrably has an ECDSA key pair, so a missing public key means the server dropped it (which would otherwise trigger the key generation below and a re-wrap of the private keys):
+        throw new KeyPairMismatchError('ECDSA');
+      }
       ecdsaKeyPair = {
         publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
         privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdsaPrivateKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
@@ -186,9 +190,11 @@ export class UserKeys {
     return new UserKeys(ecdhKeyPair, ecdsaKeyPair);
   }
 
-  // The public keys are supplied by the server, which is untrusted in Hub's zero-knowledge model. Only the private keys are
-  // authenticated (they were encrypted by this user). Comparing the EC point of both keys ensures a tampered public key can
-  // never be used to wrap secrets "to oneself" (and thereby to whoever holds the matching private key).
+  // The public keys are supplied by the server, which is untrusted in Hub's zero-knowledge model. Comparing the EC point of
+  // both keys ensures the server cannot pair the user's genuine private keys with a foreign public key, which would otherwise
+  // make the client wrap secrets "to oneself" for whoever holds the matching private key. Note that this only ties the public
+  // key to the private key that was decrypted; it does not by itself authenticate the private key's origin (the setup-code
+  // path does, as the setup code is a secret the server never sees; the device-key path relies on the stored device JWE).
   private static async assertMatchingKeyPair(keyPair: CryptoKeyPair, keyDescription: string): Promise<void> {
     const [privateJwk, publicJwk] = await Promise.all([crypto.subtle.exportKey('jwk', keyPair.privateKey), crypto.subtle.exportKey('jwk', keyPair.publicKey)]);
     if (privateJwk.crv !== publicJwk.crv || privateJwk.x !== publicJwk.x || privateJwk.y !== publicJwk.y) {

@@ -146,7 +146,7 @@ class UserData {
       throw new Error('Device not initialized.');
     }
     const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await this.#claimedEcdhPublicKey, await this.#claimedEcdsaPublicKey);
-    await this.addEcdsaKeyIfMissing(userKeys);
+    await this.addEcdsaKeyIfMissing(userKeys, browserKeys, browser);
     return userKeys;
   }
 
@@ -161,17 +161,26 @@ class UserData {
   }
 
   /**
-   * Updates the stored user keys, if the ECDSA key was missing before (added in 1.4.0)
+   * Updates the stored user keys, if the ECDSA key was missing before (added in 1.4.0).
+   *
+   * The private keys are only re-wrapped for the currently used browser (whose public key is known locally). Other devices
+   * listed by the server cannot be authenticated by the client, so wrapping the private keys to their alleged public keys
+   * would let the server obtain them by adding a device of its own; they keep their old (ECDSA-less) key material instead.
    * @param userKeys The user keys that contain the ECDSA key
+   * @param browserKeys The key pair of the currently used browser, if the user keys have been decrypted with it
+   * @param browser The device representing the currently used browser, if the user keys have been decrypted with it
    */
-  private async addEcdsaKeyIfMissing(userKeys: UserKeys) {
+  private async addEcdsaKeyIfMissing(userKeys: UserKeys, browserKeys?: BrowserKeys, browser?: DeviceDto) {
     const me = await this.me;
     if (me.setupCode && !me.ecdsaPublicKey) {
       const setupCode = await this.decryptSetupCode(userKeys);
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKeys = await userKeys.encryptWithSetupCode(setupCode);
-      for (const device of me.devices) {
-        device.userPrivateKey = await userKeys.encryptForDevice(base64.decode(device.publicKey) as Uint8Array<ArrayBuffer>);
+      if (browserKeys && browser) {
+        const thisBrowser = me.devices.find(device => device.id === browser.id);
+        if (thisBrowser) {
+          thisBrowser.userPrivateKey = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
+        }
       }
       await backend.users.putMe(me);
     }
