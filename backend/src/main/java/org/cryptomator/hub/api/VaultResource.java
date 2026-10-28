@@ -187,8 +187,9 @@ public class VaultResource {
 	@Operation(summary = "list pending access grants the caller could perform, grouped by vault",
 			description = """
 					Long-polling endpoint for the automatic access grant flow. Returns members without an access token on
-					vaults the caller holds a token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision
-					and the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
+					vaults the caller holds a token for (i.e. can decrypt and therefore re-share). Vault owners are excluded,
+					because automatic grants don't carry the recovery key owners need. The Web-of-Trust decision and the
+					vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
 					see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
 					pending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty
 					map on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when
@@ -396,14 +397,9 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId).map(access -> {
-			if (access.getAuthority() instanceof User u) {
-				return MemberDto.fromEntity(u, access.getRole());
-			} else {
-				// findMembersWithoutAccessTokens() should only return users, not groups.
-				throw new IllegalStateException();
-			}
-		}).toList();
+		return effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
 	}
 
 	/**
@@ -577,22 +573,24 @@ public class VaultResource {
 	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
+	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}). Vault owners can't be granted access this way.")
 	@APIResponse(responseCode = "200", description = "all keys stored")
-	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an access grant for this vault")
+	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an automatic access grant for this vault")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
 		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
-		var pendingUserIds = effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId)
-				.map(eva -> eva.getId().authorityId())
+		// Owners are excluded, because automatic grants don't carry the recovery key owners need.
+		var pendingMemberIds = effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.filter(entry -> entry.getValue() != VaultAccess.Role.OWNER)
+				.map(entry -> entry.getKey().getId())
 				.collect(Collectors.toSet());
-		if (!pendingUserIds.containsAll(tokens.keySet())) {
+		if (!pendingMemberIds.containsAll(tokens.keySet())) {
 			var notWaiting = tokens.keySet().stream()
-					.filter(Predicate.not(pendingUserIds::contains))
+					.filter(Predicate.not(pendingMemberIds::contains))
 					.collect(Collectors.joining(", "));
-			throw new BadRequestException("User(s) not awaiting an access grant for this vault: " + notWaiting);
+			throw new BadRequestException("User(s) not awaiting an automatic access grant for this vault: " + notWaiting);
 		}
 
 		grantAccessTokens(vaultId, tokens, true);

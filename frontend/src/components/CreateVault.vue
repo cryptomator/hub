@@ -23,8 +23,7 @@
           </div>
           <!-- Textarea -->
           <div class="mt-5 sm:mt-6">
-            <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
+            <label for="recoveryKey" class="block text-sm font-medium leading-6 text-gray-900">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
             <textarea
               id="recoveryKey"
               v-model="recoveryKeyStr"
@@ -37,7 +36,7 @@
           </div>
           <!-- Dropzone -->
           <div class="mt-5 sm:mt-6">
-            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">Vault Metadata File</label>
+            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">{{ t('createVault.enterRecoveryKey.vaultMetadataFile') }}</label>
             <div
               class="relative mt-2 flex justify-center rounded-lg border-2  px-6 py-10 border-gray-300 hover:border-gray-400 active:border-primary focus-within:border-primary focus-within:ring-primary  focus-within:ring-offset-2"
               :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0, 'border-red-300 active:border-red-500 focus-within:ring-red-500 focus-within:border-red-500': (vaultMetadata?.length ?? 0) == 0 && onRecoverError instanceof FormValidationFailedError}"
