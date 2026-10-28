@@ -141,7 +141,7 @@
     <ProcessAbortDialog v-if="recoveryProcess" ref="abortDialog" :recovery-process-id="recoveryProcess.id" @confirmed="handleRecoveryAborted" />
 
     <template #footer>
-      <button v-if="canAbort" type="button" :disabled="processing" class="rounded-sm text-sm font-medium text-red-600 hover:underline focus:outline-hidden focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 sm:mr-auto" @click="abortDialog?.show()">
+      <button v-if="canAbort" type="button" :disabled="processing" class="rounded-sm text-sm font-medium text-red-600 hover:underline cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 sm:mr-auto" @click="abortDialog?.show()">
         {{ t('emergencyAccessDialog.action.abortProcess') }}
       </button>
       <button ref="closeButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
