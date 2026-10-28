@@ -22,6 +22,17 @@ export class UnwrapKeyError extends Error {
 
 }
 
+/**
+ * Thrown when a public key does not belong to the private key it is supposed to be paired with.
+ */
+export class KeyPairMismatchError extends Error {
+
+  constructor(keyDescription: string) {
+    super(`${keyDescription} public key does not match the private key`);
+  }
+
+}
+
 export interface AccessTokenPayload {
   /**
    * The vault key (base64-encoded DER-formatted)
@@ -151,22 +162,38 @@ export class UserKeys {
     return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
   }
 
+  /**
+   * Pairs the decrypted private keys with the public keys the server claims to belong to them.
+   * @throws {KeyPairMismatchError} if a public key does not belong to the corresponding private key
+   */
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
       privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdhPrivateKey ?? jwe.key) as Uint8Array<ArrayBuffer>, UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
     };
+    await UserKeys.assertMatchingKeyPair(ecdhKeyPair, 'ECDH');
     let ecdsaKeyPair: CryptoKeyPair;
     if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
       ecdsaKeyPair = {
         publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
         privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdsaPrivateKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
+      await UserKeys.assertMatchingKeyPair(ecdsaKeyPair, 'ECDSA');
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
       ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES);
     }
     return new UserKeys(ecdhKeyPair, ecdsaKeyPair);
+  }
+
+  // The public keys are supplied by the server, which is untrusted in Hub's zero-knowledge model. Only the private keys are
+  // authenticated (they were encrypted by this user). Comparing the EC point of both keys ensures a tampered public key can
+  // never be used to wrap secrets "to oneself" (and thereby to whoever holds the matching private key).
+  private static async assertMatchingKeyPair(keyPair: CryptoKeyPair, keyDescription: string): Promise<void> {
+    const [privateJwk, publicJwk] = await Promise.all([crypto.subtle.exportKey('jwk', keyPair.privateKey), crypto.subtle.exportKey('jwk', keyPair.publicKey)]);
+    if (privateJwk.crv !== publicJwk.crv || privateJwk.x !== publicJwk.x || privateJwk.y !== publicJwk.y) {
+      throw new KeyPairMismatchError(keyDescription);
+    }
   }
 
   /**

@@ -53,11 +53,24 @@ class UserData {
   }
 
   /**
-   * Gets the ECDH public key of the user.
-   * 
-   * @see UserDto.ecdhPublicKey
+   * Gets the ECDH public key of the user, verified to belong to the private key decrypted in this browser.
+   *
+   * Use this (and never the server-supplied `UserDto.ecdhPublicKey`) whenever a secret is encrypted "to oneself", e.g. the
+   * owner's access token of a new vault: the server is untrusted and could otherwise substitute an attacker's key.
+   * @returns SPKI-encoded ECDH public key
+   * @throws {KeyPairMismatchError} if the server-supplied public key does not match the decrypted private key
    */
   public get ecdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
+    return this.#verifiedEcdhPublicKey();
+  }
+
+  async #verifiedEcdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
+    const userKeys = await this.decryptUserKeysWithBrowser();
+    return new Uint8Array(await crypto.subtle.exportKey('spki', userKeys.ecdhKeyPair.publicKey));
+  }
+
+  // the unverified ECDH public key as stored on the server; only to be paired (and thereby verified) with the decrypted private key
+  get #claimedEcdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
     return this.me.then(me => {
       if (!me.ecdhPublicKey) {
         throw new Error('User not initialized.');
@@ -66,12 +79,8 @@ class UserData {
     });
   }
 
-  /**
-   * Gets the ECDSA public key of the user, if available.
-   * 
-   * @see UserDto.ecdsaPublicKey
-   */
-  public get ecdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  // the unverified ECDSA public key as stored on the server (if available); only to be paired (and thereby verified) with the decrypted private key
+  get #claimedEcdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
     return this.me.then(me => {
       return me.ecdsaPublicKey ? base64.decode(me.ecdsaPublicKey) as Uint8Array<ArrayBuffer> : undefined;
     });
@@ -116,7 +125,7 @@ class UserData {
     if (!me.privateKeys) {
       throw new Error('User not initialized.');
     }
-    const userKeys = await UserKeys.recover(me.privateKeys, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
+    const userKeys = await UserKeys.recover(me.privateKeys, setupCode, await this.#claimedEcdhPublicKey, await this.#claimedEcdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
@@ -136,7 +145,7 @@ class UserData {
     if (!browser) {
       throw new Error('Device not initialized.');
     }
-    const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await this.ecdhPublicKey, await this.ecdsaPublicKey);
+    const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await this.#claimedEcdhPublicKey, await this.#claimedEcdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
