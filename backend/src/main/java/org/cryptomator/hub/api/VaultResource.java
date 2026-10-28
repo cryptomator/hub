@@ -72,12 +72,16 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -398,6 +402,37 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
 		return effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
+	}
+
+	@POST
+	@Path("/{vaultId}/users-requiring-access-grant/preview")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "preview members requiring access tokens", description = "lists all users that would have permissions but lack an access token if the direct vault members were replaced with the given ones (same request body as PUT /{vaultId}/members); nothing is persisted")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "400", description = "invalid members in request body")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public List<MemberDto> previewUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+		if (vaultRepo.findById(vaultId) == null) {
+			throw new NotFoundException("Vault not found.");
+		}
+		var usersWithToken = accessTokenRepo.findUserIdsWithToken(vaultId);
+
+		// resolve direct and group members to their highest prospective role (mirrors EffectiveVaultAccess.findUsersWithoutAccessTokens):
+		var prospectiveRoles = new HashMap<User, VaultAccess.Role>();
+		BiConsumer<User, VaultAccess.Role> addRole = (user, role) -> prospectiveRoles.merge(user, role, BinaryOperator.maxBy(Comparator.naturalOrder()));
+		userRepo.streamByIds(memberRoles.keySet()).forEach(user -> addRole.accept(user, memberRoles.get(user.getId())));
+		userRepo.getEffectiveGroupUsersByGroup(memberRoles.keySet()).forEach((groupId, users) -> users.forEach(user -> addRole.accept(user, memberRoles.get(groupId))));
+
+		return prospectiveRoles.entrySet().stream()
+				.filter(entry -> entry.getKey().isEnabled() && entry.getKey().getEcdhPublicKey() != null && !usersWithToken.contains(entry.getKey().getId()))
+				.sorted(Comparator.comparing(entry -> entry.getKey().getName()))
 				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
 				.toList();
 	}

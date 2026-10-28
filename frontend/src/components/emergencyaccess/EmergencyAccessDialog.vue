@@ -132,6 +132,9 @@
     <UntrustedRecipientsWarning v-if="!showSuccess && untrustedGrantees.length > 0" v-model:confirmed="confirmedUntrustedGrantees" require-confirmation class="mt-4">
       <p>{{ t('emergencyAccessDialog.warning.untrustedGrantees', [untrustedGrantees.map(u => u.name).join(', ')]) }}</p>
     </UntrustedRecipientsWarning>
+    <p v-if="accessProgress" role="status" aria-live="polite" class="mt-4 text-sm text-gray-500">
+      {{ t('emergencyAccessDialog.hint.configuringAccess', [accessProgress.done, accessProgress.total]) }}
+    </p>
     <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
       <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
         <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
@@ -161,7 +164,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, ref, Ref, toRaw, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, MemberDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { AccessTokenProducing, asPublicKey, UserKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
@@ -256,6 +259,8 @@ const didAddMyShare = computed(() => {
 const open = ref(false);
 const processing = ref(false);
 const onError = ref<Error>();
+// shown while the membership has been replaced but the vault key has not been shared with every recipient yet:
+const accessProgress = ref<{ done: number, total: number }>();
 
 const existingProcesses = ref<RecoveryProcessDto[]>([]);
 
@@ -497,6 +502,7 @@ async function show() {
   trusts.value = trustList;
   untrustedGrantees.value = [];
   confirmedUntrustedGrantees.value = false;
+  preparedPermissionChange = undefined;
   showSuccess.value = false;
   open.value = true;
 }
@@ -711,9 +717,27 @@ async function approveRecovery() {
 /**
  * PHASE THREE: By adding the last required share, we can complete the recovery process.
  */
+/**
+ * A CHANGE_PERMISSIONS completion that has been fully prepared (shares combined, recipients resolved) but is waiting for the
+ * user to acknowledge unverified recipients. Confirming commits exactly this state; nothing is reloaded from the server.
+ */
+type PreparedPermissionChange = {
+  processId: string;
+  vaultKeys: AccessTokenProducing;
+  membersWithRole: Record<string, VaultRole>;
+  usersToGrant: (MemberDto & ActivatedUser)[];
+};
+let preparedPermissionChange: PreparedPermissionChange | undefined; // deliberately non-reactive: holds the recovered vault key
+
 async function completeRecovery() {
   onError.value = undefined;
   try {
+    if (preparedPermissionChange && confirmedUntrustedGrantees.value) {
+      await commitPermissionChange(preparedPermissionChange);
+      return;
+    }
+    preparedPermissionChange = undefined;
+
     if (!props.recoveryProcess) {
       throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
     }
@@ -743,51 +767,67 @@ async function completeRecovery() {
         requiredEmergencyKeyShares: process.details.newRequiredKeyShares,
         emergencyKeyShares: keyShares
       });
+      await backend.emergencyAccess.complete(process.id);
+      emit('updated');
+      showSuccess.value = true;
     } else if (process.type === 'CHANGE_PERMISSIONS') {
       const vaultKeys: AccessTokenProducing = props.vault.uvfMetadataFile
         ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveredKey)
         : await VaultFormat8.recover(recoveredKey);
-      
-      // const vaultKeys = await VaultKeys.recover(recoveredKey);
 
       const membersWithRole = Object.fromEntries([
         ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
         ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
       ]) as Record<string, VaultRole>;
 
-      await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
-
-      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id)).filter(didCompleteSetup);
-
-      // this authoritative recipient list may include members of groups that were never shown in any picker, so
-      // re-check trust right before wrapping the recovered vault key and pause for confirmation if necessary:
-      const granteeTrustLevels = await wot.computeTrustLevels(activatedUsersToGrant, await backend.trust.listTrusted());
-      const untrusted = activatedUsersToGrant.filter(u => (granteeTrustLevels.get(u.id) ?? -1) === -1);
-      const confirmedIds = confirmedUntrustedGrantees.value ? new Set(untrustedGrantees.value.map(u => u.id)) : new Set<string>();
-      if (untrusted.some(u => !confirmedIds.has(u.id))) {
-        // no grants yet and the process is not completed; the confirmation only covers the users shown, so confirming re-runs this method:
+      // the server resolves the prospective recipients (including members of groups that were never shown in any picker)
+      // without persisting anything, so trust can be checked and confirmed before the membership is replaced:
+      const usersToGrant = (await backend.vaults.previewUsersRequiringAccessGrant(props.vault.id, membersWithRole)).filter(didCompleteSetup);
+      const granteeTrustLevels = await wot.computeTrustLevels(usersToGrant, await backend.trust.listTrusted());
+      const untrusted = usersToGrant.filter(u => (granteeTrustLevels.get(u.id) ?? -1) === -1);
+      const prepared: PreparedPermissionChange = { processId: process.id, vaultKeys: vaultKeys, membersWithRole: membersWithRole, usersToGrant: usersToGrant };
+      if (untrusted.length > 0) {
+        // nothing has been persisted yet; the user must acknowledge the listed recipients, then the prepared state is committed as-is:
         untrustedGrantees.value = untrusted;
         confirmedUntrustedGrantees.value = false;
+        preparedPermissionChange = prepared;
         return;
       }
-
-      const accessGrants: AccessGrant[] = await Promise.all(
-        activatedUsersToGrant.map(async u => {
-          const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
-          const jwe = await vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
-          return { userId: u.id, token: jwe };
-        })
-      );
-
-      if (accessGrants.length > 0) { await backend.vaults.grantAccess(props.vault.id, ...accessGrants); }
+      await commitPermissionChange(prepared);
     }
-
-    await backend.emergencyAccess.complete(process.id);
-    emit('updated');
-    showSuccess.value = true;
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+// replaces the membership, shares the vault key with exactly the prepared recipients and completes the process:
+async function commitPermissionChange(prepared: PreparedPermissionChange) {
+  // from here on the vault is in an intermediate state until every recipient holds a key, so the dialog stays blocked:
+  const progress = { done: 0, total: prepared.usersToGrant.length };
+  accessProgress.value = progress;
+  try {
+    await backend.vaults.setMembersWithRole(props.vault.id, prepared.membersWithRole);
+
+    // anyone who joined a selected group after the preview stays pending for a later (manual or automatic) grant:
+    const accessGrants: AccessGrant[] = await Promise.all(
+      prepared.usersToGrant.map(async u => {
+        const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+        const jwe = await prepared.vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
+        progress.done++;
+        return { userId: u.id, token: jwe };
+      })
+    );
+    if (accessGrants.length > 0) {
+      await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
+    }
+
+    await backend.emergencyAccess.complete(prepared.processId);
+    preparedPermissionChange = undefined;
+    emit('updated');
+    showSuccess.value = true;
+  } finally {
+    accessProgress.value = undefined;
   }
 }
 
@@ -885,7 +925,7 @@ async function loadProcessInfos() {
 
 const approvals = computed(() => processCouncilIds.value
   .map(id => ({
-    id,
+    id: id,
     name: authoritiesById.value[id]?.name ?? id,
     pictureUrl: authoritiesById.value[id]?.pictureUrl,
     approved: props.recoveryProcess?.recoveredKeyShares[id]?.recoveredKeyShare !== undefined,

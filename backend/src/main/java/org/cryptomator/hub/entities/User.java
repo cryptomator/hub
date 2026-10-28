@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -16,6 +17,7 @@ import org.hibernate.annotations.Immutable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,14 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
 				WHERE egm.id.groupId IN :groupIds AND u.enabled
 		""")
+@NamedQuery(name = "User.getEffectiveGroupUsersByGroup", query = """
+				SELECT egm.id.groupId, u
+				FROM User u
+				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
+				WHERE egm.id.groupId IN :groupIds AND u.enabled
+		""",
+		resultClass = User.EffectiveGroupUser.class
+)
 @NamedQuery(name = "User.countEffectiveGroupUsers", query = """
 				SELECT count( DISTINCT u)
 				FROM User u
@@ -214,6 +224,13 @@ public class User extends Authority {
 		return Objects.hash(super.hashCode(), email);
 	}
 
+	/**
+	 * Result row of {@code User.getEffectiveGroupUsersByGroup}: a group and one of its effective users.
+	 */
+	@RegisterForReflection
+	public record EffectiveGroupUser(String groupId, User user) {
+	}
+
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
 
@@ -273,6 +290,22 @@ public class User extends Authority {
 			return Batch.of(200).run(groupIds, new HashSet<>(), (batch, result) -> {
 				var partial = find("#User.getEffectiveGroupUsers", Map.of("groupIds", batch)).project(User.class);
 				result.addAll(partial.list());
+				return result;
+			});
+		}
+
+		/**
+		 * Resolves the enabled, effective (i.e. including nested groups) users of the given groups.
+		 *
+		 * @param groupIds IDs of groups
+		 * @return group id mapped to its effective users; groups without (enabled) users are absent
+		 */
+		public Map<String, Set<User>> getEffectiveGroupUsersByGroup(Collection<String> groupIds) {
+			return Batch.of(200).run(groupIds, new HashMap<>(), (batch, result) -> {
+				getEntityManager().createNamedQuery("User.getEffectiveGroupUsersByGroup", EffectiveGroupUser.class)
+						.setParameter("groupIds", batch)
+						.getResultStream()
+						.forEach(row -> result.computeIfAbsent(row.groupId(), _ -> new HashSet<>()).add(row.user()));
 				return result;
 			});
 		}
