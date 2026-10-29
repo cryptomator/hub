@@ -377,6 +377,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "Ik heb mijn accountsleutel veilig opgeslagen.",
   "initialSetup.recoverUserKey.title": "Autorisatie vereist",
   "initialSetup.recoverUserKey.description": "Dit is uw eerste login voor deze browser.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Deze browser onthoudt de sleutels van je account, maar de sleutels die de server heeft geleverd zijn andere. Ga alleen door als je je account reset, of weet van een herstel vanuit een back-up. Je accountsleutel bevestigt dat de geleverde sleutels echt van jou zijn; hij verlaat deze browser nooit.",
   "initialSetup.recoverUserKey.accountKey.description": "Uw accountsleutel is vereist om deze browser te koppelen aan uw account.",
   "initialSetup.recoverUserKey.deviceName": "Browsernaam",
   "initialSetup.recoverUserKey.deviceName.description": "Geef deze browser een naam voor eenvoudige identificatie in de lijst met geautoriseerde apparaten.",
