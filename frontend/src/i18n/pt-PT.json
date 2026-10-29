@@ -370,6 +370,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "Guardei a minha chave de conta em segurança.",
   "initialSetup.recoverUserKey.title": "Autorização requerida",
   "initialSetup.recoverUserKey.description": "Este é o seu primeiro início de sessão neste navegador.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Este navegador lembra-se das chaves da sua conta, mas as chaves que o servidor entrega são diferentes. Continue apenas se você redefinir a sua conta ou souber de uma restauração do backup. A sua Chave de Conta confirma que as chaves entregues são realmente suas; ela nunca sai do navegador.",
   "initialSetup.recoverUserKey.accountKey.description": "A sua chave de conta é necessária para ligar este navegador à sua conta.",
   "initialSetup.recoverUserKey.deviceName": "Nome do navegador",
   "initialSetup.recoverUserKey.deviceName.description": "Dê um nome a este navegador para facilitar a identificação na sua lista de dispositivos autorizados.",
