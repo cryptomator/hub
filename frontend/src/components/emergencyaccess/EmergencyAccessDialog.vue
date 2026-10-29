@@ -520,6 +520,8 @@ const errorMessage = computed(() => {
     return t('common.unexpectedError', [onError.value.message]);
   } else if (phase.value === 'start' && conflictingProcessExists.value) {
     return t('recoveryDialog.error.processAlreadyExists');
+  } else if (processTampered.value) {
+    return t('emergencyAccessDialog.error.processTampered');
   } else if (onLoadTrustLevelsError.value) {
     return t('common.unexpectedError', [onLoadTrustLevelsError.value.message]);
   } else if (onLoadGranteesError.value) {
@@ -535,10 +537,10 @@ const primaryAction = computed(() => {
   } else if (phase.value === 'start') {
     return { label: t('emergencyAccessDialog.action.start'), enabled: canStartRecovery.value && !needsUntrustedConfirmation.value, run: startRecovery };
   } else if (canSeeApprove.value) {
-    return { label: t('emergencyAccessDialog.action.approve'), enabled: !needsUntrustedConfirmation.value, run: approveRecovery };
+    return { label: t('emergencyAccessDialog.action.approve'), enabled: !processTampered.value && !needsUntrustedConfirmation.value, run: approveRecovery };
   } else if (canSeeComplete.value) {
     const granteesResolved = props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS' || !!granteeTrustLevels.value;
-    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: granteesResolved && (untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value), run: completeRecovery };
+    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: !processTampered.value && granteesResolved && (untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value), run: completeRecovery };
   } else {
     return undefined;
   }
@@ -981,15 +983,22 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<Record<st
 const processInfos = ref<Record<string, SignedProcessInfoPayload>>({});
 const approvalsTooltipId = useId();
 
+// set if any share's signed process info is missing or does not verify; approving or completing would be rejected anyway, so the user is told right away:
+const processTampered = ref(false);
+
 async function loadProcessInfos() {
   processInfos.value = {};
+  processTampered.value = false;
   if (!props.recoveryProcess) {
     return;
   }
   try {
-    processInfos.value = (await verifyProcessInfo(props.recoveryProcess)) ?? {};
+    const verified = await verifyProcessInfo(props.recoveryProcess);
+    processInfos.value = verified ?? {};
+    processTampered.value = verified === undefined;
   } catch (error) {
     console.error('Verifying approvals failed.', error);
+    processTampered.value = true;
   }
 }
 
@@ -998,7 +1007,7 @@ const approvals = computed(() => processCouncilIds.value
     id: id,
     name: authoritiesById.value[id]?.name ?? id,
     pictureUrl: authoritiesById.value[id]?.pictureUrl,
-    approved: props.recoveryProcess?.recoveredKeyShares[id]?.recoveredKeyShare !== undefined,
+    approved: processInfos.value[id] !== undefined, // verified signatures only, so a tampered process shows no approvals
     approvedAt: processInfos.value[id] && toDate(processInfos.value[id].iat)
   }))
   .sort((a, b) => a.name.localeCompare(b.name)));
