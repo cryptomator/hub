@@ -826,7 +826,8 @@ async function completeRecovery() {
 
       const accessGrants: AccessGrant[] = await Promise.all(
         activatedUsersToGrant.map(async u => {
-          const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+          // never wrap "to myself" using a key from the (server-supplied) recipient list, only using my verified key:
+          const publicKey = u.id === props.me.id ? await userdata.ecdhPublicKey : base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
           const jwe = await vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
           return { userId: u.id, token: jwe };
         })

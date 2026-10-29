@@ -53,7 +53,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import router from '../router';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -85,7 +85,7 @@ async function resetUserAccount() {
   try {
     processing.value = true;
     await backend.users.resetMe();
-    await BrowserKeys.delete(props.me.id);
+    await userdata.forgetBrowser();
     router.go(0); // reload current page
   } catch (error) {
     console.error('Resetting user account failed.', error);
