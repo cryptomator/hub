@@ -119,7 +119,7 @@
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('initialSetup.recoverUserKey.description') }}
+                  {{ t(keyMismatch ? 'initialSetup.recoverUserKey.description.keyMismatch' : 'initialSetup.recoverUserKey.description') }}
                 </p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
@@ -191,7 +191,7 @@ import { ComputerDesktopIcon, KeyIcon, ListBulletIcon } from '@heroicons/vue/24/
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
-import { BrowserKeys, UnwrapKeyError, UserKeys } from '../common/crypto';
+import { BrowserKeys, KeyPairMismatchError, UnwrapKeyError, UserKeys } from '../common/crypto';
 import { JWE, Recipient } from '../common/jwe';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
@@ -232,6 +232,7 @@ const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
 const confirmSetupCode = ref(false);
 const resettingUserAccount = ref(false);
+const keyMismatch = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
 onMounted(fetchData);
@@ -245,12 +246,29 @@ async function fetchData() {
       state.value = State.CreateUserKey;
     } else if (!await userdata.browser) {
       state.value = State.RecoverUserKey;
+    } else if (!await canUnlockUserKeys()) {
+      // the browser is registered, but the keys delivered by the server are not the ones it was set up with (see
+      // KeyMismatch.vue); entering the setup code re-authorizes the browser with authentic keys and replaces the pin:
+      keyMismatch.value = true;
+      state.value = State.RecoverUserKey;
     } else {
       state.value = State.SetupAlreadyCompleted;
     }
   } catch (error) {
     console.error('Retrieving setup information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function canUnlockUserKeys(): Promise<boolean> {
+  try {
+    await userdata.decryptUserKeysWithBrowser();
+    return true;
+  } catch (error) {
+    if (error instanceof KeyPairMismatchError) {
+      return false;
+    }
+    throw error;
   }
 }
 

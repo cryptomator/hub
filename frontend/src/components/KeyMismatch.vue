@@ -14,16 +14,25 @@
         <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
       </div>
       <h1 class="text-2xl leading-6 font-medium text-gray-900">
-        Account keys could not be verified
+        Your account keys were not recognized
       </h1>
-      <p class="mt-6 text-sm text-gray-500">
-        The account keys delivered by this server are not the ones this browser was set up with, or the public keys do not belong to the private keys. This can be a sign that the server has been tampered with.
-      </p>
-      <p class="mt-3 text-sm text-gray-500">
-        Do not create, recover or share any vaults until the cause has been resolved. Please contact your administrator.
-      </p>
-      <div class="mt-6">
-        <router-link to="/app/logout" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">Log out</router-link>
+      <div class="mt-6 space-y-3 text-sm text-gray-500 text-left">
+        <p>
+          This browser remembers the keys of your account. The keys the server just delivered are different ones.
+        </p>
+        <p>
+          There are two possible reasons. Either your account was reset or restored from a backup, in which case the change is expected. Or someone with access to the server is trying to make this browser use keys they control, so that vaults you create or share would be readable by them. Hub stopped before any vault key was used.
+        </p>
+        <p class="font-medium text-gray-700">
+          If you did not reset your account and are not aware of a restore, do not continue. Contact your administrator and report what you see on this page.
+        </p>
+        <p>
+          If the change is expected, you can re-authorize this browser with your Account Key. The key never leaves this browser, so this step is safe even if the server has been tampered with. It does not repair a tampered server; it only confirms that the keys the server delivered are really yours.
+        </p>
+      </div>
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <router-link to="/app/logout" class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">Log out</router-link>
+        <router-link to="/app/setup" class="inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-xs text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">Re-authorize this browser…</router-link>
       </div>
     </div>
   </div>
