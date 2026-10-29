@@ -196,8 +196,7 @@ export class UserKeys {
   // key to the private key that was decrypted; it does not by itself authenticate the private key's origin (the setup-code
   // path does, as the setup code is a secret the server never sees; the device-key path relies on the stored device JWE).
   private static async assertMatchingKeyPair(keyPair: CryptoKeyPair, keyDescription: string): Promise<void> {
-    const [privateJwk, publicJwk] = await Promise.all([crypto.subtle.exportKey('jwk', keyPair.privateKey), crypto.subtle.exportKey('jwk', keyPair.publicKey)]);
-    if (privateJwk.crv !== publicJwk.crv || privateJwk.x !== publicJwk.x || privateJwk.y !== publicJwk.y) {
+    if (!await sameEcPoint(keyPair.privateKey, keyPair.publicKey)) {
       throw new KeyPairMismatchError(keyDescription);
     }
   }
@@ -300,8 +299,8 @@ export class BrowserKeys {
    * @returns a promise resolving to the loaded browser key pair
    */
   public static async load(userId: string): Promise<BrowserKeys | undefined> {
-    const keyPair: CryptoKeyPair = await DB.transaction('keys', 'readonly', tx => {
-      const keyStore = tx.objectStore('keys');
+    const keyPair: CryptoKeyPair = await DB.transaction(DB.BROWSER_KEYS_STORE, 'readonly', tx => {
+      const keyStore = tx.objectStore(DB.BROWSER_KEYS_STORE);
       return keyStore.get(userId);
     });
     if (keyPair) {
@@ -316,8 +315,8 @@ export class BrowserKeys {
    * @returns a promise resolving on success
    */
   public static async delete(userId: string): Promise<void> {
-    await DB.transaction('keys', 'readwrite', tx => {
-      const keyStore = tx.objectStore('keys');
+    await DB.transaction(DB.BROWSER_KEYS_STORE, 'readwrite', tx => {
+      const keyStore = tx.objectStore(DB.BROWSER_KEYS_STORE);
       return keyStore.delete(userId);
     });
   }
@@ -327,8 +326,8 @@ export class BrowserKeys {
    * @returns a promise that will resolve if the key pair has been saved
    */
   public async store(userId: string): Promise<void> {
-    await DB.transaction('keys', 'readwrite', tx => {
-      const keyStore = tx.objectStore('keys');
+    await DB.transaction(DB.BROWSER_KEYS_STORE, 'readwrite', tx => {
+      const keyStore = tx.objectStore(DB.BROWSER_KEYS_STORE);
       return keyStore.put(this.keyPair, userId);
     });
   }
@@ -344,6 +343,82 @@ export class BrowserKeys {
     return base64.encode(publicKey);
   }
 
+}
+
+/**
+ * The user's own public keys as they were known at a moment they were authentic, pinned in the browser's IndexedDB.
+ *
+ * The device-key path (`UserKeys.decryptOnBrowser`) decrypts a JWE that is stored on the untrusted server and encrypted to a
+ * device public key that is also stored on the server. A malicious server could therefore replace the user's entire key pair.
+ * Pinning the public keys at setup time (freshly generated or decrypted with the setup code, which the server never sees)
+ * and comparing every subsequently unlocked key pair against the pin detects such a substitution. Browsers set up before
+ * pinning existed pin the keys of their first unlock after the upgrade instead (trust on first use).
+ */
+export class PinnedUserKeys {
+
+  protected constructor(readonly ecdhPublicKey: CryptoKey, readonly ecdsaPublicKey: CryptoKey) { }
+
+  /**
+   * Pins the public keys of the given user keys, which must stem from an authenticated source.
+   * @param userKeys The user keys to pin
+   * @returns The pinned public keys (not yet stored)
+   */
+  public static of(userKeys: UserKeys): PinnedUserKeys {
+    return new PinnedUserKeys(userKeys.ecdhKeyPair.publicKey, userKeys.ecdsaKeyPair.publicKey);
+  }
+
+  /**
+   * Attempts to load previously pinned public keys from the browser's IndexedDB.
+   * @param userId The user whose keys to load
+   * @returns The pinned public keys, if any
+   */
+  public static async load(userId: string): Promise<PinnedUserKeys | undefined> {
+    const pinned: { ecdhPublicKey: CryptoKey, ecdsaPublicKey: CryptoKey } | undefined = await DB.transaction(DB.PINNED_USER_KEYS_STORE, 'readonly', tx => {
+      return tx.objectStore(DB.PINNED_USER_KEYS_STORE).get(userId);
+    });
+    return pinned ? new PinnedUserKeys(pinned.ecdhPublicKey, pinned.ecdsaPublicKey) : undefined;
+  }
+
+  /**
+   * Deletes the pinned public keys of the given user.
+   * @param userId The user whose pin to delete
+   */
+  public static async delete(userId: string): Promise<void> {
+    await DB.transaction(DB.PINNED_USER_KEYS_STORE, 'readwrite', tx => {
+      return tx.objectStore(DB.PINNED_USER_KEYS_STORE).delete(userId);
+    });
+  }
+
+  /**
+   * Stores the pinned public keys in the browser's IndexedDB, replacing any previous pin of the user.
+   * @param userId The user whose keys are pinned
+   */
+  public async store(userId: string): Promise<void> {
+    await DB.transaction(DB.PINNED_USER_KEYS_STORE, 'readwrite', tx => {
+      return tx.objectStore(DB.PINNED_USER_KEYS_STORE).put({ ecdhPublicKey: this.ecdhPublicKey, ecdsaPublicKey: this.ecdsaPublicKey }, userId);
+    });
+  }
+
+  /**
+   * Asserts that the given (freshly unlocked) user keys are the pinned ones.
+   * @param userKeys The user keys to check
+   * @throws {KeyPairMismatchError} if either public key differs from the pinned one
+   */
+  public async assertMatches(userKeys: UserKeys): Promise<void> {
+    if (!await sameEcPoint(this.ecdhPublicKey, userKeys.ecdhKeyPair.publicKey)) {
+      throw new KeyPairMismatchError('Pinned ECDH');
+    }
+    if (!await sameEcPoint(this.ecdsaPublicKey, userKeys.ecdsaKeyPair.publicKey)) {
+      throw new KeyPairMismatchError('Pinned ECDSA');
+    }
+  }
+
+}
+
+// compares the EC points of two (public or private) EC keys; both keys must be extractable
+async function sameEcPoint(a: CryptoKey, b: CryptoKey): Promise<boolean> {
+  const [jwkA, jwkB] = await Promise.all([crypto.subtle.exportKey('jwk', a), crypto.subtle.exportKey('jwk', b)]);
+  return jwkA.crv === jwkB.crv && jwkA.x === jwkB.x && jwkA.y === jwkB.y;
 }
 
 export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams, keyUsages: KeyUsage[] = []): Promise<CryptoKey> {

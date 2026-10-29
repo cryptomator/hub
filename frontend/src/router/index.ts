@@ -270,8 +270,9 @@ router.beforeEach(async (to) => {
   if (!browser) {
     return { path: '/app/setup' };
   }
-  // Unlocking the user keys verifies that the server-supplied public keys belong to the user's private keys (the server
-  // is untrusted and could substitute them). Done once per loaded user data, i.e. again after `userdata.reload()`.
+  // Unlocking the user keys verifies that the server-supplied key material is the user's own (the server is untrusted and
+  // could substitute it): the public keys must belong to the private keys, and the key pair must be the one pinned in this
+  // browser (during setup, or on first use after the upgrade). Done once per loaded user data, i.e. again after `userdata.reload()`.
   // For users created before Hub 1.4.0 this also backfills and persists the missing ECDSA key pair.
   if (verifiedUserData !== userdata.me) {
     try {
@@ -279,7 +280,7 @@ router.beforeEach(async (to) => {
       verifiedUserData = userdata.me;
     } catch (error) {
       if (error instanceof KeyPairMismatchError) {
-        console.error('Public keys stored on the server do not match the user\'s private keys.', error);
+        console.error('Key material delivered by the server does not match the user\'s keys.', error);
         return { path: '/app/key-mismatch', replace: true };
       }
       console.error('Unlocking the user keys failed.', error);

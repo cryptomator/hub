@@ -1,6 +1,6 @@
 import { base64, base64urlnopad } from '@scure/base';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { KeyPairMismatchError, UnwrapKeyError, UserKeys, getJwkThumbprint, getJwkThumbprintStr } from '../../src/common/crypto';
+import { KeyPairMismatchError, PinnedUserKeys, UnwrapKeyError, UserKeys, getJwkThumbprint, getJwkThumbprintStr } from '../../src/common/crypto';
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -156,6 +156,33 @@ describe('crypto', () => {
   });
 
   // base64-encoded test key pairs for use in other implementations (Java, Swift, ...)
+  describe('PinnedUserKeys', () => {
+    it('assertMatches() accepts the pinned user keys', async () => {
+      const userKeys = await UserKeys.create();
+      const pinned = PinnedUserKeys.of(userKeys);
+
+      await expect(pinned.assertMatches(userKeys)).resolves.toBeUndefined();
+    });
+
+    it('assertMatches() rejects a different ECDH key pair', async () => {
+      const original = await UserKeys.create();
+      const substituted = await UserKeys.create();
+      const pinned = PinnedUserKeys.of(original);
+      const mixed = { ecdhKeyPair: substituted.ecdhKeyPair, ecdsaKeyPair: original.ecdsaKeyPair } as UserKeys;
+
+      await expect(pinned.assertMatches(mixed)).rejects.toThrow(KeyPairMismatchError);
+    });
+
+    it('assertMatches() rejects a different ECDSA key pair', async () => {
+      const original = await UserKeys.create();
+      const substituted = await UserKeys.create();
+      const pinned = PinnedUserKeys.of(original);
+      const mixed = { ecdhKeyPair: original.ecdhKeyPair, ecdsaKeyPair: substituted.ecdsaKeyPair } as UserKeys;
+
+      await expect(pinned.assertMatches(mixed)).rejects.toThrow(KeyPairMismatchError);
+    });
+  });
+
   describe('Test Key Pairs', () => {
     it('alice private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', aliceEcdh.privateKey));

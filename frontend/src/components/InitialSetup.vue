@@ -265,6 +265,7 @@ async function createUserKey() {
     me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
     me.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
     me.setupCode = await JWE.build({ setupCode: setupCode.value }).withRecipients(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.publicKey)).toCompact();
+    await userdata.pinUserKeys(userKeys); // freshly generated in this browser, i.e. authentic
     const browserKeys = await userdata.createBrowserKeys();
     await submitBrowserKeys(browserKeys, me, userKeys);
 
@@ -285,7 +286,8 @@ async function recoverUserKey() {
 
     const me = await userdata.me;
     const userKeys = await userdata.decryptUserKeysWithSetupCode(setupCode.value);
-    const browserKeys = await userdata.createBrowserKeys();
+    // keep the device key pair (and thus the device id) if this browser already has one, e.g. when re-registering a device the server no longer knows:
+    const browserKeys = await userdata.browserKeys ?? await userdata.createBrowserKeys();
     await submitBrowserKeys(browserKeys, me, userKeys);
 
     await router.push('/app/vaults');

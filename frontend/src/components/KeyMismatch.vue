@@ -17,7 +17,7 @@
         Account keys could not be verified
       </h1>
       <p class="mt-6 text-sm text-gray-500">
-        The public keys stored on this server for your account do not belong to your private keys. This can be a sign that the server has been tampered with.
+        The account keys delivered by this server are not the ones this browser was set up with, or the public keys do not belong to the private keys. This can be a sign that the server has been tampered with.
       </p>
       <p class="mt-3 text-sm text-gray-500">
         Do not create, recover or share any vaults until the cause has been resolved. Please contact your administrator.
