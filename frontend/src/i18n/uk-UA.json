@@ -402,6 +402,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "Я надійно зберіг ключ свого облікового запису.",
   "initialSetup.recoverUserKey.title": "Необхідна авторизація",
   "initialSetup.recoverUserKey.description": "Це ваш перший вхід у цьому браузері.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Цей браузер пам’ятає ключі вашого облікового запису, але ключі, отримані із сервера, відрізняються від них. Продовжуйте, лише якщо ви скинули обліковий запис або знаєте, що його було відновлено з резервної копії. Ваш ключ облікового запису підтверджує, що отримані ключі справді належать вам; він ніколи не залишає цей браузер.",
   "initialSetup.recoverUserKey.accountKey.description": "Для прив’язки цього браузера до вашого облікового запису необхідний ключ облікового запису.",
   "initialSetup.recoverUserKey.deviceName": "Назва браузера",
   "initialSetup.recoverUserKey.deviceName.description": "Назвіть цей браузер для зручності ідентифікації у списку дозволених пристроїв.",
