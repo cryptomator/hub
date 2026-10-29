@@ -92,14 +92,18 @@
         <h4 class="text-sm font-medium text-gray-900">{{ t('emergencyAccessDialog.section.ownership') }}</h4>
         <div v-if="permissionChanges.newOwners.length > 0" class="mt-3 space-y-1">
           <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newOwners') }}</span>
-          <MultiUserSelectInputGroup :selected-users="permissionChanges.newOwners" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
-            <span v-if="permissionChanges.keptOwnerCount > 0" class="mx-1 text-sm text-gray-500">{{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptOwnerCount]) }}</span>
+          <MultiUserSelectInputGroup :selected-users="showKeptOwners ? selectedNewOwners : permissionChanges.newOwners" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
+            <button v-if="!showKeptOwners && permissionChanges.keptOwners.length > 0" type="button" :title="t('emergencyAccessDialog.hint.showKept')" class="mx-1 text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer rounded-sm focus:outline-hidden focus:ring-2 focus:ring-primary" @click="showKeptOwners = true">
+              {{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptOwners.length]) }}
+            </button>
           </MultiUserSelectInputGroup>
         </div>
         <div v-if="permissionChanges.newMembers.length > 0" class="mt-4 space-y-1">
           <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newMembers') }}</span>
-          <MultiUserSelectInputGroup :selected-users="permissionChanges.newMembers" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
-            <span v-if="permissionChanges.keptMemberCount > 0" class="mx-1 text-sm text-gray-500">{{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptMemberCount]) }}</span>
+          <MultiUserSelectInputGroup :selected-users="showKeptMembers ? selectedNewmembers : permissionChanges.newMembers" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
+            <button v-if="!showKeptMembers && permissionChanges.keptMembers.length > 0" type="button" :title="t('emergencyAccessDialog.hint.showKept')" class="mx-1 text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer rounded-sm focus:outline-hidden focus:ring-2 focus:ring-primary" @click="showKeptMembers = true">
+              {{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptMembers.length]) }}
+            </button>
           </MultiUserSelectInputGroup>
         </div>
         <div v-if="removedMembers.length > 0" class="mt-4 space-y-1">
@@ -348,11 +352,15 @@ const permissionChanges = computed(() => {
   const existingMemberIds = new Set(existingMembers.value.map(u => u.id));
   return {
     newOwners: selectedNewOwners.value.filter(u => !existingOwnerIds.has(u.id)),
-    keptOwnerCount: selectedNewOwners.value.filter(u => existingOwnerIds.has(u.id)).length,
+    keptOwners: selectedNewOwners.value.filter(u => existingOwnerIds.has(u.id)),
     newMembers: selectedNewmembers.value.filter(u => !existingMemberIds.has(u.id)),
-    keptMemberCount: selectedNewmembers.value.filter(u => existingMemberIds.has(u.id)).length
+    keptMembers: selectedNewmembers.value.filter(u => existingMemberIds.has(u.id))
   };
 });
+
+// kept owners/members are collapsed into a count by default; clicking it reveals them among the new ones:
+const showKeptOwners = ref(false);
+const showKeptMembers = ref(false);
 
 // COUNCIL CHANGE
 const councilMembers = ref<ActivatedUser[]>([]);
@@ -558,6 +566,8 @@ async function show() {
   const [, trustList] = await Promise.all([loadProcessInfos(), backend.trust.listTrusted()]);
   trusts.value = trustList;
   await loadPendingPermissionChange();
+  showKeptOwners.value = false;
+  showKeptMembers.value = false;
   showSuccess.value = false;
   open.value = true;
 }

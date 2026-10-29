@@ -324,6 +324,7 @@
   "emergencyAccessDialog.hint.finishProcess": "You can finish this emergency access process by adding the last key share and completing it.",
   "emergencyAccessDialog.hint.keyShareAdded": "Your key share has already been added.",
   "emergencyAccessDialog.hint.alreadyHaveAccess": "+ {0} more who keep their role",
+  "emergencyAccessDialog.hint.showKept": "Show users who keep their role",
   "emergencyAccessDialog.hint.notInCouncil": "You are not part of the council for this process and cannot add a key share.",
   "emergencyAccessDialog.hint.configuringAccess": "Configuring access… {0}/{1}",
   "emergencyAccessDialog.action.abortProcess": "Abort Process for Everyone…",
