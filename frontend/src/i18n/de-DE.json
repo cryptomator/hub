@@ -523,6 +523,7 @@
   "vaultDetails.sharedWith.badge.owner": "Eigentümer",
   "vaultDetails.sharedWith.grantOwnership": "Eigentümerrechte gewähren",
   "vaultDetails.sharedWith.revokeOwnership": "Eigentümerrechte entziehen",
+  "vaultDetails.confirmRoleUpdate.revokeOwnershipDescription": "Möchtest du Eigentumsrechte an diesem Tresor von {0} widerrufen? Sie bleiben ein reguläres Mitglied.",
   "vaultDetails.actions.title": "Aktionen",
   "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",
