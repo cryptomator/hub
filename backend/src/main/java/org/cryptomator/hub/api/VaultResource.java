@@ -407,22 +407,21 @@ public class VaultResource {
 	}
 
 	@POST
-	@Path("/{vaultId}/users-requiring-access-grant/preview")
+	@Path("/{vaultId}/effective-users/preview")
 	@RolesAllowed("user")
 	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "preview members requiring access tokens", description = "lists all users that would have permissions but lack an access token if the direct vault members were replaced with the given ones (same request body as PUT /{vaultId}/members); nothing is persisted")
+	@Operation(summary = "preview effective users", description = "lists all enabled users with a key pair that would have permissions (directly or via groups) if the direct vault members were replaced with the given ones (same request body as PUT /{vaultId}/members), regardless of whether they already hold an access token; nothing is persisted")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "400", description = "invalid members in request body")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<MemberDto> previewUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+	public List<MemberDto> previewEffectiveUsers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
 		if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("Vault not found.");
 		}
-		var usersWithToken = accessTokenRepo.findUserIdsWithToken(vaultId);
 
 		// resolve direct and group members to their highest prospective role (mirrors EffectiveVaultAccess.findUsersWithoutAccessTokens):
 		var prospectiveRoles = new HashMap<User, VaultAccess.Role>();
@@ -431,7 +430,7 @@ public class VaultResource {
 		userRepo.getEffectiveGroupUsersByGroup(memberRoles.keySet()).forEach((groupId, users) -> users.forEach(user -> addRole.accept(user, memberRoles.get(groupId))));
 
 		return prospectiveRoles.entrySet().stream()
-				.filter(entry -> entry.getKey().isEnabled() && entry.getKey().getEcdhPublicKey() != null && !usersWithToken.contains(entry.getKey().getId()))
+				.filter(entry -> entry.getKey().isEnabled() && entry.getKey().getEcdhPublicKey() != null)
 				.sorted(Comparator.comparing(entry -> entry.getKey().getName()))
 				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
 				.toList();

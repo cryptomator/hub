@@ -66,6 +66,7 @@ const trustLevels = ref<Map<string, number>>(); // undefined until loaded for th
 const confirmedUntrusted = ref(false);
 const onLoadTrustLevelsError = ref<Error>();
 const onGrantPermissionError = ref<Error>();
+let latestTrustRefresh = 0; // overlapping refreshes (e.g. signing while the initial load is in flight) must not apply stale results
 
 const props = defineProps<{
   vault: VaultDto
@@ -90,17 +91,17 @@ watch(() => props.users, () => {
 }, { immediate: true });
 
 async function refreshTrusts() {
-  const users = props.users;
+  const refresh = ++latestTrustRefresh;
   onLoadTrustLevelsError.value = undefined;
   try {
     const trusts = await backend.trust.listTrusted();
-    const levels = await wot.computeTrustLevels(users, trusts);
-    if (users === props.users) {
+    const levels = await wot.computeTrustLevels(props.users, trusts);
+    if (refresh === latestTrustRefresh) {
       trustLevels.value = levels;
     }
   } catch (error) {
     console.error('Loading trust levels failed.', error);
-    if (users === props.users) {
+    if (refresh === latestTrustRefresh) {
       onLoadTrustLevelsError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }

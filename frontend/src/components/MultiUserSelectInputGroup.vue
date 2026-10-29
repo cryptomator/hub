@@ -142,6 +142,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   action: [item: T];
   remove: [item: T];
+  trustChanged: []; // a selected user's identity has been signed, parents holding their own trust list should reload it
 }>();
 
 const query = ref('');
@@ -177,6 +178,7 @@ const showDropdown = computed(() => props.inputVisible && query.value.trim().len
 
 async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
+  emit('trustChanged');
 }
 
 function onPillClick(event: MouseEvent, user: T) {

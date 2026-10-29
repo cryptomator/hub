@@ -391,8 +391,8 @@ class VaultService {
    * @param members The prospective direct members (users and groups) mapped to their role
    * @returns Users (including resolved group members) that would have access but lack an access token, with their highest prospective role
    */
-  public async previewUsersRequiringAccessGrant(vaultId: string, members: Record<string, VaultRole>, addFallbackPictures: boolean = true): Promise<(MemberDto & UserDto)[]> {
-    const users = await axiosAuth.post<(MemberDto & UserDto)[]>(`/vaults/${vaultId}/users-requiring-access-grant/preview`, members).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403, 404));
+  public async previewEffectiveUsers(vaultId: string, members: Record<string, VaultRole>, addFallbackPictures: boolean = true): Promise<(MemberDto & UserDto)[]> {
+    const users = await axiosAuth.post<(MemberDto & UserDto)[]>(`/vaults/${vaultId}/effective-users/preview`, members).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403, 404));
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 

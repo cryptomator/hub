@@ -341,6 +341,7 @@
   "emergencyAccessDialog.error.noProcessToApprove": "No recovery process to approve.",
   "emergencyAccessDialog.error.processTampered": "Recovery process has been tampered with.",
   "emergencyAccessDialog.error.noProcessToComplete": "No recovery process to complete.",
+  "emergencyAccessDialog.error.processNoLongerExists": "The recovery process no longer exists. It may have been aborted in the meantime.",
   "emergencyAccessDialog.error.unsupportedProcessType": "Unsupported state for recovery process type: {0}",
   "emergencyAccessDialog.warning.groupRecipients": "Groups are selected ({0}). Their individual members cannot be verified; on completion, the vault key will be shared with all group members.",
   "emergencyAccessDialog.warning.unresolvedRecipients": "{0} recipient(s) of this process could not be loaded (deleted or unknown). They are not listed here and will not get access.",

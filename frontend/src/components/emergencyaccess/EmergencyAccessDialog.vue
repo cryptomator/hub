@@ -16,6 +16,7 @@
           :input-visible="true"
           @action="addOwner"
           @remove="removeOwner"
+          @trust-changed="refreshTrusts"
         />
 
         <!-- Members (non-owners) selector -->
@@ -29,6 +30,7 @@
             :input-visible="true"
             @action="addMember"
             @remove="removeMember"
+            @trust-changed="refreshTrusts"
           />
         </div>
 
@@ -90,13 +92,13 @@
         <h4 class="text-sm font-medium text-gray-900">{{ t('emergencyAccessDialog.section.ownership') }}</h4>
         <div v-if="permissionChanges.newOwners.length > 0" class="mt-3 space-y-1">
           <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newOwners') }}</span>
-          <MultiUserSelectInputGroup :selected-users="permissionChanges.newOwners" :on-search="noopSearch" :input-visible="false">
+          <MultiUserSelectInputGroup :selected-users="permissionChanges.newOwners" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
             <span v-if="permissionChanges.keptOwnerCount > 0" class="mx-1 text-sm text-gray-500">{{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptOwnerCount]) }}</span>
           </MultiUserSelectInputGroup>
         </div>
         <div v-if="permissionChanges.newMembers.length > 0" class="mt-4 space-y-1">
           <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newMembers') }}</span>
-          <MultiUserSelectInputGroup :selected-users="permissionChanges.newMembers" :on-search="noopSearch" :input-visible="false">
+          <MultiUserSelectInputGroup :selected-users="permissionChanges.newMembers" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
             <span v-if="permissionChanges.keptMemberCount > 0" class="mx-1 text-sm text-gray-500">{{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptMemberCount]) }}</span>
           </MultiUserSelectInputGroup>
         </div>
@@ -162,7 +164,7 @@ import { DialogDescription } from '@headlessui/vue';
 import { CheckBadgeIcon, CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
-import { computed, ref, Ref, toRaw, useId, watch } from 'vue';
+import { computed, reactive, ref, Ref, toRaw, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, MemberDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { AccessTokenProducing, asPublicKey, UserKeys } from '../../common/crypto';
@@ -361,14 +363,66 @@ const trusts = ref<TrustDto[]>([]);
 const trustLevels = ref<Map<string, number>>(); // undefined until loaded for the current recipients
 const confirmedUntrusted = ref(false);
 const onLoadTrustLevelsError = ref<Error>();
-const untrustedGrantees = ref<UserDto[]>([]);
-const confirmedUntrustedGrantees = ref(false);
 
+// COMPLETION of a CHANGE_PERMISSIONS process: the server resolves every user who will have access afterwards (including
+// members of groups that were never shown in any picker) once when the dialog opens. All of them receive a freshly wrapped
+// vault key, existing token holders included, so all their identities are checked and acknowledged before the Complete
+// button, and exactly this state is committed:
+type PendingPermissionChange = {
+  membersWithRole: Record<string, VaultRole>;
+  usersToGrant: (MemberDto & ActivatedUser)[];
+};
+const pendingPermissionChange = ref<PendingPermissionChange>(); // undefined until loaded (stays undefined if loading failed)
+const granteeTrustLevels = ref<Map<string, number>>(); // undefined until computed for the current grantees and trusts
+const confirmedUntrustedGrantees = ref(false);
+const onLoadGranteesError = ref<Error>();
+
+const untrustedGrantees = computed<UserDto[]>(() => {
+  const levels = granteeTrustLevels.value;
+  return levels ? (pendingPermissionChange.value?.usersToGrant ?? []).filter(u => (levels.get(u.id) ?? -1) === -1) : [];
+});
+
+watch([pendingPermissionChange, trusts], async () => {
+  // trust levels and the confirmation only apply to the grantees and trusts they were computed for:
+  const pending = pendingPermissionChange.value;
+  const currentTrusts = trusts.value;
+  const isCurrent = () => pending === pendingPermissionChange.value && currentTrusts === trusts.value;
+  granteeTrustLevels.value = undefined;
+  confirmedUntrustedGrantees.value = false;
+  if (!pending) {
+    return;
+  }
+  try {
+    const levels = await wot.computeTrustLevels(pending.usersToGrant, currentTrusts);
+    if (isCurrent()) {
+      granteeTrustLevels.value = levels;
+    }
+  } catch (error) {
+    console.error('Computing trust levels of the grantees failed.', error);
+    if (isCurrent()) {
+      onLoadGranteesError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
+  }
+});
+
+// a selected user's identity has been signed via their badge:
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
+}
+
+// before completion the server-resolved grantee list is unknown, so the recipients named in the process stand in for it.
+// When starting, every selected user is shown (the starter may want to remove unverified ones who would keep their access);
+// when approving, kept owners/members are left out, as they keep their existing token and will not be wrapped for:
 const grantRelevantAuthorities = computed<AuthorityDto[]>(() => {
-  if ((props.recoveryProcess?.type ?? processType.value) !== 'CHANGE_PERMISSIONS') {
+  if ((props.recoveryProcess?.type ?? processType.value) !== 'CHANGE_PERMISSIONS' || phase.value === 'complete') {
     return [];
   }
-  return [...selectedNewOwners.value, ...selectedNewmembers.value];
+  const selected = [...selectedNewOwners.value, ...selectedNewmembers.value];
+  if (phase.value === 'start') {
+    return selected;
+  }
+  const existingIds = new Set([...existingOwners.value, ...existingMembers.value].map(a => a.id));
+  return selected.filter(a => !existingIds.has(a.id));
 });
 
 watch([grantRelevantAuthorities, trusts], async () => {
@@ -397,7 +451,7 @@ const unresolvedRecipientCount = computed(() => {
   if (props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS') {
     return 0;
   }
-  const shownIds = new Set(grantRelevantAuthorities.value.map(a => a.id));
+  const shownIds = new Set([...selectedNewOwners.value, ...selectedNewmembers.value].map(a => a.id));
   return new Set([...props.recoveryProcess.details.newOwnerIds, ...props.recoveryProcess.details.newMemberIds].filter(id => !shownIds.has(id))).size;
 });
 
@@ -460,6 +514,8 @@ const errorMessage = computed(() => {
     return t('recoveryDialog.error.processAlreadyExists');
   } else if (onLoadTrustLevelsError.value) {
     return t('common.unexpectedError', [onLoadTrustLevelsError.value.message]);
+  } else if (onLoadGranteesError.value) {
+    return t('common.unexpectedError', [onLoadGranteesError.value.message]);
   } else {
     return undefined;
   }
@@ -473,7 +529,8 @@ const primaryAction = computed(() => {
   } else if (canSeeApprove.value) {
     return { label: t('emergencyAccessDialog.action.approve'), enabled: !needsUntrustedConfirmation.value, run: approveRecovery };
   } else if (canSeeComplete.value) {
-    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value, run: completeRecovery };
+    const granteesResolved = props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS' || !!granteeTrustLevels.value;
+    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: granteesResolved && (untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value), run: completeRecovery };
   } else {
     return undefined;
   }
@@ -500,11 +557,29 @@ async function show() {
   await initProcessSpecificState();
   const [, trustList] = await Promise.all([loadProcessInfos(), backend.trust.listTrusted()]);
   trusts.value = trustList;
-  untrustedGrantees.value = [];
-  confirmedUntrustedGrantees.value = false;
-  preparedPermissionChange = undefined;
+  await loadPendingPermissionChange();
   showSuccess.value = false;
   open.value = true;
+}
+
+async function loadPendingPermissionChange() {
+  pendingPermissionChange.value = undefined;
+  onLoadGranteesError.value = undefined;
+  if (props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS' || !canSeeComplete.value) {
+    return;
+  }
+  try {
+    const membersWithRole = Object.fromEntries([
+      ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
+      ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
+    ]) as Record<string, VaultRole>;
+    // nothing is persisted by the preview:
+    const usersToGrant = (await backend.vaults.previewEffectiveUsers(props.vault.id, membersWithRole)).filter(didCompleteSetup);
+    pendingPermissionChange.value = { membersWithRole: membersWithRole, usersToGrant: usersToGrant }; // trust levels follow via the watch above
+  } catch (error) {
+    console.error('Resolving the recipients of the permission change failed.', error);
+    onLoadGranteesError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
 }
 
 async function loadExistingProcessesForVault() {
@@ -718,8 +793,8 @@ async function approveRecovery() {
  * PHASE THREE: By adding the last required share, we can complete the recovery process.
  */
 /**
- * A CHANGE_PERMISSIONS completion that has been fully prepared (shares combined, recipients resolved) but is waiting for the
- * user to acknowledge unverified recipients. Confirming commits exactly this state; nothing is reloaded from the server.
+ * A CHANGE_PERMISSIONS completion ready to be committed: the recovered vault key plus the membership and grantees exactly as
+ * shown to (and acknowledged by) the user when the dialog was opened. Nothing is reloaded from the server at this point.
  */
 type PreparedPermissionChange = {
   processId: string;
@@ -727,17 +802,10 @@ type PreparedPermissionChange = {
   membersWithRole: Record<string, VaultRole>;
   usersToGrant: (MemberDto & ActivatedUser)[];
 };
-let preparedPermissionChange: PreparedPermissionChange | undefined; // deliberately non-reactive: holds the recovered vault key
 
 async function completeRecovery() {
   onError.value = undefined;
   try {
-    if (preparedPermissionChange && confirmedUntrustedGrantees.value) {
-      await commitPermissionChange(preparedPermissionChange);
-      return;
-    }
-    preparedPermissionChange = undefined;
-
     if (!props.recoveryProcess) {
       throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
     }
@@ -775,25 +843,11 @@ async function completeRecovery() {
         ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveredKey)
         : await VaultFormat8.recover(recoveredKey);
 
-      const membersWithRole = Object.fromEntries([
-        ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
-        ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
-      ]) as Record<string, VaultRole>;
-
-      // the server resolves the prospective recipients (including members of groups that were never shown in any picker)
-      // without persisting anything, so trust can be checked and confirmed before the membership is replaced:
-      const usersToGrant = (await backend.vaults.previewUsersRequiringAccessGrant(props.vault.id, membersWithRole)).filter(didCompleteSetup);
-      const granteeTrustLevels = await wot.computeTrustLevels(usersToGrant, await backend.trust.listTrusted());
-      const untrusted = usersToGrant.filter(u => (granteeTrustLevels.get(u.id) ?? -1) === -1);
-      const prepared: PreparedPermissionChange = { processId: process.id, vaultKeys: vaultKeys, membersWithRole: membersWithRole, usersToGrant: usersToGrant };
-      if (untrusted.length > 0) {
-        // nothing has been persisted yet; the user must acknowledge the listed recipients, then the prepared state is committed as-is:
-        untrustedGrantees.value = untrusted;
-        confirmedUntrustedGrantees.value = false;
-        preparedPermissionChange = prepared;
-        return;
+      const pending = pendingPermissionChange.value;
+      if (!pending) {
+        throw new Error('Recipients of the permission change have not been resolved.'); // unreachable: the button is disabled until they are
       }
-      await commitPermissionChange(prepared);
+      await commitPermissionChange({ processId: process.id, vaultKeys: vaultKeys, membersWithRole: pending.membersWithRole, usersToGrant: pending.usersToGrant });
     }
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
@@ -803,13 +857,19 @@ async function completeRecovery() {
 
 // replaces the membership, shares the vault key with exactly the prepared recipients and completes the process:
 async function commitPermissionChange(prepared: PreparedPermissionChange) {
+  // the process may have been aborted (e.g. by another council member) while this dialog was open;
+  // the membership endpoint does not know about the process, so make sure it still exists before replacing anything:
+  const processes = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
+  if (!processes.some(p => p.id === prepared.processId)) {
+    throw new Error(t('emergencyAccessDialog.error.processNoLongerExists'));
+  }
   // from here on the vault is in an intermediate state until every recipient holds a key, so the dialog stays blocked:
-  const progress = { done: 0, total: prepared.usersToGrant.length };
+  const progress = reactive({ done: 0, total: prepared.usersToGrant.length });
   accessProgress.value = progress;
   try {
     await backend.vaults.setMembersWithRole(props.vault.id, prepared.membersWithRole);
 
-    // anyone who joined a selected group after the preview stays pending for a later (manual or automatic) grant:
+    // existing tokens are replaced; anyone who joined a selected group after the dialog was opened stays pending for a later (manual or automatic) grant:
     const accessGrants: AccessGrant[] = await Promise.all(
       prepared.usersToGrant.map(async u => {
         // never wrap "to myself" using a key from the (server-supplied) recipient list, only using my verified key:
@@ -824,7 +884,6 @@ async function commitPermissionChange(prepared: PreparedPermissionChange) {
     }
 
     await backend.emergencyAccess.complete(prepared.processId);
-    preparedPermissionChange = undefined;
     emit('updated');
     showSuccess.value = true;
   } finally {

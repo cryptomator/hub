@@ -16,9 +16,7 @@ import jakarta.persistence.Table;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "access_token")
@@ -26,11 +24,6 @@ import java.util.stream.Collectors;
 			DELETE
 			FROM AccessToken a
 			WHERE a.id.userId = :userId
-		""")
-@NamedQuery(name = "AccessToken.userIdsForVault", query = """
-			SELECT token.id.userId
-			FROM AccessToken token
-			WHERE token.id.vaultId = :vaultId
 		""")
 @NamedQuery(name = "AccessToken.get", query = """
 			SELECT token
@@ -131,19 +124,6 @@ public class AccessToken {
 
 		public void deleteByUser(String userId) {
 			delete("#AccessToken.deleteByUser", Map.of("userId", userId));
-		}
-
-		/**
-		 * Lists the users holding an access token for the given vault, regardless of whether they still have access to it.
-		 *
-		 * @param vaultId ID of a vault
-		 * @return IDs of all users with an access token for the vault
-		 */
-		public Set<String> findUserIdsWithToken(UUID vaultId) {
-			return getEntityManager().createNamedQuery("AccessToken.userIdsForVault", String.class)
-					.setParameter("vaultId", vaultId)
-					.getResultStream()
-					.collect(Collectors.toUnmodifiableSet());
 		}
 	}
 }
