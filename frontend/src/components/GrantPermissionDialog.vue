@@ -76,6 +76,7 @@ import { base64 } from '@scure/base';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
+import userdata from '../common/userdata';
 import { AccessTokenProducing } from '../common/crypto';
 import wot from '../common/wot';
 import TrustDetails from './TrustDetails.vue';
@@ -142,10 +143,12 @@ async function grantAccess() {
 }
 
 async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
+  const me = await userdata.me;
   const tokens: AccessGrant[] = [];
   for (const member of members) {
     if (member.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+      // never wrap "to myself" using a key from the (server-supplied) member list, only using my verified key:
+      const publicKey = member.id === me.id ? await userdata.ecdhPublicKey : base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const includeOwnerKeys = member.vaultRole === 'OWNER';
       const jwe = await props.vaultKeys.encryptForUser(publicKey, includeOwnerKeys);
       tokens.push({ userId: member.id, token: jwe });

@@ -4,6 +4,7 @@ import backend from '../common/backend';
 import { baseURL } from '../common/config';
 import { licenseSetupGuard } from './licenseSetupGuard';
 import userdata from '../common/userdata';
+import { KeyPairMismatchError } from '../common/crypto';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
@@ -20,6 +21,7 @@ import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import SetupLicense from '../components/SetupLicense.vue';
 import UnlockError from '../components/UnlockError.vue';
+import KeyMismatch from '../components/KeyMismatch.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
@@ -193,6 +195,11 @@ const routes: RouteRecordRaw[] = [
     meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true }
   },
   {
+    path: '/app/key-mismatch',
+    component: KeyMismatch,
+    meta: { skipSetup: true, skipLicenseSetup: true }
+  },
+  {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
     meta: { skipAuth: true, skipSetup: true, skipLicenseSetup: true }
@@ -243,6 +250,9 @@ router.beforeEach(async (to) => {
 // THIRD check instance license setup (requires auth, must run before user key setup)
 router.beforeEach(licenseSetupGuard);
 
+// the `userdata.me` promise whose public keys have been verified against the private keys (a new promise is created on reload)
+let verifiedUserData: Promise<unknown> | undefined;
+
 // FOURTH check user/browser keys (requires auth)
 router.beforeEach(async (to) => {
   if (to.meta.skipSetup) {
@@ -260,13 +270,20 @@ router.beforeEach(async (to) => {
   if (!browser) {
     return { path: '/app/setup' };
   }
-  // Users created before Hub 1.4.0 may lack ECDSA key pair. Unlocking the user keys with
-  // the (already registered) browser device backfills and persists ECDSA key pair
-  if (!me.ecdsaPublicKey) {
+  // Unlocking the user keys verifies that the server-supplied key material is the user's own (the server is untrusted and
+  // could substitute it): the public keys must belong to the private keys, and the key pair must be the one pinned in this
+  // browser (during setup, or on first use after the upgrade). Done once per loaded user data, i.e. again after `userdata.reload()`.
+  // For users created before Hub 1.4.0 this also backfills and persists the missing ECDSA key pair.
+  if (verifiedUserData !== userdata.me) {
     try {
       await userdata.decryptUserKeysWithBrowser(browserKeys, browser);
+      verifiedUserData = userdata.me;
     } catch (error) {
-      console.error('Backfilling the missing ECDSA user key failed.', error);
+      if (error instanceof KeyPairMismatchError) {
+        console.error('Key material delivered by the server does not match the user\'s keys.', error);
+        return { path: '/app/key-mismatch', replace: true };
+      }
+      console.error('Unlocking the user keys failed.', error);
     }
   }
 });
