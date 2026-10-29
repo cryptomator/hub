@@ -6,7 +6,7 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import router from '../router';
 import ConfirmDialog from './ConfirmDialog.vue';
 
@@ -32,6 +32,6 @@ function show() {
 
 async function resetUserAccount() {
   await backend.users.resetMe();
-  await BrowserKeys.delete(props.me.id);
+  await userdata.forgetBrowser();
 }
 </script>

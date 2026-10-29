@@ -812,7 +812,8 @@ async function commitPermissionChange(prepared: PreparedPermissionChange) {
     // anyone who joined a selected group after the preview stays pending for a later (manual or automatic) grant:
     const accessGrants: AccessGrant[] = await Promise.all(
       prepared.usersToGrant.map(async u => {
-        const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+        // never wrap "to myself" using a key from the (server-supplied) recipient list, only using my verified key:
+        const publicKey = u.id === props.me.id ? await userdata.ecdhPublicKey : base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
         const jwe = await prepared.vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
         progress.done++;
         return { userId: u.id, token: jwe };

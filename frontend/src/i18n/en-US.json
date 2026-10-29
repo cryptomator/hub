@@ -453,6 +453,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "I stored my Account Key securely.",
   "initialSetup.recoverUserKey.title": "Authorization Required",
   "initialSetup.recoverUserKey.description": "This is your first login on this browser.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "This browser remembers the keys of your account, but the keys the server delivered are different ones. Only continue if you reset your account or know of a restore from backup. Your Account Key confirms that the delivered keys are really yours; it never leaves this browser.",
   "initialSetup.recoverUserKey.accountKey.description": "Your Account Key is required to link this browser to your account.",
   "initialSetup.recoverUserKey.deviceName": "Browser Name",
   "initialSetup.recoverUserKey.deviceName.description": "Name this browser for easy identification in your authorized devices list.",
