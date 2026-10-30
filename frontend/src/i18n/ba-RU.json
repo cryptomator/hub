@@ -1,6 +1,7 @@
 {
   "common.add": "Өҫтәү",
   "common.apply": "Ҡуллан",
+  "common.back": "Артҡа",
   "common.cancel": "Кире ал",
   "common.close": "Яп",
   "common.copied": "Күсермә алынды!",
@@ -15,6 +16,7 @@
   "common.reset": "Яңынан башла",
   "common.retry": "Ҡабатла",
   "common.save": "Һаҡла",
+  "common.select": "Һайла",
   "common.share": "Уртаҡлаш",
   "common.show": "Күрһәт",
   "admin.licenseInfo.manageSubscription": "Яҙылыуҙар менән идара итеү",
@@ -25,7 +27,6 @@
   "auditLog.filter": "Фильтр",
   "auditLog.details": "Тулыраҡ мәғлүмәт",
   "auditLog.details.vault.create": "Һаҡлағыс яһа",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Серһүҙ дөрөҫ түгел",
   "createVault.enterVaultDetails.title": "Һаҡлағыс яһа",
   "createVault.enterVaultDetails.vaultName": "Һаҡлағыс исеме",
   "createVault.showRecoveryKey.submit": "Һаҡлағыс яһа",
