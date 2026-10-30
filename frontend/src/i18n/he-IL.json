@@ -1,6 +1,7 @@
 {
   "common.add": "הוספה",
   "common.apply": "החל",
+  "common.back": "חזור",
   "common.cancel": "ביטול",
   "common.close": "סגור",
   "common.copied": "הועתק!",
@@ -15,6 +16,7 @@
   "common.reset": "איפוס",
   "common.retry": "נסה שוב",
   "common.save": "שמור",
+  "common.select": "בחר",
   "common.share": "שתף",
   "common.show": "הצג",
   "admin.licenseInfo.manageSubscription": "ניהול מנוי",
@@ -25,7 +27,6 @@
   "auditLog.filter": "סנן",
   "auditLog.details": "פרטים",
   "auditLog.details.vault.create": "צור כספת חדשה",
-  "claimVaultOwnershipDialog.error.wrongPassword": "סיסמה שגויה",
   "createVault.enterVaultDetails.title": "צור כספת חדשה",
   "createVault.enterVaultDetails.vaultName": "שם הכספת",
   "createVault.showRecoveryKey.submit": "צור כספת חדשה",
