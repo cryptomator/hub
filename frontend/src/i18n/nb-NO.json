@@ -1,6 +1,7 @@
 {
   "common.add": "Legg til",
   "common.apply": "Bruk",
+  "common.back": "Tilbake",
   "common.cancel": "Avbryt",
   "common.close": "Lukk",
   "common.copied": "Kopiert!",
@@ -15,6 +16,7 @@
   "common.reset": "Nullstill",
   "common.retry": "Prøv igjen",
   "common.save": "Lagre",
+  "common.select": "Velg",
   "common.share": "Del",
   "common.show": "Vis",
   "admin.licenseInfo.manageSubscription": "Administrer abonnement",
@@ -25,7 +27,6 @@
   "auditLog.filter": "Filter",
   "auditLog.details": "Detaljer",
   "auditLog.details.vault.create": "Opprett hvelv",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Feil passord",
   "createVault.enterVaultDetails.title": "Opprett hvelv",
   "createVault.enterVaultDetails.vaultName": "Navn på hvelvet",
   "createVault.showRecoveryKey.submit": "Opprett hvelv",
