@@ -1,6 +1,7 @@
 {
   "common.add": "Idagdag",
   "common.apply": "I-apply",
+  "common.back": "Bumalik",
   "common.cancel": "Kanselahin",
   "common.close": "Isara",
   "common.copied": "Nakopya na!",
@@ -15,6 +16,7 @@
   "common.reset": "I-reset",
   "common.retry": "Subukan muli",
   "common.save": "I-save",
+  "common.select": "Piliin",
   "common.share": "Ibahagi",
   "common.show": "Ipakita",
   "admin.licenseInfo.manageSubscription": "Pamahalaan ang Subscription",
@@ -25,7 +27,6 @@
   "auditLog.filter": "Filter",
   "auditLog.details": "Mga detalye",
   "auditLog.details.vault.create": "Gumawa ng bagong Vault",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Mali ang password",
   "createVault.enterVaultDetails.title": "Gumawa ng bagong Vault",
   "createVault.enterVaultDetails.vaultName": "Pangalan ng Vault",
   "createVault.showRecoveryKey.submit": "Gumawa ng bagong Vault",
