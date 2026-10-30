@@ -102,6 +102,7 @@ const setupCode = computed({
 
 async function show() {
   state.value = State.ConfirmRegenerateSetupCode;
+  onRegenerateError.value = undefined;
   open.value = true;
 }
 
