@@ -277,6 +277,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "J'ai enregistré ma Clé de Compte en toute sécurité.",
   "initialSetup.recoverUserKey.title": "Autorisation requise",
   "initialSetup.recoverUserKey.description": "C'est votre première connexion sur ce navigateur.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Ce navigateur se souvient des clés de votre compte, mais les clés fournies par le serveur sont différentes. Ne continuez que si vous réinitialisez votre compte ou que vous connaissez une restauration à partir de la sauvegarde. Votre clé de compte confirme que les clés livrées sont vraiment les vôtres; elle ne quitte jamais ce navigateur.",
   "initialSetup.recoverUserKey.accountKey.description": "Votre Clé de Compte est requise pour lier ce navigateur à votre compte.",
   "initialSetup.recoverUserKey.deviceName": "Nom du navigateur",
   "initialSetup.recoverUserKey.deviceName.description": "Nommez ce navigateur pour l'identifier facilement dans la liste des appareils autorisés.",
