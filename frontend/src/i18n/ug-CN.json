@@ -1,5 +1,6 @@
 {
   "common.apply": "قوللىنىش",
+  "common.back": "قايت",
   "common.cancel": "بىكار قىل",
   "common.close": "ياپ",
   "common.copied": "كۆچۈرۈلدى!",
@@ -9,7 +10,6 @@
   "common.show": "كۆرسەت",
   "auditLog.filter": "سۈزگۈچ",
   "auditLog.details.vault.create": "ئامبار قۇر",
-  "claimVaultOwnershipDialog.error.wrongPassword": "پارول خاتا",
   "createVault.enterVaultDetails.title": "ئامبار قۇر",
   "createVault.enterVaultDetails.vaultName": "ئامبار ئىسمى",
   "createVault.showRecoveryKey.submit": "ئامبار قۇر",
