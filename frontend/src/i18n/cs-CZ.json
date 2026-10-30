@@ -1,6 +1,7 @@
 {
   "common.add": "Přidat",
   "common.apply": "Použít",
+  "common.back": "Zpět",
   "common.cancel": "Zrušit",
   "common.close": "Zavřít",
   "common.copied": "Zkopírováno!",
@@ -15,6 +16,7 @@
   "common.reset": "Resetovat",
   "common.retry": "Opakovat",
   "common.save": "Uložit",
+  "common.select": "Vybrat",
   "common.share": "Sdílet",
   "common.show": "Zobrazit",
   "admin.licenseInfo.manageSubscription": "Spravovat předplatné",
@@ -25,7 +27,6 @@
   "auditLog.filter": "Filtr",
   "auditLog.details": "Podrobnosti",
   "auditLog.details.vault.create": "Vytvořit trezor",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Chybné heslo",
   "createVault.enterVaultDetails.title": "Vytvořit trezor",
   "createVault.enterVaultDetails.vaultName": "Název trezoru",
   "createVault.showRecoveryKey.submit": "Vytvořit trezor",
