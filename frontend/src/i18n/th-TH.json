@@ -1,6 +1,7 @@
 {
   "common.add": "เพิ่ม",
   "common.apply": "นำไปใช้",
+  "common.back": "ย้อนกลับ",
   "common.cancel": "ยกเลิก",
   "common.close": "ปิด",
   "common.copied": "คัดลอกแล้ว!",
@@ -15,6 +16,7 @@
   "common.reset": "รีเซ็ต",
   "common.retry": "ลอง​ใหม่",
   "common.save": "บันทึก",
+  "common.select": "เลือก",
   "common.share": "แชร์",
   "common.show": "แสดง",
   "admin.licenseInfo.manageSubscription": "จัดการการสมัครสมาชิก",
@@ -25,7 +27,6 @@
   "auditLog.filter": "กรอง",
   "auditLog.details": "ราย​ละเอียด",
   "auditLog.details.vault.create": "สร้าง Vault",
-  "claimVaultOwnershipDialog.error.wrongPassword": "รหัสผ่านไม่ถูกต้อง",
   "createVault.enterVaultDetails.title": "สร้าง Vault",
   "createVault.enterVaultDetails.vaultName": "ชื่อ Vault",
   "createVault.showRecoveryKey.submit": "สร้าง Vault",
