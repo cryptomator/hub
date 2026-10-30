@@ -1,6 +1,7 @@
 {
   "common.add": "जोड़िये",
   "common.apply": "लागू करें",
+  "common.back": "पीछे जाएं",
   "common.cancel": "रद्द करें",
   "common.close": "बंद करें",
   "common.copied": "कॉपी हुआ!",
@@ -14,6 +15,7 @@
   "common.remove": "हटाएँ",
   "common.retry": "पुन: प्रयास करें",
   "common.save": "सहेजें",
+  "common.select": "चुनें",
   "common.share": "साझा करें",
   "common.show": "दिखाएँ",
   "admin.webOfTrust.information": "अधिक जानें",
@@ -22,7 +24,6 @@
   "admin.emergencyAccess.learnMore": "अधिक जानें",
   "auditLog.filter": "छांटे",
   "auditLog.details.vault.create": "वॉल्ट बनाएं",
-  "claimVaultOwnershipDialog.error.wrongPassword": "गलत पासवर्ड!",
   "createVault.enterVaultDetails.title": "वॉल्ट बनाएं",
   "createVault.enterVaultDetails.vaultName": "वॉल्ट का नाम",
   "createVault.showRecoveryKey.submit": "वॉल्ट बनाएं",
