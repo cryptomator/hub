@@ -1,6 +1,7 @@
 {
   "common.add": "Dodaj",
   "common.apply": "Uporabi",
+  "common.back": "Nazaj",
   "common.cancel": "Prekliči",
   "common.close": "Zapri",
   "common.copied": "Kopirano!",
@@ -14,6 +15,7 @@
   "common.remove": "Odstrani",
   "common.retry": "Poizkusi znova",
   "common.save": "Shrani",
+  "common.select": "Izberi",
   "common.share": "Deli",
   "common.show": "Prikaži",
   "admin.webOfTrust.information": "Preberite več.",
@@ -22,7 +24,6 @@
   "admin.emergencyAccess.learnMore": "Preberite več.",
   "auditLog.details": "Podrobnosti",
   "auditLog.details.vault.create": "Ustvari trezor",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Napačno geslo",
   "createVault.enterVaultDetails.title": "Ustvari trezor",
   "createVault.enterVaultDetails.vaultName": "Ime trezorja",
   "createVault.showRecoveryKey.submit": "Ustvari trezor",
