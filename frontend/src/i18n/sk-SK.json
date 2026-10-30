@@ -163,6 +163,7 @@
   "groupEditCreate.error.saveFailed": "Uloženie skupiny zlyhalo.",
   "trustDetails.trustLevel.untrusted": "Neoverené",
   "initialSetup.createUserKey.title": "Vitajte v Cryptomator Hube",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Tento prehliadač si pamätá kľúče vášho účtu, avšak kľúče, ktoré poskytol server, sú odlišné. Pokračujte iba vtedy, ak ste svoj účet resetovali alebo ak viete o obnove zo zálohy. Váš kľúč účtu potvrdzuje, že poskytnuté kľúče skutočne patria vám; tento kľúč nikdy neopustí tento prehliadač.",
   "initialSetup.accountKey": "Kľúč účtu",
   "licenseAlert.licenseExpiredGracePeriod.title": "Vyžaduje sa obnovenie licencie",
   "licenseAlert.licenseExpiredGracePeriod.admin.description": "Platnosť vašej licencie Cryptomator Hub vypršala. Obnovte ju v {0}, aby ste si zachovali prístup k svojim trezorom.",
