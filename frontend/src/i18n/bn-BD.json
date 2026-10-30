@@ -1,5 +1,6 @@
 {
   "common.apply": "প্রয়োগ করুন",
+  "common.back": "পিছনে",
   "common.cancel": "বাতিল করুন",
   "common.close": "বন্ধ করুন",
   "common.copied": "কপি হয়েছে!",
@@ -13,6 +14,7 @@
   "common.remove": "বাতিল",
   "common.retry": "পুনরায় চেষ্টা করুন",
   "common.save": "সংরক্ষণ করুন",
+  "common.select": "নির্বাচন করুন",
   "common.share": "শেয়ার",
   "common.show": "দেখান",
   "admin.webOfTrust.information": "আরও জানুন।",
@@ -20,7 +22,6 @@
   "admin.automaticAccessGrant.save": "সংরক্ষণ করুন",
   "admin.emergencyAccess.learnMore": "আরও জানুন।",
   "auditLog.details.vault.create": "ভোল্ট তৈরি করুন",
-  "claimVaultOwnershipDialog.error.wrongPassword": "ভুল পাসওয়ার্ড",
   "createVault.enterVaultDetails.title": "ভোল্ট তৈরি করুন",
   "createVault.enterVaultDetails.vaultName": "ভোল্ট এর নাম",
   "createVault.showRecoveryKey.submit": "ভোল্ট তৈরি করুন",
