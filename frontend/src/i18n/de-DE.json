@@ -368,6 +368,7 @@
   "initialSetup.createUserKey.confirmAccountKey": "Ich habe meinen Account Key sicher gespeichert.",
   "initialSetup.recoverUserKey.title": "Autorisierung erforderlich",
   "initialSetup.recoverUserKey.description": "Dies ist deine erste Anmeldung in diesem Browser.",
+  "initialSetup.recoverUserKey.description.keyMismatch": "Dieser Browser erinnert sich an die Schlüssel Ihres Kontos, aber der Server hat abweichende Schlüssel geliefert. Sie können nur fortfahren, wenn Sie Ihr Konto zurücksetzen oder eine Wiederherstellung aus einer Sicherung durchführen. Ihr Kontoschlüssel bestätigt, dass die übermittelten Schlüssel wirklich Ihnen gehören; er verlässt niemals diesen Browser.",
   "initialSetup.recoverUserKey.accountKey.description": "Dein Account Key wird benötigt, um diesen Browser mit deinem Account zu verknüpfen.",
   "initialSetup.recoverUserKey.deviceName": "Browsername",
   "initialSetup.recoverUserKey.deviceName.description": "Benenne diesen Browser, um ihn in deinem Profil wiedererkennen zu können.",
