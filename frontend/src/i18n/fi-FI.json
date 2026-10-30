@@ -1,6 +1,7 @@
 {
   "common.add": "Lisää",
   "common.apply": "Käytä",
+  "common.back": "Takaisin",
   "common.cancel": "Peruuta",
   "common.close": "Sulje",
   "common.copied": "Kopioitu!",
@@ -14,6 +15,7 @@
   "common.reset": "Palauta",
   "common.retry": "Yritä uudelleen",
   "common.save": "Tallenna",
+  "common.select": "Valitse",
   "common.share": "Jaa",
   "common.show": "Näytä",
   "admin.webOfTrust.information": "Lue Lisää.",
@@ -22,7 +24,6 @@
   "admin.emergencyAccess.learnMore": "Lue Lisää.",
   "auditLog.filter": "Suodata",
   "auditLog.details.vault.create": "Luo Uusi Vault",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Väärä salasana",
   "createVault.enterVaultDetails.title": "Luo Uusi Vault",
   "createVault.enterVaultDetails.vaultName": "Holvin nimi",
   "createVault.showRecoveryKey.submit": "Luo Uusi Vault",
