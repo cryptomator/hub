@@ -1,6 +1,7 @@
 {
   "common.add": "Adaugă",
   "common.apply": "Aplică",
+  "common.back": "Înapoi",
   "common.cancel": "Anulează",
   "common.close": "Închide",
   "common.copied": "Copiat!",
@@ -15,6 +16,7 @@
   "common.reset": "Resetează",
   "common.retry": "Încercați din nou",
   "common.save": "Salvează",
+  "common.select": "Selectează",
   "common.share": "Distribuie",
   "common.show": "Afișează",
   "admin.licenseInfo.manageSubscription": "Administrați-vă abonamentul",
@@ -25,7 +27,6 @@
   "auditLog.filter": "Filtru",
   "auditLog.details": "Detalii",
   "auditLog.details.vault.create": "Crează seif",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Parolă greșită",
   "createVault.enterVaultDetails.title": "Crează seif",
   "createVault.enterVaultDetails.vaultName": "Nume seif",
   "createVault.showRecoveryKey.submit": "Crează seif",
