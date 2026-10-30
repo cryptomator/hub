@@ -183,6 +183,10 @@ export class UserKeys {
         privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdsaPrivateKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
       await UserKeys.assertMatchingKeyPair(ecdsaKeyPair, 'ECDSA');
+    } else if (ecdsaPublicKey) {
+      // the user already has a published ECDSA key pair (added in another browser), which this JWE predates. Generating
+      // a new pair here would not match the published one, so the device needs to be re-initialized with the setup code:
+      throw new KeyPairMismatchError('ECDSA');
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
       ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES);
