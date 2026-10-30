@@ -914,6 +914,30 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for null role")
+		void previewEffectiveUsersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members returns 400 for null role")
+		void setMembersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/effective-users/preview returns 403 - not owning a nonexisting vault")
 		void previewEffectiveUsersUnknownVault() {
 			given().when().contentType(ContentType.JSON).body("""

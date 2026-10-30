@@ -243,7 +243,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "400", description = "invalid members in request body")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
 		var vault = vaultRepo.findById(vaultId);
 		if (vault == null) {
 			throw new NotFoundException("Vault not found.");
@@ -418,7 +418,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "400", description = "invalid members in request body")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<MemberDto> previewEffectiveUsers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+	public List<MemberDto> previewEffectiveUsers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
 		if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("Vault not found.");
 		}
