@@ -1,6 +1,7 @@
 {
   "common.add": "Afegir",
   "common.apply": "Aplica",
+  "common.back": "Enrere",
   "common.cancel": "Cancel·la",
   "common.close": "Tanca",
   "common.copied": "Copiat!",
@@ -20,6 +21,7 @@
   "common.reset": "Reinicia",
   "common.retry": "Reintenta",
   "common.save": "Desa",
+  "common.select": "Selecciona",
   "common.share": "Comparteix",
   "common.show": "Mostra",
   "common.undo": "Desfer",
@@ -32,7 +34,6 @@
   "auditLog.filter": "Filtre",
   "auditLog.details": "Detalls",
   "auditLog.details.vault.create": "Crea la caixa forta",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Contrasenya incorrecta",
   "createVault.enterVaultDetails.title": "Crea la caixa forta",
   "createVault.enterVaultDetails.vaultName": "Nom de la caixa forta",
   "createVault.showRecoveryKey.submit": "Crea la caixa forta",
