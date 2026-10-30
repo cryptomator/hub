@@ -1,286 +1,184 @@
 <template>
-  <TransitionRoot as="template" :show="open" @after-leave="handleAfterLeave">
-    <Dialog as="div" class="fixed inset-0 z-10 overflow-y-auto" :class="wantAbort ? 'pointer-events-none' : ''" :aria-hidden="wantAbort ? 'true' : undefined" @close="handleParentClose">
-      <TransitionChild
-        as="template"
-        enter="ease-out duration-300"
-        enter-from="opacity-0"
-        enter-to="opacity-100"
-        leave="ease-in duration-200"
-        leave-from="opacity-100"
-        leave-to="opacity-0"
-      >
-        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
-      </TransitionChild>
+  <HubDialog v-model:open="open" :title="phaseTitle" :busy="processing" :error="errorMessage" :initial-focus="initialFocus" @submit="submit()" @closed="emit('close')">
+    <DialogDescription v-if="showSuccess" as="p" class="mt-2 text-sm text-gray-500">
+      {{ t('emergencyAccessDialog.message.completed') }}
+    </DialogDescription>
 
-      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <TransitionChild
-          as="template"
-          enter="ease-out duration-300"
-          enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          enter-to="opacity-100 translate-y-0 sm:scale-100"
-          leave="ease-in duration-200"
-          leave-from="opacity-100 translate-y-0 sm:scale-100"
-          leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        >
-          <DialogPanel
-            class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg"
-          >
-            <div class="relative rounded-lg bg-white z-10">
-              <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                  <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
-                    <div v-if="showSuccess">
-                      <CheckCircleIcon class="h-12 w-12 text-primary" aria-hidden="true" />
-                    </div>
-                    <div v-else-if="phase !== 'start'">
-                      <SegmentRing
-                        :total="requiredSegments"
-                        :completed="completedSegments"
-                        :size="36"
-                      />
-                    </div>
-                    <div v-else>
-                      <PlayIcon class="h-8 w-8 text-primary" aria-hidden="true" />
-                    </div>
-                  </div>
-                  <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                      {{ phaseTitle }}
-                    </DialogTitle>
-                    <div v-if="showSuccess" class="mt-4">
-                      <div>
-                        {{ t('emergencyAccessDialog.message.completed') }}
-                      </div>
-                    </div>
-                    <div v-else-if="phase === 'start'" class="mt-4 space-y-4">
-                      <div v-if="processType === 'CHANGE_PERMISSIONS'">
-                        <label class="block text-sm font-medium text-gray-700">
-                          {{ t('emergencyAccessDialog.label.selectOwner') }}
-                        </label>
-                        <MultiUserSelectInputGroup
-                          ref="ownersSelect"
-                          :selected-users="owners"
-                          :on-search="searchUsers"
-                          :input-visible="true"
-                          @action="addOwner"
-                          @remove="removeOwner"
-                        />
+    <div v-else-if="phase === 'start'" class="mt-4 space-y-4">
+      <div v-if="processType === 'CHANGE_PERMISSIONS'">
+        <label class="block text-sm font-medium text-gray-700">
+          {{ t('emergencyAccessDialog.label.selectOwner') }}
+        </label>
+        <MultiUserSelectInputGroup
+          ref="ownersSelect"
+          :selected-users="owners"
+          :on-search="searchUsers"
+          :input-visible="true"
+          @action="addOwner"
+          @remove="removeOwner"
+          @trust-changed="refreshTrusts"
+        />
 
-                        <!-- Members (non-owners) selector -->
-                        <div class="mt-4">
-                          <label class="block text-sm font-medium text-gray-700">
-                            {{ t('emergencyAccessDialog.label.selectMember') }}
-                          </label>
-                          <MultiUserSelectInputGroup
-                            :selected-users="members"
-                            :on-search="searchUsers"
-                            :input-visible="true"
-                            @action="addMember"
-                            @remove="removeMember"
-                          />
-                        </div>
+        <!-- Members (non-owners) selector -->
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700">
+            {{ t('emergencyAccessDialog.label.selectMember') }}
+          </label>
+          <MultiUserSelectInputGroup
+            :selected-users="members"
+            :on-search="searchUsers"
+            :input-visible="true"
+            @action="addMember"
+            @remove="removeMember"
+            @trust-changed="refreshTrusts"
+          />
+        </div>
 
-                        <!-- Removed Members display -->
-                        <div v-if="removedMembers.length > 0" class="mt-4">
-                          <span class="block text-sm font-medium text-gray-700">
-                            {{ t('emergencyAccess.label.removed') }}
-                          </span>
-                          <MultiUserSelectInputGroup
-                            :selected-users="removedMembers"
-                            :on-search="noopSearch"
-                            :input-visible="false"
-                          />
-                        </div>
-                      </div>
-
-                      <div v-else-if="processType === 'COUNCIL_CHANGE'">
-                        <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :council-members="councilMembers" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="true" />
-                      </div>
-                      <div v-else class="text-sm text-red-600">
-                        {{ t('recoveryDialog.error.invalidRecoveryType') }}
-                      </div>
-                    </div>
-
-                    <div v-else-if="!recoveryProcess">
-                      <!-- every other phase should have a recovery process -->
-                      Internal error: No recovery process available. <!-- no need to localize this. -->
-                    </div>
-
-                    <div v-else>
-                      <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'">
-                        {{ t('emergencyAccessDialog.section.ownership') }}
-                        
-                        <div class="mt-4 space-y-1 text-sm text-gray-500">
-                          <span class="font-medium text-gray-700">{{ t('emergencyAccess.label.owners') }}</span>
-                          <MultiUserSelectInputGroup
-                            :selected-users="selectedNewOwners"
-                            :on-search="noopSearch"
-                            :input-visible="false"
-                          />
-                          <!-- Members (non-owners) selector -->
-                          <div class="mt-4">
-                            <label class="block text-sm font-medium text-gray-700">
-                              {{ t('emergencyAccess.label.members') }}
-                            </label>
-                            <MultiUserSelectInputGroup
-                              :selected-users="selectedNewmembers"
-                              :on-search="noopSearch"
-                              :input-visible="false"
-                            />
-                          </div>
-                          <!-- Removed Members display -->
-                          <div v-if="removedMembers.length > 0" class="mt-4">
-                            <span class="block text-sm font-medium text-gray-700">
-                              {{ t('emergencyAccess.label.removed') }}
-                            </span>
-                            <MultiUserSelectInputGroup
-                              :selected-users="removedMembers"
-                              :on-search="noopSearch"
-                              :input-visible="false"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
-                        {{ t('emergencyAccessDialog.section.councilChange') }}
-                        <div class="mt-4">
-                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.details.newRequiredKeyShares" :readonly="true" :show-required-key-shares="true" />
-                        </div>
-                      </div>
-                      <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
-                        <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
-                          <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                          {{ t('emergencyAccessDialog.hint.finishProcess') }}
-                        </span>
-                      </div>
-                      <div v-else-if="(phase === 'complete' || phase === 'approve') && didAddMyShare" class="text-sm pt-2">
-                        <span class="inline-flex items-center gap-2 rounded-full bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
-                          <CheckBadgeIcon class="h-4 w-4" aria-hidden="true" />
-                          {{ t('emergencyAccessDialog.hint.keyShareAdded') }}
-                        </span>
-                      </div>
-                    </div>
-                    <UntrustedRecipientsWarning v-if="!showSuccess && (untrustedSelected.length > 0 || selectedGroups.length > 0)" v-model:confirmed="confirmedUntrusted" :require-confirmation="phase !== 'complete'" class="mt-4">
-                      <p v-if="untrustedSelected.length > 0">{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedSelected.map(u => u.name).join(', ')]) }}</p>
-                      <p v-if="selectedGroups.length > 0">{{ t('emergencyAccessDialog.warning.groupRecipients', [selectedGroups.map(g => g.name).join(', ')]) }}</p>
-                    </UntrustedRecipientsWarning>
-                    <UntrustedRecipientsWarning v-if="!showSuccess && untrustedGrantees.length > 0" v-model:confirmed="confirmedUntrustedGrantees" require-confirmation class="mt-4">
-                      <p>{{ t('emergencyAccessDialog.warning.untrustedGrantees', [untrustedGrantees.map(u => u.name).join(', ')]) }}</p>
-                    </UntrustedRecipientsWarning>
-                    <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
-                      <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
-                        <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                        {{ t('emergencyAccessDialog.hint.notInCouncil') }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            
-              <div v-if="onError" class="w-full sm:w-auto mb-2 text-right">
-                <p v-if="onError instanceof PaymentRequiredError" class="inline-block text-sm text-red-900 bg-red-100 rounded px-3 py-1 mt-1">
-                  {{ t('vaultDetails.error.licenseViolated') }}
-                </p>
-                <p v-else class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1 mt-1">
-                  {{ t('common.unexpectedError', [onError.message]) }}
-                </p>
-              </div>
-
-              <div v-if="conflictingProcessExists && phase === 'start'" class="w-full sm:w-auto mb-2 text-right">
-                <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
-                  {{ t('recoveryDialog.error.processAlreadyExists') }}
-                </p>
-              </div>
-
-              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex">
-                <!-- ABORT -->
-                <template v-if="phase !== 'start' && (isMeInProcessCouncil || isMeInCouncil) && !showSuccess">
-                  <button
-                    class=" text-sm text-red-600 hover:underline sm:mr-auto focus:outline-none focus:underline rounded"
-                    @click.stop="requestCancel()"
-                  >
-                    {{ t('emergencyAccessDialog.action.abortProcess') }}
-                  </button>
-                </template>
-                <!-- CLOSE -->
-                <button
-                  ref="closeButton"
-                  type="button"
-                  class="mt-3 inline-flex w-full justify-center sm:ml-auto rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                  @click.stop="open = false" 
-                >
-                  {{ t('common.close') }}
-                </button>               
-                <!-- START -->
-                <template v-if="phase === 'start'">
-                  <button
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                    :disabled="!canStartRecovery || needsUntrustedConfirmation"
-                    @click="startRecovery()"
-                  >
-                    {{ t('emergencyAccessDialog.action.start') }}
-                  </button>
-                </template>
-
-                <!-- APPROVE -->
-                <template v-else-if="phase === 'approve'">
-                  <button
-                    v-if="canSeeApprove"
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                    :disabled="needsUntrustedConfirmation"
-                    @click="approveRecovery()"
-                  >
-                    {{ t('emergencyAccessDialog.action.approve') }}
-                  </button>
-                </template>
-
-                <!-- COMPLETE -->
-                <template v-else-if="phase === 'complete' && !showSuccess">
-                  <button
-                    v-if="canSeeComplete"
-                    ref="completeButton"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                    :disabled="untrustedGrantees.length > 0 && !confirmedUntrustedGrantees"
-                    @click="completeRecovery()"
-                  >
-                    {{ t('emergencyAccessDialog.action.completeProcess') }}
-                  </button>
-                </template>
-              </div>
-            </div>
-          </DialogPanel>
-        </TransitionChild>
+        <!-- Removed Members display -->
+        <div v-if="removedMembers.length > 0" class="mt-4">
+          <span class="block text-sm font-medium text-gray-700">
+            {{ t('emergencyAccess.label.removed') }}
+          </span>
+          <MultiUserSelectInputGroup
+            :selected-users="removedMembers"
+            :on-search="noopSearch"
+            :input-visible="false"
+          />
+        </div>
       </div>
-      <ProcessAbortDialog
-        v-if="props.recoveryProcess"
-        ref="abortDialog"
-        :recovery-process-id="props.recoveryProcess.id"
-        @confirmed="handleRecoveryAborted"
-        @close="onAbortClosed"
-      />
-    </Dialog>
-  </TransitionRoot>
+
+      <div v-else-if="processType === 'COUNCIL_CHANGE'">
+        <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :council-members="councilMembers" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="true" />
+      </div>
+      <div v-else class="text-sm text-red-600">
+        {{ t('recoveryDialog.error.invalidRecoveryType') }}
+      </div>
+    </div>
+
+    <p v-else-if="!recoveryProcess" class="mt-2 text-sm">
+      <!-- every other phase should have a recovery process -->
+      Internal error: No recovery process available. <!-- no need to localize this. -->
+    </p>
+
+    <template v-else>
+      <DialogDescription as="p" class="mt-1 text-sm text-gray-500">
+        {{ starter ? t('emergencyAccessDialog.context.vaultStartedBy', [vault.name, starter.name, d(starter.startedAt, 'short')]) : t('emergencyAccessDialog.context.vault', [vault.name]) }}
+      </DialogDescription>
+
+      <div class="group relative mt-3 inline-flex items-center gap-2">
+        <SegmentRing :total="requiredSegments" :completed="completedSegments" :size="20" />
+        <button type="button" :aria-describedby="approvalsTooltipId" class="cursor-default rounded-sm text-sm text-gray-700 underline decoration-dotted underline-offset-4 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary">
+          {{ t('emergencyAccessDialog.approvals.count', [completedSegments, requiredSegments]) }}
+        </button>
+        <div :id="approvalsTooltipId" role="tooltip" class="invisible absolute left-0 top-full z-20 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-lg border border-gray-200 bg-white p-3 opacity-0 shadow-xl transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100 group-has-focus-visible:visible group-has-focus-visible:opacity-100 pointer-coarse:group-focus-within:visible pointer-coarse:group-focus-within:opacity-100">
+          <ul class="space-y-2">
+            <li v-for="approval in approvals" :key="approval.id" class="flex items-center justify-between gap-3 text-sm">
+              <span class="flex min-w-0 items-center gap-2">
+                <img :src="approval.pictureUrl" alt="" class="h-5 w-5 shrink-0 rounded-full" />
+                <span class="truncate">{{ approval.id === me.id ? t('emergencyAccessDialog.approvals.you', [approval.name]) : approval.name }}</span>
+              </span>
+              <span v-if="approval.approved" class="inline-flex shrink-0 items-center gap-1 text-xs text-green-700">
+                <CheckCircleIcon class="h-4 w-4" aria-hidden="true" />
+                <template v-if="approval.approvedAt"><span class="sr-only">{{ t('emergencyAccess.status.added') }}</span>{{ d(approval.approvedAt, 'short') }}</template>
+                <template v-else>{{ t('emergencyAccess.status.added') }}</template>
+              </span>
+              <span v-else class="shrink-0 text-xs text-gray-500">{{ t('emergencyAccess.status.pending') }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'" class="mt-5">
+        <h4 class="text-sm font-medium text-gray-900">{{ t('emergencyAccessDialog.section.ownership') }}</h4>
+        <div v-if="permissionChanges.newOwners.length > 0" class="mt-3 space-y-1">
+          <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newOwners') }}</span>
+          <MultiUserSelectInputGroup :selected-users="showKeptOwners ? selectedNewOwners : permissionChanges.newOwners" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
+            <button v-if="!showKeptOwners && permissionChanges.keptOwners.length > 0" type="button" :title="t('emergencyAccessDialog.hint.showKept')" class="mx-1 text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer rounded-sm focus:outline-hidden focus:ring-2 focus:ring-primary" @click="showKeptOwners = true">
+              {{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptOwners.length]) }}
+            </button>
+          </MultiUserSelectInputGroup>
+        </div>
+        <div v-if="permissionChanges.newMembers.length > 0" class="mt-4 space-y-1">
+          <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccessDialog.label.newMembers') }}</span>
+          <MultiUserSelectInputGroup :selected-users="showKeptMembers ? selectedNewmembers : permissionChanges.newMembers" :on-search="noopSearch" :input-visible="false" @trust-changed="refreshTrusts">
+            <button v-if="!showKeptMembers && permissionChanges.keptMembers.length > 0" type="button" :title="t('emergencyAccessDialog.hint.showKept')" class="mx-1 text-sm text-gray-500 hover:text-gray-700 hover:underline cursor-pointer rounded-sm focus:outline-hidden focus:ring-2 focus:ring-primary" @click="showKeptMembers = true">
+              {{ t('emergencyAccessDialog.hint.alreadyHaveAccess', [permissionChanges.keptMembers.length]) }}
+            </button>
+          </MultiUserSelectInputGroup>
+        </div>
+        <div v-if="removedMembers.length > 0" class="mt-4 space-y-1">
+          <span class="block text-sm font-medium text-gray-700">{{ t('emergencyAccess.label.removed') }}</span>
+          <MultiUserSelectInputGroup :selected-users="removedMembers" :on-search="noopSearch" :input-visible="false" />
+        </div>
+      </div>
+      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" class="mt-5">
+        <h4 class="text-sm font-medium text-gray-900">{{ t('emergencyAccessDialog.section.councilChange') }}</h4>
+        <div class="mt-4">
+          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.details.newRequiredKeyShares" :readonly="true" :show-required-key-shares="true" />
+        </div>
+      </div>
+      <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
+        <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
+          <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
+          {{ t('emergencyAccessDialog.hint.finishProcess') }}
+        </span>
+      </div>
+      <div v-else-if="(phase === 'complete' || phase === 'approve') && didAddMyShare" class="text-sm pt-2">
+        <span class="inline-flex items-center gap-2 rounded-full bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
+          <CheckBadgeIcon class="h-4 w-4" aria-hidden="true" />
+          {{ t('emergencyAccessDialog.hint.keyShareAdded') }}
+        </span>
+      </div>
+    </template>
+    <UntrustedRecipientsWarning v-if="!showSuccess && showUntrustedWarning" v-model:confirmed="confirmedUntrusted" :require-confirmation="phase !== 'complete'" class="mt-4">
+      <p v-if="untrustedSelected.length > 0">{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedSelected.map(u => u.name).join(', ')]) }}</p>
+      <p v-if="selectedGroups.length > 0">{{ t('emergencyAccessDialog.warning.groupRecipients', [selectedGroups.map(g => g.name).join(', ')]) }}</p>
+      <p v-if="unresolvedRecipientCount > 0">{{ t('emergencyAccessDialog.warning.unresolvedRecipients', [unresolvedRecipientCount]) }}</p>
+    </UntrustedRecipientsWarning>
+    <UntrustedRecipientsWarning v-if="!showSuccess && untrustedGrantees.length > 0" v-model:confirmed="confirmedUntrustedGrantees" require-confirmation class="mt-4">
+      <p>{{ t('emergencyAccessDialog.warning.untrustedGrantees', [untrustedGrantees.map(u => u.name).join(', ')]) }}</p>
+    </UntrustedRecipientsWarning>
+    <p v-if="accessProgress" role="status" aria-live="polite" class="mt-4 text-sm text-gray-500">
+      {{ t('emergencyAccessDialog.hint.configuringAccess', [accessProgress.done, accessProgress.total]) }}
+    </p>
+    <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
+      <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
+        <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
+        {{ t('emergencyAccessDialog.hint.notInCouncil') }}
+      </span>
+    </div>
+    <ProcessAbortDialog v-if="recoveryProcess" ref="abortDialog" :recovery-process-id="recoveryProcess.id" @confirmed="handleRecoveryAborted" />
+
+    <template #footer>
+      <button v-if="canAbort" type="button" :disabled="processing" class="rounded-sm text-sm font-medium text-red-600 hover:underline cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 sm:mr-auto" @click="abortDialog?.show()">
+        {{ t('emergencyAccessDialog.action.abortProcess') }}
+      </button>
+      <button ref="closeButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
+        {{ t(phase === 'start' ? 'common.cancel' : 'common.close') }}
+      </button>
+      <button v-if="primaryAction" type="submit" :disabled="processing || !primaryAction.enabled" :class="primaryButton">
+        {{ primaryAction.label }}
+      </button>
+    </template>
+  </HubDialog>
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
-import { CheckCircleIcon, PlayIcon } from '@heroicons/vue/24/solid';
+import { DialogDescription } from '@headlessui/vue';
+import { CheckBadgeIcon, CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
-import { computed, nextTick, ref, Ref, toRaw, watch } from 'vue';
+import { computed, reactive, ref, Ref, toRaw, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, MemberDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { AccessTokenProducing, asPublicKey, UserKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
 import wot from '../../common/wot';
 import { wordEncoder } from '../../common/util';
+import { primaryButton, secondaryButton } from '../dialogButtons';
+import HubDialog from '../HubDialog.vue';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import UntrustedRecipientsWarning from '../UntrustedRecipientsWarning.vue';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
@@ -290,7 +188,7 @@ import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
 import { VaultFormat8 } from '../../common/vaultFormat8';
 import { UniversalVaultFormat } from '../../common/universalVaultFormat';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vault: VaultDto;
@@ -306,7 +204,7 @@ const emit = defineEmits<{
 }>();
 
 defineExpose({ show });
-const closeButton = ref<HTMLElement>();
+const closeButton = ref<HTMLButtonElement>();
 const ownersSelect = ref<MultiUserSelectExpose>();
 const emergencyAccessSetup = ref<InstanceType<typeof EmergencyAccessSetup>>();
 
@@ -365,7 +263,10 @@ const didAddMyShare = computed(() => {
 });
 
 const open = ref(false);
+const processing = ref(false);
 const onError = ref<Error>();
+// shown while the membership has been replaced but the vault key has not been shared with every recipient yet:
+const accessProgress = ref<{ done: number, total: number }>();
 
 const existingProcesses = ref<RecoveryProcessDto[]>([]);
 
@@ -446,36 +347,131 @@ const selectedNewmembers = computed<AuthorityDto[]>(() => {
   }
 });
 
+const permissionChanges = computed(() => {
+  const existingOwnerIds = new Set(existingOwners.value.map(u => u.id));
+  const existingMemberIds = new Set(existingMembers.value.map(u => u.id));
+  return {
+    newOwners: selectedNewOwners.value.filter(u => !existingOwnerIds.has(u.id)),
+    keptOwners: selectedNewOwners.value.filter(u => existingOwnerIds.has(u.id)),
+    newMembers: selectedNewmembers.value.filter(u => !existingMemberIds.has(u.id)),
+    keptMembers: selectedNewmembers.value.filter(u => existingMemberIds.has(u.id))
+  };
+});
+
+// kept owners/members are collapsed into a count by default; clicking it reveals them among the new ones:
+const showKeptOwners = ref(false);
+const showKeptMembers = ref(false);
+
 // COUNCIL CHANGE
 const councilMembers = ref<ActivatedUser[]>([]);
 
 // WEB OF TRUST: a CHANGE_PERMISSIONS process re-wraps the recovered vault key to the selected users' public keys on
 // completion, so unverified identities must be surfaced to every involved council member (start, approval, completion):
 const trusts = ref<TrustDto[]>([]);
-const trustLevels = ref<Map<string, number>>(new Map());
+const trustLevels = ref<Map<string, number>>(); // undefined until loaded for the current recipients
 const confirmedUntrusted = ref(false);
-const untrustedGrantees = ref<UserDto[]>([]);
-const confirmedUntrustedGrantees = ref(false);
+const onLoadTrustLevelsError = ref<Error>();
 
+// COMPLETION of a CHANGE_PERMISSIONS process: the server resolves every user who will have access afterwards (including
+// members of groups that were never shown in any picker) once when the dialog opens. All of them receive a freshly wrapped
+// vault key, existing token holders included, so all their identities are checked and acknowledged before the Complete
+// button, and exactly this state is committed:
+type PendingPermissionChange = {
+  membersWithRole: Record<string, VaultRole>;
+  usersToGrant: (MemberDto & ActivatedUser)[];
+};
+const pendingPermissionChange = ref<PendingPermissionChange>(); // undefined until loaded (stays undefined if loading failed)
+const granteeTrustLevels = ref<Map<string, number>>(); // undefined until computed for the current grantees and trusts
+const confirmedUntrustedGrantees = ref(false);
+const onLoadGranteesError = ref<Error>();
+
+const untrustedGrantees = computed<UserDto[]>(() => {
+  const levels = granteeTrustLevels.value;
+  return levels ? (pendingPermissionChange.value?.usersToGrant ?? []).filter(u => (levels.get(u.id) ?? -1) === -1) : [];
+});
+
+watch([pendingPermissionChange, trusts], async () => {
+  // trust levels and the confirmation only apply to the grantees and trusts they were computed for:
+  const pending = pendingPermissionChange.value;
+  const currentTrusts = trusts.value;
+  const isCurrent = () => pending === pendingPermissionChange.value && currentTrusts === trusts.value;
+  granteeTrustLevels.value = undefined;
+  confirmedUntrustedGrantees.value = false;
+  if (!pending) {
+    return;
+  }
+  try {
+    const levels = await wot.computeTrustLevels(pending.usersToGrant, currentTrusts);
+    if (isCurrent()) {
+      granteeTrustLevels.value = levels;
+    }
+  } catch (error) {
+    console.error('Computing trust levels of the grantees failed.', error);
+    if (isCurrent()) {
+      onLoadGranteesError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
+  }
+});
+
+// a selected user's identity has been signed via their badge:
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
+}
+
+// before completion the server-resolved grantee list is unknown, so the recipients named in the process stand in for it.
+// When starting, every selected user is shown (the starter may want to remove unverified ones who would keep their access);
+// when approving, kept owners/members are left out, as they keep their existing token and will not be wrapped for:
 const grantRelevantAuthorities = computed<AuthorityDto[]>(() => {
-  if ((props.recoveryProcess?.type ?? processType.value) !== 'CHANGE_PERMISSIONS') {
+  if ((props.recoveryProcess?.type ?? processType.value) !== 'CHANGE_PERMISSIONS' || phase.value === 'complete') {
     return [];
   }
-  return [...selectedNewOwners.value, ...selectedNewmembers.value];
+  const selected = [...selectedNewOwners.value, ...selectedNewmembers.value];
+  if (phase.value === 'start') {
+    return selected;
+  }
+  const existingIds = new Set([...existingOwners.value, ...existingMembers.value].map(a => a.id));
+  return selected.filter(a => !existingIds.has(a.id));
 });
 
 watch([grantRelevantAuthorities, trusts], async () => {
-  const users = grantRelevantAuthorities.value.filter(a => a.type === 'USER') as UserDto[];
-  trustLevels.value = await wot.computeTrustLevels(users, trusts.value);
+  // trust levels and the confirmation only apply to the recipients they were made for:
+  const authorities = grantRelevantAuthorities.value;
+  const currentTrusts = trusts.value;
+  const isCurrent = () => authorities === grantRelevantAuthorities.value && currentTrusts === trusts.value;
+  trustLevels.value = undefined;
+  confirmedUntrusted.value = false;
+  onLoadTrustLevelsError.value = undefined;
+  try {
+    const levels = await wot.computeTrustLevels(authorities.filter(a => a.type === 'USER') as UserDto[], currentTrusts);
+    if (isCurrent()) {
+      trustLevels.value = levels;
+    }
+  } catch (error) {
+    console.error('Computing trust levels failed.', error);
+    if (isCurrent()) {
+      onLoadTrustLevelsError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
+  }
+});
+
+// recipients of the signed process the server did not resolve (deleted, or withheld) are missing from the changes, so they are called out in the warning:
+const unresolvedRecipientCount = computed(() => {
+  if (props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS') {
+    return 0;
+  }
+  const shownIds = new Set([...selectedNewOwners.value, ...selectedNewmembers.value].map(a => a.id));
+  return new Set([...props.recoveryProcess.details.newOwnerIds, ...props.recoveryProcess.details.newMemberIds].filter(id => !shownIds.has(id))).size;
 });
 
 // only users who will actually receive a key (i.e. have an ecdhPublicKey) are relevant for the warning:
-const untrustedSelected = computed(() => grantRelevantAuthorities.value.filter((a): a is UserDto => a.type === 'USER' && !!(a as UserDto).ecdhPublicKey && trustLevels.value.get(a.id) === -1));
+const untrustedSelected = computed(() => grantRelevantAuthorities.value.filter((a): a is UserDto => a.type === 'USER' && !!(a as UserDto).ecdhPublicKey && !!trustLevels.value && (trustLevels.value.get(a.id) ?? -1) === -1));
 
 // members of selected groups cannot be individually verified before completion:
 const selectedGroups = computed(() => grantRelevantAuthorities.value.filter(a => a.type === 'GROUP'));
 
-const needsUntrustedConfirmation = computed(() => (untrustedSelected.value.length > 0 || selectedGroups.value.length > 0) && !confirmedUntrusted.value);
+const showUntrustedWarning = computed(() => !!trustLevels.value && (untrustedSelected.value.length > 0 || selectedGroups.value.length > 0 || unresolvedRecipientCount.value > 0));
+
+const needsUntrustedConfirmation = computed(() => !trustLevels.value || (showUntrustedWarning.value && !confirmedUntrusted.value));
 
 const canStartRecovery = computed(() => {
   if (processType.value === undefined) return false;
@@ -507,31 +503,59 @@ async function searchUsers(query: string): Promise<AuthorityDto[]> {
 }
 
 const abortDialog = ref<InstanceType<typeof ProcessAbortDialog>>();
-const wantAbort = ref(false);
 
-function requestCancel() {
-  if (!props.recoveryProcess) return;
-  wantAbort.value = true;
-  abortDialog.value?.show();
+const canAbort = computed(() => !showSuccess.value && phase.value !== 'start' && (isMeInProcessCouncil.value || isMeInCouncil.value));
+
+function handleRecoveryAborted() {
+  emit('updated');
+  open.value = false;
 }
 
-function onAbortClosed() { wantAbort.value = false; }
+const initialFocus = computed(() => phase.value === 'start' && processType.value === 'CHANGE_PERMISSIONS' ? ownersSelect.value?.focusTarget : closeButton.value);
 
-function handleParentClose() { if (!wantAbort.value) open.value = false; }
+const errorMessage = computed(() => {
+  if (onError.value instanceof PaymentRequiredError) {
+    return t('vaultDetails.error.licenseViolated');
+  } else if (onError.value) {
+    return t('common.unexpectedError', [onError.value.message]);
+  } else if (phase.value === 'start' && conflictingProcessExists.value) {
+    return t('recoveryDialog.error.processAlreadyExists');
+  } else if (processTampered.value) {
+    return t('emergencyAccessDialog.error.processTampered');
+  } else if (onLoadTrustLevelsError.value) {
+    return t('common.unexpectedError', [onLoadTrustLevelsError.value.message]);
+  } else if (onLoadGranteesError.value) {
+    return t('common.unexpectedError', [onLoadGranteesError.value.message]);
+  } else {
+    return undefined;
+  }
+});
 
-function handleAfterLeave() { if (!open.value) emit('close'); }
+const primaryAction = computed(() => {
+  if (showSuccess.value) {
+    return undefined;
+  } else if (phase.value === 'start') {
+    return { label: t('emergencyAccessDialog.action.start'), enabled: canStartRecovery.value && !needsUntrustedConfirmation.value, run: startRecovery };
+  } else if (canSeeApprove.value) {
+    return { label: t('emergencyAccessDialog.action.approve'), enabled: !processTampered.value && !needsUntrustedConfirmation.value, run: approveRecovery };
+  } else if (canSeeComplete.value) {
+    const granteesResolved = props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS' || !!granteeTrustLevels.value;
+    return { label: t('emergencyAccessDialog.action.completeProcess'), enabled: !processTampered.value && granteesResolved && (untrustedGrantees.value.length === 0 || confirmedUntrustedGrantees.value), run: completeRecovery };
+  } else {
+    return undefined;
+  }
+});
 
-async function handleRecoveryAborted() {
-  if (!props.recoveryProcess) return;
-  onError.value = undefined;
+async function submit() {
+  const action = primaryAction.value;
+  if (processing.value || !open.value || !action?.enabled) {
+    return;
+  }
   try {
-    await backend.emergencyAccess.abort(props.recoveryProcess.id);
-    emit('updated');
-    wantAbort.value = false;
-    open.value = false;
-  } catch (error) {
-    console.error('Cancelling emergency recovery failed.', error);
-    onError.value = error instanceof Error ? error : new Error('Unknown Error');
+    processing.value = true;
+    await action.run();
+  } finally {
+    processing.value = false;
   }
 }
 
@@ -541,18 +565,32 @@ async function show() {
   await initOwnersAndMembers();
   await loadAuthoritiesForCouncilAndProcesses();
   await initProcessSpecificState();
-  trusts.value = await backend.trust.listTrusted();
-  confirmedUntrusted.value = false;
-  untrustedGrantees.value = [];
-  confirmedUntrustedGrantees.value = false;
+  const [, trustList] = await Promise.all([loadProcessInfos(), backend.trust.listTrusted()]);
+  trusts.value = trustList;
+  await loadPendingPermissionChange();
+  showKeptOwners.value = false;
+  showKeptMembers.value = false;
   showSuccess.value = false;
   open.value = true;
-  await nextTick();
+}
 
-  if (phase.value === 'start' && processType.value === 'CHANGE_PERMISSIONS') {
-    return ownersSelect.value?.focus();
-  } else {
-    return closeButton.value?.focus();
+async function loadPendingPermissionChange() {
+  pendingPermissionChange.value = undefined;
+  onLoadGranteesError.value = undefined;
+  if (props.recoveryProcess?.type !== 'CHANGE_PERMISSIONS' || !canSeeComplete.value) {
+    return;
+  }
+  try {
+    const membersWithRole = Object.fromEntries([
+      ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
+      ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
+    ]) as Record<string, VaultRole>;
+    // nothing is persisted by the preview:
+    const usersToGrant = (await backend.vaults.previewEffectiveUsers(props.vault.id, membersWithRole)).filter(didCompleteSetup);
+    pendingPermissionChange.value = { membersWithRole: membersWithRole, usersToGrant: usersToGrant }; // trust levels follow via the watch above
+  } catch (error) {
+    console.error('Resolving the recipients of the permission change failed.', error);
+    onLoadGranteesError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
@@ -740,11 +778,11 @@ async function startRecovery() {
  * PHASE TWO: Adding further shares to the recovery process.
  */
 async function approveRecovery() {
-  if (!props.recoveryProcess) {
-    throw new Error(t('emergencyAccessDialog.error.noProcessToApprove'));
-  }
   onError.value = undefined;
   try {
+    if (!props.recoveryProcess) {
+      throw new Error(t('emergencyAccessDialog.error.noProcessToApprove'));
+    }
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {
       throw new Error(t('emergencyAccessDialog.error.processTampered'));
@@ -766,12 +804,23 @@ async function approveRecovery() {
 /**
  * PHASE THREE: By adding the last required share, we can complete the recovery process.
  */
+/**
+ * A CHANGE_PERMISSIONS completion ready to be committed: the recovered vault key plus the membership and grantees exactly as
+ * shown to (and acknowledged by) the user when the dialog was opened. Nothing is reloaded from the server at this point.
+ */
+type PreparedPermissionChange = {
+  processId: string;
+  vaultKeys: AccessTokenProducing;
+  membersWithRole: Record<string, VaultRole>;
+  usersToGrant: (MemberDto & ActivatedUser)[];
+};
+
 async function completeRecovery() {
-  if (!props.recoveryProcess) {
-    throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
-  }
   onError.value = undefined;
   try {
+    if (!props.recoveryProcess) {
+      throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
+    }
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {
       throw new Error(t('emergencyAccessDialog.error.processTampered'));
@@ -798,51 +847,59 @@ async function completeRecovery() {
         requiredEmergencyKeyShares: process.details.newRequiredKeyShares,
         emergencyKeyShares: keyShares
       });
+      await backend.emergencyAccess.complete(process.id);
+      emit('updated');
+      showSuccess.value = true;
     } else if (process.type === 'CHANGE_PERMISSIONS') {
       const vaultKeys: AccessTokenProducing = props.vault.uvfMetadataFile
         ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveredKey)
         : await VaultFormat8.recover(recoveredKey);
-      
-      // const vaultKeys = await VaultKeys.recover(recoveredKey);
 
-      const membersWithRole = Object.fromEntries([
-        ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
-        ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
-      ]) as Record<string, VaultRole>;
-
-      await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
-
-      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id)).filter(didCompleteSetup);
-
-      // this authoritative recipient list may include members of groups that were never shown in any picker, so
-      // re-check trust right before wrapping the recovered vault key and pause for confirmation if necessary:
-      const granteeTrustLevels = await wot.computeTrustLevels(activatedUsersToGrant, await backend.trust.listTrusted());
-      const untrusted = activatedUsersToGrant.filter(u => granteeTrustLevels.get(u.id) === -1);
-      if (untrusted.length > 0 && !confirmedUntrustedGrantees.value) {
-        // nothing irreversible happened yet (no grants, process not completed); confirming the warning re-runs this method:
-        untrustedGrantees.value = untrusted;
-        return;
+      const pending = pendingPermissionChange.value;
+      if (!pending) {
+        throw new Error('Recipients of the permission change have not been resolved.'); // unreachable: the button is disabled until they are
       }
-
-      const accessGrants: AccessGrant[] = await Promise.all(
-        activatedUsersToGrant.map(async u => {
-          // never wrap "to myself" using a key from the (server-supplied) recipient list, only using my verified key:
-          const publicKey = u.id === props.me.id ? await userdata.ecdhPublicKey : base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
-          const jwe = await vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
-          return { userId: u.id, token: jwe };
-        })
-      );
-
-      if (accessGrants.length > 0) { await backend.vaults.grantAccess(props.vault.id, ...accessGrants); }
+      await commitPermissionChange({ processId: process.id, vaultKeys: vaultKeys, membersWithRole: pending.membersWithRole, usersToGrant: pending.usersToGrant });
     }
-
-    await backend.emergencyAccess.complete(process.id);
-    emit('updated');
-    showSuccess.value = true; 
-    closeButton.value?.focus();
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+// replaces the membership, shares the vault key with exactly the prepared recipients and completes the process:
+async function commitPermissionChange(prepared: PreparedPermissionChange) {
+  // the process may have been aborted (e.g. by another council member) while this dialog was open;
+  // the membership endpoint does not know about the process, so make sure it still exists before replacing anything:
+  const processes = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
+  if (!processes.some(p => p.id === prepared.processId)) {
+    throw new Error(t('emergencyAccessDialog.error.processNoLongerExists'));
+  }
+  // from here on the vault is in an intermediate state until every recipient holds a key, so the dialog stays blocked:
+  const progress = reactive({ done: 0, total: prepared.usersToGrant.length });
+  accessProgress.value = progress;
+  try {
+    await backend.vaults.setMembersWithRole(props.vault.id, prepared.membersWithRole);
+
+    // existing tokens are replaced; anyone who joined a selected group after the dialog was opened stays pending for a later (manual or automatic) grant:
+    const accessGrants: AccessGrant[] = await Promise.all(
+      prepared.usersToGrant.map(async u => {
+        // never wrap "to myself" using a key from the (server-supplied) recipient list, only using my verified key:
+        const publicKey = u.id === props.me.id ? await userdata.ecdhPublicKey : base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+        const jwe = await prepared.vaultKeys.encryptForUser(publicKey, u.vaultRole === 'OWNER');
+        progress.done++;
+        return { userId: u.id, token: jwe };
+      })
+    );
+    if (accessGrants.length > 0) {
+      await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
+    }
+
+    await backend.emergencyAccess.complete(prepared.processId);
+    emit('updated');
+    showSuccess.value = true;
+  } finally {
+    accessProgress.value = undefined;
   }
 }
 
@@ -879,10 +936,10 @@ async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Prom
   };
 }
 
-async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> {
+async function verifyProcessInfo(process: RecoveryProcessDto): Promise<Record<string, SignedProcessInfoPayload> | undefined> {
   if (process.vaultId !== props.vault.id) {
     console.error(`Recovery process ${process.id} does not belong to vault ${props.vault.id}.`);
-    return false;
+    return undefined;
   }
   const councilMemberIds = Object.keys(process.recoveredKeyShares);
   const authorities = await backend.authorities.listSome(councilMemberIds);
@@ -891,33 +948,83 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
     u => u.id
   );
 
+  const verifiedPayloads: Record<string, SignedProcessInfoPayload> = {};
   for (const [councilMemberId, recoveredKeyShare] of Object.entries(process.recoveredKeyShares)) {
     if (!recoveredKeyShare.recoveredKeyShare) {
       continue;
     } else if (!recoveredKeyShare.signedProcessInfo) {
       console.error(`Missing signed process info for council member ${councilMemberId}.`);
-      return false;
+      return undefined;
     } else if (!councilMembers[councilMemberId]) {
       console.error(`Unknown council member ${councilMemberId}.`);
-      return false;
+      return undefined;
     }
     const councilMember = councilMembers[councilMemberId];
     const publicKey = await asPublicKey(base64.decode(councilMember.ecdsaPublicKey) as Uint8Array<ArrayBuffer>, ECDSA_P384, ['verify']);
     const [_header, payload] = await JWT.parse(recoveredKeyShare.signedProcessInfo, publicKey) as [JWTHeader, SignedProcessInfoPayload];
     if (payload.sub !== process.id || payload.iss !== councilMemberId) {
       console.error(`Invalid signed process info for council member ${councilMemberId}.`);
-      return false;
+      return undefined;
     }
     if (payload.type !== process.type || !R.isDeepEqual(payload.details, process.details)) {
       console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
-      return false;
+      return undefined;
     }
     if (payload.vaultId !== process.vaultId || payload.processPublicKey !== process.processPublicKey || payload.requiredKeyShares !== process.requiredKeyShares) {
       console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
-      return false;
+      return undefined;
     }
+    verifiedPayloads[councilMemberId] = payload;
   }
-  return true;
+  return verifiedPayloads;
+}
+
+// filled from verified signatures only:
+const processInfos = ref<Record<string, SignedProcessInfoPayload>>({});
+const approvalsTooltipId = useId();
+
+// set if any share's signed process info is missing or does not verify; approving or completing would be rejected anyway, so the user is told right away:
+const processTampered = ref(false);
+
+async function loadProcessInfos() {
+  processInfos.value = {};
+  processTampered.value = false;
+  if (!props.recoveryProcess) {
+    return;
+  }
+  try {
+    const verified = await verifyProcessInfo(props.recoveryProcess);
+    processInfos.value = verified ?? {};
+    processTampered.value = verified === undefined;
+  } catch (error) {
+    console.error('Verifying approvals failed.', error);
+    processTampered.value = true;
+  }
+}
+
+const approvals = computed(() => processCouncilIds.value
+  .map(id => ({
+    id: id,
+    name: authoritiesById.value[id]?.name ?? id,
+    pictureUrl: authoritiesById.value[id]?.pictureUrl,
+    approved: processInfos.value[id] !== undefined, // verified signatures only, so a tampered process shows no approvals
+    approvedAt: processInfos.value[id] && toDate(processInfos.value[id].iat)
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name)));
+
+const starter = computed(() => {
+  const payloads = Object.values(processInfos.value).filter(p => toDate(p.iat));
+  if (payloads.length === 0) {
+    return undefined;
+  }
+  const first = payloads.reduce((a, b) => (b.iat < a.iat ? b : a));
+  return { name: authoritiesById.value[first.iss]?.name ?? first.iss, startedAt: toDate(first.iat)! };
+});
+
+// iat is claimed by the signer, so it may be missing or out of range:
+function toDate(iat: unknown): Date | undefined {
+  const date = new Date(typeof iat === 'number' ? iat * 1000 : NaN);
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 async function loadActivatedUsers(ids: string[]): Promise<ActivatedUser[]> {

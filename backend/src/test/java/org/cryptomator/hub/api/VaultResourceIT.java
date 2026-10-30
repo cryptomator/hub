@@ -875,6 +875,54 @@ public class VaultResourceIT {
 					.body("id", hasItems("group1", "group2"))
 			;
 		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview resolves prospective members without persisting them")
+		void previewEffectiveUsers() {
+			// user997 (direct OWNER, MEMBER via group1) → OWNER; user999 (via group1 only) → MEMBER; user1 (group1) → MEMBER, even though already holding a token for vault2;
+			// user998 (group1) has no key; user2 (group2) is not part of the prospective members:
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"group1": "MEMBER",
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("user997", "user999", "user1"))
+					.body("id", not(hasItems("user998", "user2")))
+					.body("findAll { it.id == 'user997' }", hasSize(1))
+					.body("find { it.id == 'user997' }.vaultRole", is("OWNER"))
+					.body("find { it.id == 'user999' }.vaultRole", is("MEMBER"))
+					.body("find { it.id == 'user1' }.vaultRole", is("MEMBER"));
+
+			// nothing persisted:
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("group1", "group2"))
+					.body("id", not(hasItems("user997")));
+			Mockito.verify(eventLogger, Mockito.never()).logVaultMemberAdded(any(), eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100002222")), eq("user997"), any());
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for empty body")
+		void previewEffectiveUsersEmpty() {
+			given().when().contentType(ContentType.JSON).body("{}").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/effective-users/preview returns 403 - not owning a nonexisting vault")
+		void previewEffectiveUsersUnknownVault() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
+					.then().statusCode(403);
+		}
 	}
 
 	@Nested

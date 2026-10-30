@@ -73,8 +73,8 @@
       </table>
     </div>
   </section>
-  <GroupAddMemberDialog ref="addMemberDialog" :group-id="group.id" :members="members" @saved="props.onSaved" />
-  <GroupMemberRemoveDialog v-if="deletingGroupMember" ref="deleteGroupMemberDialog" :member="deletingGroupMember" :group-id="group.id" @close="deletingGroupMember = undefined" @delete="onGroupMemberDeleted" />
+  <GroupAddMemberDialog ref="addMemberDialog" :group="group" :members="members" @saved="props.onSaved" />
+  <GroupMemberRemoveDialog v-if="deletingGroupMember" ref="deleteGroupMemberDialog" :member="deletingGroupMember" :group="group" @close="deletingGroupMember = undefined" @delete="onGroupMemberDeleted" />
 </template>
 
 <script setup lang="ts">
