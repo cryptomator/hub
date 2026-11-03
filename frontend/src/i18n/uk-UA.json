@@ -610,7 +610,7 @@
   "vaultList.addVault.create": "Створити нове",
   "vaultList.addVault.recover": "Відновити наявне",
   "vaultList.filter": "Фільтр",
-  "vaultList.filter.entry.accessibleVaults": "Доступний",
+  "vaultList.filter.entry.accessibleVaults": "Доступні",
   "vaultList.filter.entry.ownedVaults": "Належать мені",
   "vaultList.filter.entry.allVaults": "Усі",
   "vaultList.filter.result.empty.title": "Немає сховищ",
