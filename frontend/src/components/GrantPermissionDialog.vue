@@ -1,88 +1,77 @@
 <template>
-  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
-    <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
-      </TransitionChild>
-
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                  <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
-                  </div>
-                  <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                      {{ t('grantPermissionDialog.title') }}
-                    </DialogTitle>
-                    <div class="mt-2">
-                      <p class="text-sm text-gray-500">
-                        {{ t('grantPermissionDialog.description') }}
-                      </p>
-                    </div>
-                    <div class="mt-2 h-48 overflow-y-auto">
-                      <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-                        <template v-for="member in users.values()" :key="member.id">
-                          <li class="py-3 flex flex-col">
-                            <div class="flex items-center whitespace-nowrap w-full">
-                              <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                              <p class="ml-4 text-sm font-medium text-gray-900 w-full">{{ member.name }}</p>
-                              <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
-                            </div>
-                          </li>
-                        </template>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <form novalidate @submit.prevent="grantAccess">
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    {{ t('grantPermissionDialog.submit', [users.length]) }}
-                  </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
-                    {{ t('common.cancel') }}
-                  </button>
-                </div>
-                <p v-if="onGrantPermissionError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
-                </p>
-                <p v-if="onGrantPermissionError instanceof ConflictError || onGrantPermissionError instanceof NotFoundError" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
-                  {{ t('common.reload') }}
-                </p>
-              </form>
-            </DialogPanel>
-          </TransitionChild>
+  <HubDialog v-model:open="open" :title="t('grantPermissionDialog.title')" :busy="processing" :error="grantPermissionErrorMessage" :initial-focus="cancelButton" @submit="grantAccess()" @closed="$emit('close')">
+    <DialogDescription as="p" class="mt-2 text-sm text-gray-500">
+      {{ t('grantPermissionDialog.description', [vault.name, users.length]) }}
+    </DialogDescription>
+    <ul class="mt-4 max-h-64 divide-y divide-gray-200 overflow-y-auto border-y border-gray-200">
+      <li v-for="member in users" :key="member.id" class="flex items-center gap-3 py-3">
+        <img :src="member.pictureUrl" alt="" class="h-8 w-8 shrink-0 rounded-full" />
+        <div class="min-w-0 grow">
+          <p class="truncate text-sm font-medium text-gray-900">{{ member.name }}</p>
+          <p v-if="isUntrusted(member)" class="flex items-center gap-1 text-xs text-yellow-700">
+            <ExclamationTriangleIcon class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {{ t('grantPermissionDialog.warning.unverifiedUser') }}
+            <template v-if="member.ecdsaPublicKey">
+              ·
+              <button type="button" :disabled="processing" class="rounded-sm font-medium underline hover:text-yellow-900 focus:outline-hidden focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" @click="verify(member)">
+                {{ t('trustDetails.showSignDialogBtn') }}<span class="sr-only"> {{ member.name }}</span>
+              </button>
+            </template>
+          </p>
         </div>
-      </div>
-    </Dialog>
-  </TransitionRoot>
+        <span class="inline-flex shrink-0 items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+          {{ member.vaultRole === 'OWNER' ? t('vaultDetails.sharedWith.badge.owner') : t('common.member') }}
+        </span>
+      </li>
+    </ul>
+    <UntrustedRecipientsWarning v-if="untrustedUsers.length > 0" v-model:confirmed="confirmedUntrusted" require-confirmation class="mt-4">
+      <p>{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedUsers.map(u => u.name).join(', ')]) }}</p>
+    </UntrustedRecipientsWarning>
+    <SignUserKeysDialog v-if="verifyingUser" ref="signUserKeysDialog" :user="verifyingUser" @close="verifyingUser = undefined" @signed="refreshTrusts()" />
+
+    <template #footer>
+      <button ref="cancelButton" type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
+        {{ t('common.cancel') }}
+      </button>
+      <button type="submit" :disabled="processing || !trustLevels || (untrustedUsers.length > 0 && !confirmedUntrusted)" :class="primaryButton">
+        {{ t('grantPermissionDialog.submit', [users.length]) }}
+      </button>
+    </template>
+  </HubDialog>
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { DialogDescription } from '@headlessui/vue';
+import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { base64 } from '@scure/base';
-import { onMounted, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ConflictError, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
-import TrustDetails from './TrustDetails.vue';
+import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
+import userdata from '../common/userdata';
+import { AccessTokenProducing } from '../common/crypto';
+import wot from '../common/wot';
+import { primaryButton, secondaryButton } from './dialogButtons';
+import HubDialog from './HubDialog.vue';
+import SignUserKeysDialog from './SignUserKeysDialog.vue';
+import UntrustedRecipientsWarning from './UntrustedRecipientsWarning.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-const trusts = ref<TrustDto[]>([]);
+const processing = ref(false);
+const cancelButton = ref<HTMLButtonElement>();
+const signUserKeysDialog = ref<InstanceType<typeof SignUserKeysDialog>>();
+const verifyingUser = ref<MemberDto & UserDto>();
+const trustLevels = ref<Map<string, number>>(); // undefined until loaded for the current users
+const confirmedUntrusted = ref(false);
+const onLoadTrustLevelsError = ref<Error>();
 const onGrantPermissionError = ref<Error>();
+let latestTrustRefresh = 0; // overlapping refreshes (e.g. signing while the initial load is in flight) must not apply stale results
 
 const props = defineProps<{
   vault: VaultDto
-  users: UserDto[]
-  vaultKeys: VaultKeys
+  users: (MemberDto & UserDto)[]
+  vaultKeys: AccessTokenProducing
 }>();
 
 const emit = defineEmits<{
@@ -94,39 +83,89 @@ defineExpose({
   show
 });
 
-onMounted(fetchData);
-
-async function fetchData() {
-  await refreshTrusts();
-}
+watch(() => props.users, () => {
+  // trust levels and the confirmation only apply to the recipients they were made for:
+  trustLevels.value = undefined;
+  confirmedUntrusted.value = false;
+  refreshTrusts();
+}, { immediate: true });
 
 async function refreshTrusts() {
-  trusts.value = await backend.trust.listTrusted();
+  const refresh = ++latestTrustRefresh;
+  onLoadTrustLevelsError.value = undefined;
+  try {
+    const trusts = await backend.trust.listTrusted();
+    const levels = await wot.computeTrustLevels(props.users, trusts);
+    if (refresh === latestTrustRefresh) {
+      trustLevels.value = levels;
+    }
+  } catch (error) {
+    console.error('Loading trust levels failed.', error);
+    if (refresh === latestTrustRefresh) {
+      onLoadTrustLevelsError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
+  }
 }
+
+const untrustedUsers = computed(() => props.users.filter(isUntrusted));
+
+// recipients missing from the computed trust levels count as unverified:
+function isUntrusted(member: MemberDto & UserDto): boolean {
+  return !!member.ecdhPublicKey && !!trustLevels.value && (trustLevels.value.get(member.id) ?? -1) === -1;
+}
+
+const grantPermissionErrorMessage = computed(() => {
+  const error = onGrantPermissionError.value ?? onLoadTrustLevelsError.value;
+  if (!error) {
+    return undefined;
+  }
+  const message = t('common.unexpectedError', [error.message]);
+  return error instanceof ConflictError || error instanceof NotFoundError ? `${message}. ${t('common.reload')}` : message;
+});
 
 function show() {
   open.value = true;
 }
 
+function verify(member: MemberDto & UserDto) {
+  verifyingUser.value = member;
+  nextTick(() => signUserKeysDialog.value?.show());
+}
+
 async function grantAccess() {
+  if (processing.value || !open.value) {
+    return;
+  }
   onGrantPermissionError.value = undefined;
   try {
+    processing.value = true;
+    if (!trustLevels.value) {
+      throw new Error('Trust levels of the recipients are not known yet');
+    }
+    if (untrustedUsers.value.length > 0 && !confirmedUntrusted.value) {
+      throw new Error('Sharing the vault key with unverified users requires explicit confirmation');
+    }
     await giveUsersAccess(props.users);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
     console.error('Granting access permissions failed.', error);
     onGrantPermissionError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    processing.value = false;
   }
 }
 
-async function giveUsersAccess(users: UserDto[]) {
+async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
+  const me = await userdata.me;
   const tokens: AccessGrant[] = [];
-  for (const user of users) {
-    if (user.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.decode(user.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
-      const jwe = await props.vaultKeys.encryptForUser(publicKey);
-      tokens.push({ userId: user.id, token: jwe });
+  for (const member of members) {
+    if (member.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
+      // never wrap "to myself" using a key from the (server-supplied) member list, only using my verified key:
+      const publicKey = member.id === me.id ? await userdata.ecdhPublicKey : base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
+      const includeOwnerKeys = member.vaultRole === 'OWNER';
+      const jwe = await props.vaultKeys.encryptForUser(publicKey, includeOwnerKeys);
+      tokens.push({ userId: member.id, token: jwe });
     }
   }
   await backend.vaults.grantAccess(props.vault.id, ...tokens);

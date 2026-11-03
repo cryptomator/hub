@@ -5,12 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/2.0.1...HEAD)
+## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.4...HEAD)
 
 ### Added
 
 - Show a short onboarding tour to newly created users, remembered across browsers and devices and replayable from the profile menu
 - Suggest downloading the Cryptomator app in the sidebar
+
+### Changed
+
+- Updated Keycloak to 26.8.1
+- Disabled the deprecated "Full scope allowed" switch on Hub's Keycloak clients in favor of explicit role scope mappings. Existing realms are not migrated automatically and keep logging a deprecation warning until each client's [switch is disabled](https://www.keycloak.org/docs/latest/upgrading/index.html#full-scope-allowed-switch-on-clients-is-deprecated) and its roles are mapped: realm roles `user`, `create-vaults`, `admin` for `cryptomatorhub`, realm role `user` for `cryptomator`, `realm-management` role `realm-admin` for `cryptomatorhub-system`, and, if present, realm roles `user`, `create-vaults` plus `realm-management` role `manage-users` for `cryptomatorhub-cli`.
+
+### Fixed
+
+- Fixed automatic access grants leaving vault owners without the vault's recovery key: owners now always need to be granted access manually (#505)
+
+## [2.1.4](https://github.com/cryptomator/hub/compare/2.1.3...2.1.4) (2026-10-23)
+
+### Fixed
+
+- Fixed an error when loading the vault members that still need to be granted access
+
+### Changed
+
+- Redesigned all dialogs (#507)
+
+## [2.1.3](https://github.com/cryptomator/hub/compare/2.1.2...2.1.3) (2026-10-22)
+
+### Changed
+
+- Updated Keycloak to 26.7.5
+
+### Security
+
+Details on the vulnerabilities below will be published as GitHub security advisories once users had time to update. Please upgrade promptly.
+
+- Fixed a vulnerability in the emergency access feature (GHSA-m34v-6wr7-hxpp)
+- Fixed a vulnerability in Web of Trust signature verification (GHSA-6h99-f755-pjr7)
+- Fixed a vulnerability affecting Web of Trust checks when granting vault access (GHSA-58gr-v8jr-2g56)
+- Fixed a denial-of-service vulnerability in client-side key material parsing (GHSA-x8hg-xmc2-pvfq)
+- Removed the CA root `emSign ECC Root CA - G3` from the trust stores of the Hub and Keycloak images (JDK `cacerts` and OS bundle) after the eMudhra intermediate CA key compromise of 2026-10-17, see [Mozilla bug 2083449](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449). The Keycloak image is published as `26.7.5.1`.
+
+## [2.1.2](https://github.com/cryptomator/hub/compare/2.1.1...2.1.2) (2026-10-12)
+
+### Fixed
+
+- Fixed licenses being rejected once the certificate that signed them was rotated out: the certificate chain is now required to be valid at the license's issue date instead of at verification time
+- If the stored license fails verification during startup, Hub now requests a refreshed license from the license server once before falling back to setup mode
+- The license setup page no longer offers trial and community edition licenses on managed instances
+
+## [2.1.1](https://github.com/cryptomator/hub/compare/2.1.0...2.1.1) (2026-09-24)
+
+### Fixed
+
+- Fixed unhandled errors during license refresh that prevented Hub from starting when the license server is unreachable (#500)
+
+## [2.1.0](https://github.com/cryptomator/hub/compare/2.0.1...2.1.0) (2026-09-23)
+
+### Added
+
+- Split info banners into global, always-shown ones(License, legacy device banners)and local, only-on-selected- pages ones (#494)
+
+### Changed
+
+- Updated Keycloak to 26.7.4
+- Updated to Quarkus 3.39.4
+- Updated frontend dependencies, including Vite 8.3, Vitest 5 and vue-router 5.3
+- Updated translations (#492, #499)
+
+### Fixed
+
+- Fixed license refreshes of all instances of a version happening at the same time (bdc40758f0992b73cc86b2f1f19d7e194bb7cf69)
+- Fixed log message about ignored device IDs during unlock reporting `null` instead of the actual ID (09dc989abd458ea57d460da6fc35dc8d3d599f77)
 
 ## [2.0.1](https://github.com/cryptomator/hub/compare/2.0.0...2.0.1) (2026-09-07)
 

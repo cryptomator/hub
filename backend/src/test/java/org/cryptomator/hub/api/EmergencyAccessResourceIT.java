@@ -55,23 +55,28 @@ public class EmergencyAccessResourceIT {
 
 	// Builds a valid RecoveryProcessDto payload in which {@code memberId} is the sole council member of the process.
 	private static String recoveryProcessBody(UUID processId, UUID vaultId, String memberId) {
+		// matches the canonical share stored in emergency_key_shares for user1 (see V9999__Test_Data.sql):
+		return recoveryProcessBody(processId, vaultId, memberId, 2, "jwe.jwe.jwe.emergency." + memberId);
+	}
+
+	private static String recoveryProcessBody(UUID processId, UUID vaultId, String memberId, int requiredKeyShares, String unrecoveredKeyShare) {
 		return """
 				{
 					"id": "%s",
 					"vaultId": "%s",
 					"type": "CHANGE_PERMISSIONS",
-					"requiredKeyShares": 2,
+					"requiredKeyShares": %d,
 					"processPublicKey": "processPublicKey",
 					"recoveredKeyShares": {
 						"%s": {
 							"processPrivateKey": "jwe.jwe.jwe.process.privatekey",
-							"unrecoveredKeyShare": "jwe.jwe.jwe.unrecovered.share",
+							"unrecoveredKeyShare": "%s",
 							"recoveredKeyShare": "jwe.jwe.jwe.recovered.share",
 							"signedProcessInfo": "jws.jws.signature"
 						}
 					}
 				}
-				""".formatted(processId, vaultId, memberId);
+				""".formatted(processId, vaultId, requiredKeyShares, memberId, unrecoveredKeyShare);
 	}
 
 	private boolean processExists(UUID processId) {
@@ -141,6 +146,31 @@ public class EmergencyAccessResourceIT {
 					.then().statusCode(204);
 
 			assertThat(processExists(processId), is(true));
+		}
+
+		@Test
+		@DisplayName("PUT /emergency-access/{processId} with a substituted unrecovered key share returns 400")
+		void testSubstitutedKeyShareIsRejected() {
+			var processId = UUID.fromString("7E57C0DE-0000-4000-8000-000200000004");
+
+			// a malicious starter copies a ciphertext of their choosing (e.g. another vault's key share) into the process
+			given().contentType(ContentType.JSON).body(recoveryProcessBody(processId, COUNCIL_VAULT_ID, "user1", 2, "jwe.jwe.jwe.emergency.othervault.user1"))
+					.when().put("/emergency-access/{processId}", processId)
+					.then().statusCode(400);
+
+			assertThat(processExists(processId), is(false));
+		}
+
+		@Test
+		@DisplayName("PUT /emergency-access/{processId} with mismatching requiredKeyShares returns 400")
+		void testMismatchingRequiredKeySharesIsRejected() {
+			var processId = UUID.fromString("7E57C0DE-0000-4000-8000-000200000005");
+
+			given().contentType(ContentType.JSON).body(recoveryProcessBody(processId, COUNCIL_VAULT_ID, "user1", 3, "jwe.jwe.jwe.emergency.user1"))
+					.when().put("/emergency-access/{processId}", processId)
+					.then().statusCode(400);
+
+			assertThat(processExists(processId), is(false));
 		}
 
 		@Test

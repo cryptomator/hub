@@ -110,6 +110,14 @@ public class VaultResourceIT {
 	@BeforeEach
 	@Transactional
 	void setupTestData() {
+		var user997 = new User();
+		user997.setId("user997");
+		user997.setName("User 997");
+		user997.setEcdhPublicKey("ecdh_public997");
+		user997.setEcdsaPublicKey("ecdsa_public997");
+		user997.setPrivateKeys("private997");
+		user997.setSetupCode("setup997");
+
 		var user998 = new User();
 		user998.setId("user998");
 		user998.setName("User 998");
@@ -122,17 +130,22 @@ public class VaultResourceIT {
 		user999.setPrivateKeys("private999");
 		user999.setSetupCode("setup999");
 
-		userRepo.persist(user998, user999);
+		userRepo.persist(user997, user998, user999);
+
+		var group1 = groupRepo.findById("group1");
+		group1.getMembers().add(user997);
+		group1.getMembers().add(user998);
+		group1.getMembers().add(user999);
+		groupRepo.persist(group1);
 
 		var group2 = groupRepo.findById("group2");
-		group2.getMembers().add(user998);
 		group2.getMembers().add(user999);
 		groupRepo.persist(group2);
 
-		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
-		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
+		effectiveGroupMembershipRepo.updateUsers(List.of("user997", "user998", "user999"));
+		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group2"));
 
-		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		var entitlements = HubLicenseEntitlements.create().withSeats(6L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
@@ -140,7 +153,7 @@ public class VaultResourceIT {
 	@AfterEach
 	@Transactional
 	void cleanupTestData() {
-		userRepo.deleteByIds(List.of("user998", "user999"));
+		userRepo.deleteByIds(List.of("user997", "user998", "user999"));
 	}
 
 	@Nested
@@ -153,10 +166,12 @@ public class VaultResourceIT {
 		private static final String VALID_SALT = "base64";
 		private static final String VALID_AUTH_PUB = "base64";
 		private static final String VALID_AUTH_PRI = "base64";
+		private static final String VALID_UVF_METADATA_FILE = "{json}";
+		private static final String VALID_UVF_RECOVERY_KEY = "base64";
 
 		@Test
 		void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, Instant.parse("2020-02-20T20:20:20Z"), "foobarbaz", false, 0, Map.of(), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, Instant.parse("2020-02-20T20:20:20Z"), "foobarbaz", false, 0, Map.of(),  VALID_UVF_METADATA_FILE, VALID_UVF_RECOVERY_KEY, VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -341,6 +356,30 @@ public class VaultResourceIT {
 			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending member user997 on vault2")
+		void testGetUsersRequiringAccessGrant() {
+			// user1 holds a token for vault2 (V9999), so it can re-share and sees vault2's pending members. The Web-of-Trust
+			// decision is left to the client, so no trust setup is needed. user997 (group1, member of vault2) has an ecdh key
+			// but no token yet, so it is pending. user998 (also group1) has no ecdh key. user999 is a member via group1 but an
+			// owner via group2, and owners are never granted automatically. We don't assert the total vault count: other
+			// tests may leave vaults around.
+			given().queryParam("wait", 0)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(200)
+					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user997"))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user999")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=-1 returns 400 (validation)")
+		void testGetUsersRequiringAccessGrantNegativeWait() {
+			given().queryParam("wait", -1)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(400);
+		}
+
 		@Nested
 		@DisplayName("legacy unlock")
 		@TestSecurity(user = "User Name 1", roles = {"user"})
@@ -411,7 +450,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
 		void testCreateVaultWithMissingRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -434,7 +473,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
 		void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -456,10 +495,21 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100006666 returns 400 due to missing emergencyKeyShares")
+		void testCreateVaultWithoutEmergencyKeyShares() {
+			var body = Map.of("id", "7E57C0DE-0000-4000-8000-000100006666", "name", "My Vault");
+
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100006666")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
 		void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", true, 0, Map.of(), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", true, 0, Map.of(), "uvfMetadata4", "uvfKeySet4", "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100004444")
@@ -475,7 +525,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name and description (archived flag ignored)")
 		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", "doNotUpdate", "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -572,6 +622,46 @@ public class VaultResourceIT {
 					.then().statusCode(200);
 		}
 
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens (manual) returns 403 for non-owner member user1")
+		void testManualGrantByNonOwnerForbidden() {
+			// user1 is only a MEMBER of vault2 (via group1), so the owner-only manual endpoint must reject the grant.
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 200 for user997 (member-initiated automatic grant to a pending member)")
+		void testAutoGrantByMember() {
+			// Same member (user1, non-owner of vault2) as above, but via the auto endpoint, which any member may call.
+			// user997 is in group1 (member of vault2), has a public key, and holds no token yet → pending.
+			given().contentType(ContentType.JSON).body(Map.of("user997", "jwe.jwe.jwe.vault2.user997"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200);
+
+			// the grant must be recorded as automatic (true), attributed to the member who performed it
+			Mockito.verify(eventLogger).logVaultAccessGranted("user1", UUID.fromString("7E57C0DE-0000-4000-8000-000100002222"), "user997", true);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 400 for user999 (pending owner)")
+		void testAutoGrantToOwner() {
+			// user999 is pending on vault2 but owns it via group2, so the auto endpoint must reject them.
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 400 for user998 (not awaiting a grant: no public key)")
+		void testAutoGrantToNonPending() {
+			// user998 is in group1 (member of vault2) but has no public key, so it is not awaiting a grant and must be rejected.
+			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault2.user998"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
 	}
 
 	@Nested
@@ -659,8 +749,33 @@ public class VaultResourceIT {
 		}
 
 		@Test
+		@Order(8)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains not disabled user2")
+		void testGetUsersRequiringAccessExcludesDisabledUser() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET ecdh_publickey='ecdh_public2', ecdsa_publickey='ecdsa_public2', privatekeys='private2', setupcode='setup2', enabled=FALSE
+						WHERE id='user2';
+						""");
+			}
+
+			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", not(hasItems("user2")));
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET ecdh_publickey=NULL, ecdsa_publickey=NULL, privatekeys=NULL, setupcode=NULL, enabled=TRUE
+						WHERE id='user2';
+						""");
+			}
+		}
+
+		@Test
 		@Order(10)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2 once with highest role")
 		void testGetUsersRequiringAccess2() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -670,9 +785,11 @@ public class VaultResourceIT {
 						""");
 			}
 
+			// user2 is OWNER via group2 and MEMBER directly (added in testGrantDirectAccessToSelf())
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
-					.body("id", hasItems("user2"));
+					.body("findAll { it.id == 'user2' }", hasSize(1))
+					.body("find { it.id == 'user2' }.vaultRole", is("OWNER"));
 
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -758,6 +875,78 @@ public class VaultResourceIT {
 					.body("id", hasItems("group1", "group2"))
 			;
 		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview resolves prospective members without persisting them")
+		void previewEffectiveUsers() {
+			// user997 (direct OWNER, MEMBER via group1) → OWNER; user999 (via group1 only) → MEMBER; user1 (group1) → MEMBER, even though already holding a token for vault2;
+			// user998 (group1) has no key; user2 (group2) is not part of the prospective members:
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"group1": "MEMBER",
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("user997", "user999", "user1"))
+					.body("id", not(hasItems("user998", "user2")))
+					.body("findAll { it.id == 'user997' }", hasSize(1))
+					.body("find { it.id == 'user997' }.vaultRole", is("OWNER"))
+					.body("find { it.id == 'user999' }.vaultRole", is("MEMBER"))
+					.body("find { it.id == 'user1' }.vaultRole", is("MEMBER"));
+
+			// nothing persisted:
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("group1", "group2"))
+					.body("id", not(hasItems("user997")));
+			Mockito.verify(eventLogger, Mockito.never()).logVaultMemberAdded(any(), eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100002222")), eq("user997"), any());
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for empty body")
+		void previewEffectiveUsersEmpty() {
+			given().when().contentType(ContentType.JSON).body("{}").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for null role")
+		void previewEffectiveUsersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members returns 400 for null role")
+		void setMembersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/effective-users/preview returns 403 - not owning a nonexisting vault")
+		void previewEffectiveUsersUnknownVault() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
+					.then().statusCode(403);
+		}
 	}
 
 	@Nested
@@ -788,11 +977,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=3")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=2")
 		void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("find { it.id == 'group2' }.memberSize", equalTo(3));
+					.body("find { it.id == 'group2' }.memberSize", equalTo(2));
 		}
 
 		@Test
@@ -1131,7 +1320,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 403 for admin updating vault they don't own")
 		void testAdminCannotUpdateVaultTheyDontOwn() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "uvfMetadata1", "uvfKeySet1", "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
@@ -1143,7 +1332,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100005555 returns 403 for admin creating vault without create-vaults role")
 		void testAdminCannotCreateVaultWithoutCreateVaultsRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100005555");
-			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
+			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "uvfMetadata5", "uvfKeySet5", "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100005555")

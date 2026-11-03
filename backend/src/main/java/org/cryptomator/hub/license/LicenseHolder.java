@@ -78,7 +78,11 @@ public class LicenseHolder {
 		var state = this.loadLicense();
 		this.cachedState.set(state);
 		if (state.unconfigured()) {
-			return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
+			var storedToken = this.loadStoredLicenseKey();
+			if (storedToken == null || !this.recoverStoredLicense(storedToken)) {
+				return; // no license configured yet — skip refresh attempts, an admin will obtain a license via the setup workflow
+			}
+			state = this.state(); // recovered by installing a refreshed license
 		}
 		// refresh upon startup:
 		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
@@ -109,8 +113,8 @@ public class LicenseHolder {
 			try {
 				return LicenseState.from(validateExistingLicense(settings));
 			} catch (JWTVerificationException e) {
-				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}. Starting in setup mode; an admin needs to provide a valid license via the web interface.", settings.getHubId());
-				return unconfigured; // keep the stored license key untouched, so it remains available for inspection
+				LOG.errorv(e, "License stored in the database is invalid or does not match hub ID {0}.", settings.getHubId());
+				return unconfigured; // keep the stored license key untouched, so it remains available for a recovery attempt and for inspection
 			}
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
 			try {
@@ -122,6 +126,32 @@ public class LicenseHolder {
 		} else {
 			LOG.warn("No license configured. Starting in setup mode; an admin needs to obtain a license via the web interface.");
 			return unconfigured;
+		}
+	}
+
+	@Transactional
+	@Nullable String loadStoredLicenseKey() {
+		return settingsRepo.get().getLicenseKey();
+	}
+
+	/**
+	 * Attempts to recover from a stored license that no longer verifies (e.g. because the certificate that signed it has been rotated out since)
+	 * by requesting a refreshed license from the license server, which is the authority on whether the stored token is still acceptable.
+	 * Attempted once during startup only; if it fails, the instance starts in setup mode and an admin needs to provide a valid license via the web interface.
+	 *
+	 * @param storedToken The stored license token that failed verification
+	 * @return {@code true} if a refreshed license has been installed, {@code false} if the instance remains in setup mode
+	 */
+	boolean recoverStoredLicense(String storedToken) {
+		LOG.info("Attempting to recover by requesting a refreshed license from the license server...");
+		try {
+			var refreshedLicense = requestLicenseRefresh(storedToken);
+			set(refreshedLicense);
+			LOG.info("Successfully recovered by installing a refreshed license.");
+			return true;
+		} catch (LicenseRefreshFailedException | JWTVerificationException e) {
+			LOG.error("Failed to recover from invalid stored license. Starting in setup mode; an admin needs to provide a valid license via the web interface.", e);
+			return false;
 		}
 	}
 
@@ -153,17 +183,31 @@ public class LicenseHolder {
 		return validated;
 	}
 
-	LicenseApi.Solution solveChallenge() {
+	/**
+	 * Obtains a solved proof-of-work challenge from the license server, required to authorize a license refresh.
+	 * <p>
+	 * On managed instances, a presolved challenge is requested using the configured API credentials; if that fails, this method falls back to solving a regular challenge.
+	 *
+	 * @return the solution to be sent along with the license refresh request
+	 * @throws LicenseApi.RequestFailedException if no challenge could be obtained from the license server
+	 */
+	LicenseApi.Solution solveChallenge() throws LicenseApi.RequestFailedException {
 		if (managedApiUsername.isPresent() && managedApiPassword.isPresent()) {
 			var authHeader = "Basic " + Base64.getEncoder().encodeToString((managedApiUsername.get() + ":" + managedApiPassword.get()).getBytes(StandardCharsets.UTF_8));
 			try {
-				return licenseApi.generatePresolvedChallenge(authHeader);
-			} catch (WebApplicationException e) {
+				return LicenseApi.await(licenseApi.generatePresolvedChallenge(authHeader));
+			} catch (LicenseApi.RequestFailedException e) {
 				LOG.warn("Failed to retrieve presolved challenge for license refresh. Falling back to solving a regular challenge.", e);
 			}
 		}
-		var challenge = licenseApi.generateChallenge();
-		return solveChallenge(challenge);
+
+		try {
+			var challenge = LicenseApi.await(licenseApi.generateChallenge());
+			return solveChallenge(challenge);
+		} catch (LicenseApi.RequestFailedException e) {
+			LOG.warn("Failed to retrieve regular challenge for license refresh.", e);
+			throw e;
+		}
 	}
 
 	// visible for testing
@@ -253,8 +297,23 @@ public class LicenseHolder {
 		}
 	}
 
+	/**
+	 * Fetches the license issued for the given license server session and installs it.
+	 *
+	 * @param session The session the license was purchased in
+	 * @throws LicenseRefreshFailedException if the license server is unreachable or the fetched license is invalid
+	 * @throws WebApplicationException       if the license server responded with an error status code, which is relayed to the client as-is (e.g. a 404 for an unknown session)
+	 */
 	public void refreshLicense(UUID session) throws LicenseRefreshFailedException, WebApplicationException {
-		var refreshedLicense = licenseApi.getLicense(session);
+		String refreshedLicense;
+		try {
+			refreshedLicense = LicenseApi.await(licenseApi.getLicense(session));
+		} catch (LicenseApi.RequestFailedException e) {
+			if (e.getCause() instanceof WebApplicationException cause) {
+				throw cause;
+			}
+			throw new LicenseRefreshFailedException("Failed to fetch the license issued for session " + session, e);
+		}
 		setRefreshedLicense(refreshedLicense);
 	}
 
@@ -276,11 +335,11 @@ public class LicenseHolder {
 
 	//visible for testing
 	String requestLicenseRefresh(String licenseToken) throws LicenseRefreshFailedException {
-		var solution = solveChallenge();
 		try {
-			return licenseApi.refreshLicense(licenseToken, solution.toCaptcha());
-		} catch (WebApplicationException e) {
-			throw new LicenseRefreshFailedException("License endpoint responded with status code " + e.getResponse().getStatus());
+			var solution = solveChallenge();
+			return LicenseApi.await(licenseApi.refreshLicense(licenseToken, solution.toCaptcha()));
+		} catch (LicenseApi.RequestFailedException e) {
+			throw new LicenseRefreshFailedException("Failed to request a refreshed license", e);
 		}
 	}
 

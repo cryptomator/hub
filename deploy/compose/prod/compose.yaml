@@ -61,7 +61,7 @@ services:
   # `QUARKUS_OIDC_TOKEN_ISSUER` of the `hub` service at your instance and import the realm from the `cryptomator-realm` config there (https://www.keycloak.org/server/importExport).
   # The secret of the `cryptomatorhub-system` client must equal `HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET`, and Keycloak's origin must be in the `connect-src` of Hub's Content Security Policy.
   keycloak:
-    image: ghcr.io/cryptomator/keycloak:26.7.3
+    image: ghcr.io/cryptomator/keycloak:26.8.1
     command: start --optimized --import-realm
     environment:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -97,7 +97,7 @@ services:
 
   # The Hub application, configured through environment variables (same settings as the Helm chart). Only reachable through Traefik.
   hub:
-    image: ghcr.io/cryptomator/hub:2.0.1
+    image: ghcr.io/cryptomator/hub:2.1.4
     environment:
       HUB_PUBLIC_ROOT_PATH: /
       HUB_KEYCLOAK_PUBLIC_URL: https://kc.example.com
@@ -222,15 +222,33 @@ configs:
             "client": "cryptomatorhub",
             "roles": [
               "user",
+              "create-vaults",
               "admin"
+            ]
+          },
+          {
+            "client": "cryptomator",
+            "roles": [
+              "user"
             ]
           }
         ],
+        "clientScopeMappings": {
+          "realm-management": [
+            {
+              "client": "cryptomatorhub-system",
+              "roles": [
+                "realm-admin"
+              ]
+            }
+          ]
+        },
         "clients": [
           {
             "clientId": "cryptomatorhub",
             "serviceAccountsEnabled": false,
             "publicClient": true,
+            "fullScopeAllowed": false,
             "name": "Cryptomator Hub",
             "enabled": true,
             "redirectUris": [
@@ -276,6 +294,7 @@ configs:
             "clientId": "cryptomator",
             "serviceAccountsEnabled": false,
             "publicClient": true,
+            "fullScopeAllowed": false,
             "name": "Cryptomator App",
             "enabled": true,
             "redirectUris": [
@@ -297,6 +316,7 @@ configs:
             "clientId": "cryptomatorhub-system",
             "serviceAccountsEnabled": true,
             "publicClient": false,
+            "fullScopeAllowed": false,
             "name": "Cryptomator Hub System",
             "enabled": true,
             "clientAuthenticatorType": "client-secret",

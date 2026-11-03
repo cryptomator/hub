@@ -290,6 +290,7 @@ async function fetchData() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
+    // awaited last: a failed update check must not prevent the settings above from being initialized
     latestVersion.value = await versionAvailable;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
@@ -450,5 +451,4 @@ function resetWebOfTrust() {
 }
 
 // #endregion
-
 </script>

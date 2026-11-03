@@ -109,6 +109,9 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = undefined;
   try {
+    // unlocking the user keys verifies that the server-supplied public keys belong to the private keys, so the
+    // fingerprint shown below (and compared out-of-band by others) is guaranteed to be the user's own:
+    await userdata.decryptUserKeysWithBrowser();
     me.value = await userdata.me;
     version.value = await backend.version.get();
   } catch (error) {

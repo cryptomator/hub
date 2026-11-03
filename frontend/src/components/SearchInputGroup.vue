@@ -8,7 +8,7 @@
             <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" />
           </div>
 
-          <ComboboxInput v-if="selectedItem === undefined" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value" />
+          <ComboboxInput v-if="selectedItem === undefined" ref="comboboxInput" v-focus :disabled="disabled" class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value" />
           <div v-else class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 flex items-center justify-between shadow-xs sm:text-sm">
             <span class="truncate">{{ selectedItem.name }}</span>
             <span v-if="selectedItem.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [selectedItem.memberSize]) }}</span>
@@ -29,12 +29,12 @@
         </ComboboxOptions>
       </Combobox>
 
-      <button v-if="selectedItem !== undefined" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="reset()">
+      <button v-if="selectedItem !== undefined" :disabled="disabled" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center disabled:cursor-not-allowed disabled:opacity-50" @click="reset()">
         <XCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
       </button>
     </div>
 
-    <button ref="actionButton" :disabled="selectedItem === undefined" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
+    <button ref="actionButton" :disabled="selectedItem === undefined || disabled" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
       {{ actionTitle }}
     </button>
   </div>
@@ -55,12 +55,17 @@ export type Item = {
   memberSize?: number;
 };
 
+export type SearchInputGroupExpose = {
+  focusTarget?: HTMLElement;
+};
+
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   actionTitle: string
   placeHolder: string
   onSearch: (query: string) => Promise<T[]>
+  disabled?: boolean
 }>();
 
 const emit = defineEmits<{
@@ -73,7 +78,12 @@ const vFocus = {
   }
 };
 
+const comboboxInput = ref<InstanceType<typeof ComboboxInput>>();
 const actionButton = ref<HTMLButtonElement>();
+defineExpose({
+  focusTarget: computed<HTMLElement | undefined>(() => comboboxInput.value?.$el ?? actionButton.value)
+});
+
 const selectedItem = shallowRef<T>();
 watch(selectedItem, (value) => {
   if (value !== undefined) {

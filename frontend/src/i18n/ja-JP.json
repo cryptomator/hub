@@ -114,6 +114,8 @@
   "legacyDeviceList.type": "種類",
   "legacyDeviceList.ipAddress": "IPアドレス",
   "legacyDeviceList.lastAccess": "金庫の最終アクセス",
+  "legacyDeviceBanner.user.description": "次のメジャーリリースでは、レガシーデバイスはサポートされなくなります。 {0} のリストを確認し、デバイスでCryptomatorを更新または削除してください。",
+  "legacyDeviceBanner.button": "ユーザープロフィール",
   "manageAccountKey.title": "アカウントキー",
   "nav.vaults": "金庫",
   "nav.profile.admin": "管理者",

@@ -5,10 +5,11 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.http.HttpServerRequest;
-import org.jboss.logging.Logger;
-import org.jspecify.annotations.Nullable;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
@@ -22,7 +23,6 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -46,6 +46,8 @@ import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.VaultAccess.Role;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.events.VaultMembersJoined;
+import org.cryptomator.hub.events.VaultMembersJoinedBroadcaster;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.keycloak.RealmRole;
@@ -63,16 +65,23 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.jboss.logging.Logger;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,10 +109,12 @@ public class VaultResource {
 	private final LicenseHolder license;
 	private final VaultUnlockMetrics vaultUnlockMetrics;
 	private final HttpServerRequest request; // @RequestScoped bean, injected as a client proxy resolving against the current request
+	private final VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster;
+	private final Event<VaultMembersJoined> vaultMembersJoinedEvent;
 
 	@Inject
 	@SuppressWarnings("deprecation")
-	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics, HttpServerRequest request) {
+	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics, HttpServerRequest request, VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster, Event<VaultMembersJoined> vaultMembersJoinedEvent) {
 		this.eventLogger = eventLogger;
 		this.accessTokenRepo = accessTokenRepo;
 		this.deviceRepo = deviceRepo;
@@ -118,6 +129,8 @@ public class VaultResource {
 		this.license = license;
 		this.vaultUnlockMetrics = vaultUnlockMetrics;
 		this.request = request;
+		this.vaultMembersJoinedBroadcaster = vaultMembersJoinedBroadcaster;
+		this.vaultMembersJoinedEvent = vaultMembersJoinedEvent;
 	}
 
 	@GET
@@ -171,6 +184,38 @@ public class VaultResource {
 	}
 
 	@GET
+	@Path("/users-requiring-access-grant")
+	@RolesAllowed("user")
+	@RunOnVirtualThread
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "list pending access grants the caller could perform, grouped by vault",
+			description = """
+					Long-polling endpoint for the automatic access grant flow. Returns members without an access token on
+					vaults the caller holds a token for (i.e. can decrypt and therefore re-share). Vault owners are excluded,
+					because automatic grants don't carry the recovery key owners need. The Web-of-Trust decision and the
+					vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
+					see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
+					pending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty
+					map on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when
+					only such candidates remain). Best effort — events on other backend instances will not wake this call.""")
+	@APIResponse(responseCode = "200")
+	public Map<UUID, Set<String>> getUsersRequiringAccessGrant(@QueryParam("wait") @DefaultValue("25") @Min(0) int wait) throws InterruptedException {
+		var callerId = jwt.getSubject();
+		try (var ticket = vaultMembersJoinedBroadcaster.subscribe()) {
+			var initial = queryPendingAccessGrants(callerId);
+			if (!initial.isEmpty()) {
+				return initial;
+			}
+			ticket.awaitChange(Duration.ofSeconds(wait));
+			return queryPendingAccessGrants(callerId);
+		}
+	}
+
+	private Map<UUID, Set<String>> queryPendingAccessGrants(String currentUserId) {
+		return QuarkusTransaction.requiringNew().call(() -> effectiveVaultAccessRepo.findMembersWithoutAccessTokens(currentUserId));
+	}
+
+	@GET
 	@Path("/{vaultId}/members")
 	@RolesAllowed("user")
 	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
@@ -198,7 +243,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "400", description = "invalid members in request body")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
 		var vault = vaultRepo.findById(vaultId);
 		if (vault == null) {
 			throw new NotFoundException("Vault not found.");
@@ -248,6 +293,9 @@ public class VaultResource {
 		vaultAccessRepo.persist(addedMembers);
 		vaultAccessRepo.persist(updatedMembers);
 
+		if (!addedMembers.isEmpty()) {
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
+		}
 		return Response.noContent().build();
 	}
 
@@ -320,6 +368,7 @@ public class VaultResource {
 			access.setRole(role);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(jwt.getSubject(), vault.getId(), authority.getId(), role);
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -348,11 +397,43 @@ public class VaultResource {
 	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
+	@Operation(summary = "list members requiring access tokens", description = "lists all members, that have permissions but lack an access token")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return userRepo.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
+	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
+		return effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
+	}
+
+	@POST
+	@Path("/{vaultId}/effective-users/preview")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "preview effective users", description = "lists all enabled users with a key pair that would have permissions (directly or via groups) if the direct vault members were replaced with the given ones (same request body as PUT /{vaultId}/members), regardless of whether they already hold an access token; nothing is persisted")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "400", description = "invalid members in request body")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public List<MemberDto> previewEffectiveUsers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
+		if (vaultRepo.findById(vaultId) == null) {
+			throw new NotFoundException("Vault not found.");
+		}
+
+		// resolve direct and group members to their highest prospective role (mirrors EffectiveVaultAccess.findUsersWithoutAccessTokens):
+		var prospectiveRoles = new HashMap<User, VaultAccess.Role>();
+		BiConsumer<User, VaultAccess.Role> addRole = (user, role) -> prospectiveRoles.merge(user, role, BinaryOperator.maxBy(Comparator.naturalOrder()));
+		userRepo.streamByIds(memberRoles.keySet()).forEach(user -> addRole.accept(user, memberRoles.get(user.getId())));
+		userRepo.getEffectiveGroupUsersByGroup(memberRoles.keySet()).forEach((groupId, users) -> users.forEach(user -> addRole.accept(user, memberRoles.get(groupId))));
+
+		return prospectiveRoles.entrySet().stream()
+				.filter(entry -> entry.getKey().isEnabled() && entry.getKey().getEcdhPublicKey() != null)
+				.sorted(Comparator.comparing(entry -> entry.getKey().getName()))
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
 	}
 
 	/**
@@ -472,6 +553,30 @@ public class VaultResource {
 		}
 	}
 
+	@GET
+	@Path("/{vaultId}/uvf/vault.uvf")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get the vault.uvf file")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfMetadata(@PathParam("vaultId") UUID vaultId) {
+		return vaultRepo.findByIdOptional(vaultId).map(Vault::getUvfMetadataFile).orElseThrow(NotFoundException::new);
+	}
+
+	@GET
+	@Path("/{vaultId}/uvf/jwks.json")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get public vault keys", description = "retrieves a JWK Set containing public keys related to this vault")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfKeys(@PathParam("vaultId") UUID vaultId) {
+		return vaultRepo.findByIdOptional(vaultId).map(Vault::getUvfKeySet).orElseThrow(NotFoundException::new);
+	}
+
 	@POST
 	@Path("/{vaultId}/access-tokens")
 	@RolesAllowed("user")
@@ -484,8 +589,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
-		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-
 		// check number of available seats
 		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
@@ -494,6 +597,49 @@ public class VaultResource {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
+		grantAccessTokens(vaultId, tokens, false);
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/{vaultId}/access-tokens/auto")
+	@RolesAllowed("user")
+	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}). Vault owners can't be granted access this way.")
+	@APIResponse(responseCode = "200", description = "all keys stored")
+	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an automatic access grant for this vault")
+	@APIResponse(responseCode = "403", description = "not a vault member")
+	@APIResponse(responseCode = "404", description = "at least one user has not been found")
+	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
+		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
+		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
+		// Owners are excluded, because automatic grants don't carry the recovery key owners need.
+		var pendingMemberIds = effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.filter(entry -> entry.getValue() != VaultAccess.Role.OWNER)
+				.map(entry -> entry.getKey().getId())
+				.collect(Collectors.toSet());
+		if (!pendingMemberIds.containsAll(tokens.keySet())) {
+			var notWaiting = tokens.keySet().stream()
+					.filter(Predicate.not(pendingMemberIds::contains))
+					.collect(Collectors.joining(", "));
+			throw new BadRequestException("User(s) not awaiting an automatic access grant for this vault: " + notWaiting);
+		}
+
+		grantAccessTokens(vaultId, tokens, true);
+		return Response.ok().build();
+	}
+
+	/**
+	 * Persists access tokens for the given users, recording each grant in the audit log.
+	 *
+	 * @param vaultId   the vault to grant access to
+	 * @param tokens    map from user id to the per-user-encrypted vault key
+	 * @param automatic whether the grant is performed by the automatic access grant flow (recorded in the audit log)
+	 */
+	private void grantAccessTokens(UUID vaultId, Map<String, String> tokens, boolean automatic) {
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
 			var token = accessTokenRepo.findById(new AccessToken.AccessId(userId, vaultId));
@@ -504,9 +650,8 @@ public class VaultResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId);
+			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId, automatic);
 		}
-		return Response.ok().build();
 	}
 
 	@GET
@@ -593,6 +738,8 @@ public class VaultResource {
 		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
 		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
+		vault.setUvfMetadataFile(vaultDto.uvfMetadataFile);
+		vault.setUvfKeySet(vaultDto.uvfKeySet);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 
@@ -613,6 +760,7 @@ public class VaultResource {
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			eventLogger.logVaultUpdated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
@@ -694,18 +842,24 @@ public class VaultResource {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars @Nullable String description,
+						   @JsonProperty("creationTime") Instant creationTime,
+						   @JsonProperty("description") @NoHtmlOrScriptChars @Nullable String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
-						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
+						   @JsonProperty("emergencyKeyShares") @NotNull Map<String, String> emergencyKeyShares,
+						   @JsonProperty("uvfMetadataFile") @Nullable String uvfMetadataFile,
+						   @JsonProperty("uvfKeySet") @Nullable String uvfKeySet,
 						   // Legacy properties ("Vault Admin Password"):
-						   @JsonProperty("masterkey") @OnlyBase64Chars @Nullable String masterkey, @JsonProperty("iterations") @Nullable Integer iterations,
-						   @JsonProperty("salt") @OnlyBase64Chars @Nullable String salt,
+						   @JsonProperty("masterkey") @OnlyBase64Chars @Nullable String masterkey, @JsonProperty("iterations") @Nullable Integer iterations, @JsonProperty("salt") @OnlyBase64Chars @Nullable String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars @Nullable String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars @Nullable String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
+			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(),
+					// uvf:
+					entity.getUvfMetadataFile(), entity.getUvfKeySet(),
+					// legacy properties:
+					entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
 		}
 
 	}

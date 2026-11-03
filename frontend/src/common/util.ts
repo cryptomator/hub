@@ -30,13 +30,24 @@ export class UTF8 {
 export class DB {
 
   private static readonly NAME = 'hub';
+  // bump when adding an object store, so existing databases get upgraded:
+  private static readonly VERSION = 2;
+  public static readonly BROWSER_KEYS_STORE = 'keys'; // since version 1
+  public static readonly PINNED_USER_KEYS_STORE = 'pinnedUserKeys'; // since version 2
+  private static readonly OBJECT_STORES = [DB.BROWSER_KEYS_STORE, DB.PINNED_USER_KEYS_STORE];
 
   public static async transaction<T>(objectStore: string, mode: IDBTransactionMode, query: (transaction: IDBTransaction) => IDBRequest<T>): Promise<T> {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open(DB.NAME);
+      const req = indexedDB.open(DB.NAME, DB.VERSION);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error!);
-      req.onupgradeneeded = () => req.result.createObjectStore(objectStore);
+      req.onupgradeneeded = () => {
+        for (const store of DB.OBJECT_STORES) {
+          if (!req.result.objectStoreNames.contains(store)) {
+            req.result.createObjectStore(store);
+          }
+        }
+      };
     });
     const transaction = db.transaction(objectStore, mode);
     return new Promise<T>((resolve, reject) => {

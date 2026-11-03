@@ -10,6 +10,7 @@ import { startOnboarding, startOnboardingIfNeeded, stopOnboarding, tourSteps } f
 import i18n from '../../src/i18n';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({ hasRole: vi.fn(() => true) }) }));
+vi.mock('../../src/common/config', () => ({ default: {}, backendBaseURL: '/api/' }));
 // one shared drive fn, so tests can assert the tour was actually started across driver() instances;
 // destroy fires onDestroyed like the real driver does, so stopOnboarding() is testable
 vi.mock('driver.js', () => {

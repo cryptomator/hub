@@ -19,6 +19,7 @@
         <p v-else-if="trustLevel > 0" class="text-sm mb-2">{{ t('trustDetails.trustLevel', [ n(1 / trustLevel, 'percent')]) }}</p>
         <button 
           v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" 
+          type="button"
           class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm whitespace-nowrap" 
           @click.prevent.stop="showSignUserKeysDialog"
         >
@@ -38,7 +39,6 @@ import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid'
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { TrustDto, UserDto } from '../common/backend';
-import userdata from '../common/userdata';
 import wot from '../common/wot';
 import SignUserKeysDialog from './SignUserKeysDialog.vue';
 
@@ -62,21 +62,8 @@ const trustLevel = ref<number>(-1);
 
 watch(trust, computeTrustLevel, { immediate: true });
 
-async function computeTrustLevel(trust?: TrustDto) {
-  const me = await userdata.me;
-  if (me.id === props.trustedUser.id) {
-    trustLevel.value = 0; // Self
-  } else if (trust && props.trustedUser.ecdhPublicKey && props.trustedUser.ecdsaPublicKey) {
-    try {
-      await wot.verify(trust.signatureChain, { ecdhPublicKey: props.trustedUser.ecdhPublicKey, ecdsaPublicKey: props.trustedUser.ecdsaPublicKey });
-      trustLevel.value = trust.signatureChain.length;
-    } catch (error) {
-      console.error('WoT signature verification failed.', error);
-      trustLevel.value = -1; // Unverified
-    }
-  } else {
-    trustLevel.value = -1; // Unverified
-  }
+async function computeTrustLevel() {
+  trustLevel.value = await wot.computeTrustLevel(props.trustedUser, props.trusts);
 }
 
 function showSignUserKeysDialog() {

@@ -169,6 +169,8 @@
   "legacyDeviceList.description.information": "Læs mere.",
   "legacyDeviceList.deviceName": "Enheds-navn",
   "legacyDeviceList.type": "Type",
+  "legacyDeviceBanner.user.description": "Dine ældre enheder vil ikke længere blive understøttet i den næste store udgivelse. Gennemgå dem venligst i {0} og enten opdatér Cryptomator på de anførte enheder eller fjern dem.",
+  "legacyDeviceBanner.button": "Brugerprofil",
   "manageAccountKey.title": "Kontonøgle",
   "nav.vaults": "Bokse",
   "nav.profile.admin": "Admin",
