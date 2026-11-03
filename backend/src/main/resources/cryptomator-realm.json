@@ -212,15 +212,46 @@
       "client": "cryptomatorhub",
       "roles": [
         "user",
+        "create-vaults",
         "admin"
+      ]
+    },
+    {
+      "client": "cryptomator",
+      "roles": [
+        "user"
+      ]
+    },
+    {
+      "client": "cryptomatorhub-cli",
+      "roles": [
+        "user",
+        "create-vaults"
       ]
     }
   ],
+  "clientScopeMappings": {
+    "realm-management": [
+      {
+        "client": "cryptomatorhub-system",
+        "roles": [
+          "realm-admin"
+        ]
+      },
+      {
+        "client": "cryptomatorhub-cli",
+        "roles": [
+          "manage-users"
+        ]
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "cryptomatorhub",
       "serviceAccountsEnabled": false,
       "publicClient": true,
+      "fullScopeAllowed": false,
       "name": "Cryptomator Hub",
       "enabled": true,
       "redirectUris": [
@@ -268,6 +299,7 @@
       "clientId": "cryptomator",
       "serviceAccountsEnabled": false,
       "publicClient": true,
+      "fullScopeAllowed": false,
       "name": "Cryptomator App",
       "enabled": true,
       "redirectUris": [
@@ -291,6 +323,7 @@
       "standardFlowEnabled": false,
       "serviceAccountsEnabled": true,
       "publicClient": false,
+      "fullScopeAllowed": false,
       "enabled": true
     },
     {
@@ -301,6 +334,7 @@
       "standardFlowEnabled": false,
       "serviceAccountsEnabled": true,
       "publicClient": false,
+      "fullScopeAllowed": false,
       "enabled": true
     }
   ],

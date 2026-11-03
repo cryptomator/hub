@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.8.1
+- Disabled the deprecated "Full scope allowed" switch on Hub's Keycloak clients in favor of explicit role scope mappings. Existing realms are not migrated automatically and keep logging a deprecation warning until each client's [switch is disabled](https://www.keycloak.org/docs/latest/upgrading/index.html#full-scope-allowed-switch-on-clients-is-deprecated) and its roles are mapped: realm roles `user`, `create-vaults`, `admin` for `cryptomatorhub`, realm role `user` for `cryptomator`, `realm-management` role `realm-admin` for `cryptomatorhub-system`, and, if present, realm roles `user`, `create-vaults` plus `realm-management` role `manage-users` for `cryptomatorhub-cli`.
 
 ### Fixed
 
