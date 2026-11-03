@@ -379,6 +379,7 @@
   "grantPermissionDialog.description": "Shares the key of \"{0}\" with {1} newly added member(s).",
   "grantPermissionDialog.submit": "Grant Access",
   "grantPermissionDialog.warning.unverifiedUser": "Identity not verified",
+  "grantPermissionDialog.warning.verifyToProceed": "Verify their identity above to proceed without this risk.",
 
   "groups.title": "Groups",
   "group.detail.info": "Group Details",
