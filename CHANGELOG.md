@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Show a short onboarding tour to newly created users, remembered across browsers and devices and replayable from the profile menu
-- Suggest downloading the Cryptomator app in the sidebar
 
 ### Changed
 

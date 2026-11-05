@@ -34,21 +34,6 @@
       </div>
     </nav>
 
-    <div v-if="showAppHint" class="relative rounded-lg bg-white/5 p-3 ring-1 ring-white/10">
-      <div class="flex items-center gap-x-2.5 pr-6">
-        <img src="/app-logo.svg" alt="" class="h-7 w-auto shrink-0" />
-        <h3 class="text-sm font-medium text-white">{{ t('appHint.title') }}</h3>
-      </div>
-      <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHint.description') }}</p>
-      <a href="https://cryptomator.org/downloads/" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        {{ t('appHint.download') }}
-      </a>
-      <button type="button" class="absolute top-2 right-2 rounded-md p-1 text-gray-500 hover:text-white focus-visible:outline-2 focus-visible:outline-primary" @click="dismissHint()">
-        <span class="sr-only">{{ t('common.close') }}</span>
-        <XMarkIcon class="h-4 w-4" aria-hidden="true" />
-      </button>
-    </div>
-
     <!-- Kept outside the scrolling nav so the dropdown isn't clipped by the nav's overflow -->
     <Menu as="div" class="relative">
       <MenuButton data-tour="profile" class="flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden">
@@ -90,11 +75,10 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
-import { computed, FunctionalComponent, ref } from 'vue';
+import { FunctionalComponent } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { UserDto } from '../common/backend';
-import { isFlagSet, setFlag } from '../common/util';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
 export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & ({ to: string } | { action: () => void });
@@ -102,7 +86,7 @@ export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 
-const props = defineProps<{
+defineProps<{
   me: UserDto,
   mainNav: NavigationItem[],
   adminNav: NavigationItem[],
@@ -115,18 +99,6 @@ const emit = defineEmits<{
   navigate: [],
   close: []
 }>();
-
-// dismissing the hint is a per-browser convenience, unlike the account-wide onboardingCompleted
-const appHintKey = `hub.appHintDismissed.${props.me.id}`;
-const appHintDismissed = ref(isFlagSet(appHintKey));
-// only shown once the tour is over, so it does not compete with the tour's own download step;
-// legacy devices are ignored on purpose: their owners should switch to the current app anyway
-const showAppHint = computed(() => !appHintDismissed.value && (props.me.onboardingCompleted ?? false) && props.me.devices.every(device => device.type === 'BROWSER'));
-
-function dismissHint() {
-  setFlag(appHintKey);
-  appHintDismissed.value = true;
-}
 
 function itemClasses(to: string) {
   const active = route.path === to || route.path.startsWith(to + '/');
