@@ -224,9 +224,6 @@ public class DeviceResource {
 	}
 
 	private Response remove(String deviceId, boolean legacyDevice) {
-		if (deviceId == null || deviceId.trim().isEmpty()) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
-		}
 		User currentUser = userRepo.findById(jwt.getSubject());
 		boolean removed = legacyDevice
 				? remove(deviceId, currentUser, legacyDeviceRepo::findByIdOptional, legacyDeviceRepo::delete, LegacyDevice::getOwner)
