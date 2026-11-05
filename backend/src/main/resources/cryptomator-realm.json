@@ -324,6 +324,9 @@
       "serviceAccountsEnabled": true,
       "publicClient": false,
       "fullScopeAllowed": false,
+      "defaultClientScopes": [
+        "kc-admin-api"
+      ],
       "enabled": true
     },
     {
@@ -335,6 +338,15 @@
       "serviceAccountsEnabled": true,
       "publicClient": false,
       "fullScopeAllowed": false,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email",
+        "kc-admin-api"
+      ],
       "enabled": true
     }
   ],
