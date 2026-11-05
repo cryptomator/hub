@@ -126,8 +126,7 @@ describe('startOnboarding', () => {
     expect(appStep.description.firstElementChild!.getAttribute('aria-hidden')).toBeNull();
     expect(appStep.description.innerHTML).toContain('<ol');
     expect(appStep.description.innerHTML).toContain(t('onboarding.getApp.step1'));
-    expect(appStep.description.innerHTML).toContain('href="https://cryptomator.org/downloads/');
-    expect(appStep.description.innerHTML).toContain('src="/download-qr.svg"');
+    expect(appStep.description.innerHTML).toContain('href="https://cryptomator.org/downloads/"');
     expect(appStep.nextButton.textContent).toBe(t('onboarding.done'));
     const { hasRole } = await auth;
     expect(vi.mocked(hasRole)).toHaveBeenCalledWith('create-vaults');
@@ -251,16 +250,6 @@ describe('startOnboarding', () => {
     expect(me.onboardingCompleted).toBe(false);
     // completion would call the backend synchronously, so this cannot be a timing artifact
     expect(backend.users.setMyOnboardingCompleted).not.toHaveBeenCalled();
-  });
-
-  it('omits the QR code on mobile devices', async () => {
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
-
-    const steps = await drive(() => startOnboarding(me));
-
-    const appStep = renderStep(steps.length - 1).innerHTML;
-    expect(appStep).not.toContain('download-qr.svg');
-    expect(appStep).toContain('apps.apple.com');
   });
 });
 

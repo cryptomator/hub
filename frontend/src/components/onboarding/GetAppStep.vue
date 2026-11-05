@@ -11,17 +11,11 @@
     </ol>
   </VignetteFrame>
   <p>{{ t('onboarding.getApp.description') }}</p>
-  <a :href="downloadUrl" target="_blank" rel="noopener noreferrer" class="mt-4 block rounded-md bg-primary px-4 py-2 text-center font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ t('onboarding.getApp.download') }}</a>
-  <div v-if="showQrCode" class="mt-3.5 flex items-center justify-center gap-3 text-xs/5 text-gray-500">
-    <!-- the QR code encodes https://cryptomator.org/downloads/ -->
-    <img src="/download-qr.svg" alt="" class="h-16 w-16 rounded-md border border-gray-200" />
-    <span class="max-w-44">{{ t('onboarding.getApp.qrCode') }}</span>
-  </div>
+  <a href="https://cryptomator.org/downloads/" target="_blank" rel="noopener noreferrer" class="mt-4 block rounded-md bg-primary px-4 py-2 text-center font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ t('onboarding.getApp.download') }}</a>
 </template>
 
 <script setup lang="ts">
 import { ArrowDownTrayIcon, FolderOpenIcon, KeyIcon } from '@heroicons/vue/24/outline';
-import { appDownloadUrl, isMobile } from '../../common/appdownload';
 import i18n from '../../i18n';
 import VignetteFrame from './VignetteFrame.vue';
 
@@ -34,6 +28,4 @@ const steps = [
   { icon: FolderOpenIcon, labelKey: 'onboarding.getApp.step2', labelArgs: ['vault.cryptomator'] },
   { icon: KeyIcon, labelKey: 'onboarding.getApp.step3' }
 ];
-const downloadUrl = appDownloadUrl();
-const showQrCode = !isMobile();
 </script>

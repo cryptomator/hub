@@ -543,7 +543,6 @@
   "onboarding.getApp.step2": "Open {0} in your cloud folder",
   "onboarding.getApp.step3": "Enter your Account Key",
   "onboarding.getApp.download": "Download App",
-  "onboarding.getApp.qrCode": "Or scan the code to install the app on your phone.",
 
   "recoveryKeyDialog.title": "Recovery Key for \"{0}\"",
   "recoveryKeyDialog.description": "Keep it somewhere safe. If Hub is unavailable, it is the only way back to your data.",

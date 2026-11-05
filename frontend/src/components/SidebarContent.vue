@@ -40,7 +40,7 @@
         <h3 class="text-sm font-medium text-white">{{ t('appHint.title') }}</h3>
       </div>
       <p class="mt-1.5 text-xs/5 text-gray-400">{{ t('appHint.description') }}</p>
-      <a :href="downloadUrl" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <a href="https://cryptomator.org/downloads/" target="_blank" rel="noopener noreferrer" class="mt-2.5 flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white shadow-xs hover:bg-primary-d1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         {{ t('appHint.download') }}
       </a>
       <button type="button" class="absolute top-2 right-2 rounded-md p-1 text-gray-500 hover:text-white focus-visible:outline-2 focus-visible:outline-primary" @click="dismissHint()">
@@ -93,7 +93,6 @@ import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { computed, FunctionalComponent, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { appDownloadUrl } from '../common/appdownload';
 import { UserDto } from '../common/backend';
 import { isFlagSet, setFlag } from '../common/util';
 
@@ -117,7 +116,6 @@ const emit = defineEmits<{
   close: []
 }>();
 
-const downloadUrl = appDownloadUrl();
 // dismissing the hint is a per-browser convenience, unlike the account-wide onboardingCompleted
 const appHintKey = `hub.appHintDismissed.${props.me.id}`;
 const appHintDismissed = ref(isFlagSet(appHintKey));
