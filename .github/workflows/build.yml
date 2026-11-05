@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          persist-credentials: false
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
           package_json_file: frontend/package.json
@@ -106,6 +107,8 @@ jobs:
       packages: write # Required for pushing the image to GHCR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
           package_json_file: frontend/package.json
@@ -159,7 +162,10 @@ jobs:
       - name: Export Digest
         id: digest
         run: |
-          echo "digest_${{ matrix.arch }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "digest_${ARCH}=${DIGEST}" >> "$GITHUB_OUTPUT"
+        env:
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.push.outputs.digest }}
 
   multi-arch-image:
     name: Build and Push Multi-Arch Image
@@ -208,15 +214,22 @@ jobs:
       - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }}
         run: >
           docker buildx imagetools create
-          --tag "ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }}"
-          --tag "ghcr.io/cryptomator/hub:${{ steps.version.outputs.short_sha }}"
-          "ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}"
-          "ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}"
+          --tag "ghcr.io/cryptomator/hub:${APP_VERSION}"
+          --tag "ghcr.io/cryptomator/hub:${SHORT_SHA}"
+          "ghcr.io/cryptomator/hub@${DIGEST_AMD64}"
+          "ghcr.io/cryptomator/hub@${DIGEST_ARM64}"
+        env:
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
+          SHORT_SHA: ${{ steps.version.outputs.short_sha }}
+          DIGEST_AMD64: ${{ needs.build-native-image.outputs.digest_amd64 }}
+          DIGEST_ARM64: ${{ needs.build-native-image.outputs.digest_arm64 }}
       - name: Retrieve Multi-Arch Digest
         id: inspect
         run: |
-          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }} --format "{{json .Manifest}}" | jq -r .digest)
+          DIGEST=$(docker buildx imagetools inspect "ghcr.io/cryptomator/hub:${APP_VERSION}" --format "{{json .Manifest}}" | jq -r .digest)
           echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
+        env:
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
       - name: Generate artifact attestation
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
@@ -237,4 +250,3 @@ jobs:
       attestations: write
       artifact-metadata: write
       packages: write
-    secrets: inherit
