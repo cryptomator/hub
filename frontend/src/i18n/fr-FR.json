@@ -111,6 +111,8 @@
   "admin.automaticAccessGrant.saved": "Enregistré !",
   "admin.emergencyAccess.title": "Accès d'urgence",
   "admin.emergencyAccess.learnMore": "En savoir plus.",
+  "admin.emergencyAccess.enabled.help": "Activer l'accès d'urgence",
+  "admin.emergencyAccess.requiredKeys.label": "Clés requises",
   "emergencyAccess.keyholders.noEligible": "Aucun utilisateur éligible trouvé. Les utilisateurs doivent terminer leur configuration de clé en se connectant une fois avant d'être éligibles.",
   "admin.emergencyAccess.allowChoosing.atLeast": "Au moins :",
   "archiveVaultDialog.title": "Archiver «{0} » ?",
