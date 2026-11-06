@@ -20,7 +20,8 @@
         </li>
       </ul>
 
-      <div v-if="isAdmin">
+      <!-- SidebarContent renders twice (drawer and desktop); the tour resolves data-tour anchors to the visible instance -->
+      <div v-if="isAdmin" data-tour="adminNav">
         <hr class="border-white/10" />
         <ul role="list" class="mt-3 space-y-1">
           <li v-for="item in adminNav" :key="item.name">
@@ -35,7 +36,7 @@
 
     <!-- Kept outside the scrolling nav so the dropdown isn't clipped by the nav's overflow -->
     <Menu as="div" class="relative">
-      <MenuButton class="flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden">
+      <MenuButton data-tour="profile" class="flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden">
         <img class="h-8 w-8 shrink-0 rounded-full bg-white" :src="me.pictureUrl" alt="" />
         <span class="truncate">{{ me.name }}</span>
       </MenuButton>
@@ -47,7 +48,7 @@
           </div>
           <ul v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="py-1.5">
             <li v-for="item in itemGroup" :key="item.name">
-              <router-link :to="item.to" @click="emit('navigate')">
+              <router-link v-if="'to' in item" :to="item.to" @click="emit('navigate')">
                 <MenuItem v-slot="{ active }">
                   <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
                     <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
@@ -55,6 +56,14 @@
                   </div>
                 </MenuItem>
               </router-link>
+              <MenuItem v-else v-slot="{ active }">
+                <button type="button" class="w-full" @click="item.action()">
+                  <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm']">
+                    <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
+                    {{ t(item.name) }}
+                  </div>
+                </button>
+              </MenuItem>
             </li>
           </ul>
         </MenuItems>
@@ -72,7 +81,7 @@ import { useRoute } from 'vue-router';
 import { UserDto } from '../common/backend';
 
 export type NavigationItem = { icon: FunctionalComponent, name: string, to: string };
-export type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
+export type ProfileDropdownItem = { icon: FunctionalComponent, name: string } & ({ to: string } | { action: () => void });
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();

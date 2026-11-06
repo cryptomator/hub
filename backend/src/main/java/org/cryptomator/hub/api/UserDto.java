@@ -19,6 +19,7 @@ public final class UserDto extends AuthorityDto {
 	private final @Nullable String lastName;
 	private final @Nullable String language;
 	private final boolean enabled;
+	private final @Nullable Boolean onboardingCompleted;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final @Nullable String ecdhPublicKey;
 	private final @Nullable String ecdsaPublicKey;
@@ -35,6 +36,7 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("lastName") @Nullable String lastName,
 			@JsonProperty("language") @Nullable String language,
 			@JsonProperty("enabled") boolean enabled,
+			@JsonProperty("onboardingCompleted") @Nullable Boolean onboardingCompleted,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
@@ -50,6 +52,7 @@ public final class UserDto extends AuthorityDto {
 		this.lastName = lastName;
 		this.language = language;
 		this.enabled = enabled;
+		this.onboardingCompleted = onboardingCompleted;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
@@ -66,12 +69,13 @@ public final class UserDto extends AuthorityDto {
 			@Nullable String lastName,
 			@Nullable String language,
 			boolean enabled,
+			@Nullable Boolean onboardingCompleted,
 			Set<DeviceResource.DeviceDto> devices,
 			@Nullable String ecdhPublicKey,
 			@Nullable String ecdsaPublicKey,
 			@Nullable String privateKeys,
 			@Nullable String setupCode) {
-		this(id, name, pictureUrl, email, firstName, lastName, language, enabled, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, enabled, onboardingCompleted, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
@@ -97,6 +101,11 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("enabled")
 	public boolean isEnabled() {
 		return enabled;
+	}
+
+	@JsonProperty("onboardingCompleted")
+	public @Nullable Boolean getOnboardingCompleted() {
+		return onboardingCompleted;
 	}
 
 	@JsonProperty("devices")
@@ -146,7 +155,7 @@ public final class UserDto extends AuthorityDto {
 		return setupCode;
 	}
 
-	public static UserDto justPublicInfo(User user) {
+	public static UserDto fromEntity(User user, Set<DeviceResource.DeviceDto> devices) {
 		return new UserDto(
 				user.getId(),
 				user.getName(),
@@ -156,6 +165,33 @@ public final class UserDto extends AuthorityDto {
 				user.getLastName(),
 				user.getLanguage(),
 				user.isEnabled(),
+				user.isOnboardingCompleted(),
+				devices,
+				user.getEcdhPublicKey(),
+				user.getEcdsaPublicKey(),
+				user.getPrivateKeys(),
+				user.getSetupCode());
+	}
+
+	public static UserDto justPublicInfo(User user) {
+		return justPublicInfo(user, null);
+	}
+
+	public static UserDto detailedInfo(User user) {
+		return justPublicInfo(user, user.isOnboardingCompleted());
+	}
+
+	private static UserDto justPublicInfo(User user, @Nullable Boolean onboardingCompleted) {
+		return new UserDto(
+				user.getId(),
+				user.getName(),
+				user.getPictureUrl(),
+				user.getEmail(),
+				user.getFirstName(),
+				user.getLastName(),
+				user.getLanguage(),
+				user.isEnabled(),
+				onboardingCompleted,
 				Set.of(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),

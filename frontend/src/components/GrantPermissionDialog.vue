@@ -25,7 +25,10 @@
       </li>
     </ul>
     <UntrustedRecipientsWarning v-if="untrustedUsers.length > 0" v-model:confirmed="confirmedUntrusted" require-confirmation class="mt-4">
-      <p>{{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedUsers.map(u => u.name).join(', ')]) }}</p>
+      <p>
+        {{ t('untrustedRecipientsWarning.untrustedUsers', [untrustedUsers.map(u => u.name).join(', ')]) }}
+        <template v-if="untrustedUsers.every(u => u.ecdsaPublicKey)">{{ t('grantPermissionDialog.warning.verifyToProceed') }}</template>
+      </p>
     </UntrustedRecipientsWarning>
     <SignUserKeysDialog v-if="verifyingUser" ref="signUserKeysDialog" :user="verifyingUser" @close="verifyingUser = undefined" @signed="refreshTrusts()" />
 

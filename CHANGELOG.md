@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/2.1.4...HEAD)
 
+### Added
+
+- Show a short onboarding tour to newly created users, remembered across browsers and devices and replayable from the profile menu
+
 ### Changed
 
 - Updated Keycloak to 26.8.2 and disabled the deprecated "Full scope allowed" switch on Hub's Keycloak clients in favor of explicit role scope mappings. Existing realms are not migrated automatically: assign the [`kc-admin-api` client scope](https://www.keycloak.org/docs/latest/upgrading/index.html#admin-rest-api-now-enforces-an-audience-check) as a default client scope to `cryptomatorhub-system` and, if present, `cryptomatorhub-cli`, otherwise Hub's requests to Keycloak fail with `401 Unauthorized`. Also [disable the switch](https://www.keycloak.org/docs/latest/upgrading/index.html#full-scope-allowed-switch-on-clients-is-deprecated) on each client and map its roles, otherwise Keycloak keeps logging a deprecation warning: realm roles `user`, `create-vaults`, `admin` for `cryptomatorhub`, realm role `user` for `cryptomator`, `realm-management` role `realm-admin` for `cryptomatorhub-system`, and, if present, realm roles `user`, `create-vaults` plus `realm-management` role `manage-users` for `cryptomatorhub-cli`.

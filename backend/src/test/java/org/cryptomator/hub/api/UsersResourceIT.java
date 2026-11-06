@@ -64,6 +64,14 @@ class UsersResourceIT {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
+	private void seedOnboardingCompleted(String userId, boolean completed) throws SQLException {
+		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+			s.execute("""
+					UPDATE "user_details" SET "onboarding_completed" = %s WHERE "id" = '%s';
+					""".formatted(completed, userId));
+		}
+	}
+
 	@Nested
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
@@ -85,6 +93,7 @@ class UsersResourceIT {
 			when().get("/users/me")
 					.then().statusCode(200)
 					.body("id", is("user1"))
+					.body("onboardingCompleted", is(false))
 					.body("devices.flatten()", empty());
 		}
 
@@ -174,6 +183,94 @@ class UsersResourceIT {
 	}
 
 	@Nested
+	@DisplayName("As user2")
+	@TestSecurity(user = "User Name 2", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user2")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	class AsAuthorzedUser2 {
+
+		@Test
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as completed")
+		void testSetMyOnboardingCompleted() throws SQLException {
+			seedOnboardingCompleted("user2", false);
+
+			given().contentType(ContentType.TEXT).body("true")
+					.when().put("/users/me/onboarding-completed")
+					.then().statusCode(204);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(true));
+		}
+
+		@Test
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as pending")
+		void testSetMyOnboardingPending() throws SQLException {
+			seedOnboardingCompleted("user2", true);
+
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/me/onboarding-completed")
+					.then().statusCode(204);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(false));
+		}
+
+		@Test
+		@DisplayName("PUT /users/me returns 201 and does not clear the onboarding flag")
+		void testPutMeKeepsOnboardingCompleted() throws SQLException {
+			seedOnboardingCompleted("user2", true);
+
+			var body = """
+					{
+						"id": "user2",
+						"name": "User Name 2",
+						"email": "user2@example.com",
+						"onboardingCompleted": false
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/me")
+					.then().statusCode(201);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(true));
+		}
+
+		@Test
+		@DisplayName("PUT /users/me returns 201 and does not set the onboarding flag")
+		void testPutMeKeepsOnboardingPending() throws SQLException {
+			seedOnboardingCompleted("user2", false);
+
+			var body = """
+					{
+						"id": "user2",
+						"name": "User Name 2",
+						"email": "user2@example.com",
+						"onboardingCompleted": true
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/me")
+					.then().statusCode(201);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(false));
+		}
+
+		@AfterAll
+		void tearDown() throws SQLException {
+			seedOnboardingCompleted("user2", false);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 
@@ -182,6 +279,7 @@ class UsersResourceIT {
 		@CsvSource(value = {
 				"GET, /users/me",
 				"PUT, /users/me",
+				"PUT, /users/me/onboarding-completed",
 				"GET, /users"
 		})
 		void testGet(String method, String path) {
@@ -403,7 +501,8 @@ class UsersResourceIT {
 		void testGetAll() {
 			when().get("/users")
 					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
+					.body("id", hasItems("user1", "user2"))
+					.body("find { it.id == 'user1' }.onboardingCompleted", nullValue());
 		}
 
 		@Test
@@ -545,9 +644,20 @@ class UsersResourceIT {
 			when().get("/users/user1")
 					.then().statusCode(200)
 					.body("id", is("user1"))
+					.body("onboardingCompleted", is(false))
 					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
 					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue());
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns the onboarding flag for a completed user")
+		void testGetUserOnboardingCompleted() throws SQLException {
+			seedOnboardingCompleted("newUserId123", true);
+
+			when().get("/users/newUserId123")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(true));
 		}
 
 		@Test
