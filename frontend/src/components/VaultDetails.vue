@@ -204,7 +204,7 @@
         </button>
 
         <!-- emergency access -->
-        <div v-if="vaultRole == 'OWNER' && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess" class="mt-2 flex flex-col gap-2">
+        <div v-if="vaultRole == 'OWNER' && entitlements?.emergencyAccessEnabled && settings?.enableEmergencyAccess" class="mt-2 flex flex-col gap-2">
           <!-- setup emergencyAccess button -->
           <button v-if="!hasEmergencyKeys" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
             <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
@@ -272,8 +272,8 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import config from '../common/config';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import licenseEntitlements from '../common/entitlements';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
@@ -317,7 +317,7 @@ const onAddUserError = ref<Error>();
 const onReactivateError = ref<Error>();
 const onClaimOwnershipError = ref<Error>();
 
-const cfg = config.get();
+const entitlements = licenseEntitlements.current;
 const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
@@ -361,8 +361,8 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = undefined;
   try {
-    vault.value = await backend.vaults.get(props.vaultId);
-    settings.value = await backend.settings.get();
+    // only assign the vault once all of these succeeded, as the template shows fetch errors only while it is undefined
+    [vault.value, settings.value] = await Promise.all([backend.vaults.get(props.vaultId), backend.settings.get(), licenseEntitlements.get()]);
 
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));
