@@ -82,7 +82,7 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && entitlements?.emergencyAccessEnabled && settings?.enableEmergencyAccess">
               <EmergencyBadge
                 v-if="vault.requiredEmergencyKeyShares == 0"
                 type="warning"
@@ -141,7 +141,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
-import config from '../common/config';
+import licenseEntitlements from '../common/entitlements';
 import globalBanners from '../common/globalBanners';
 import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
@@ -152,7 +152,7 @@ import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const cfg = config.get();
+const entitlements = licenseEntitlements.current;
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
@@ -201,7 +201,7 @@ async function fetchData() {
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
 
-    settings.value = await backend.settings.get();
+    [settings.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');

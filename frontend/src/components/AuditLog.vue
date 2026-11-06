@@ -134,7 +134,7 @@
       </div>
     </div>
 
-    <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mt-5">
+    <ContentBanner v-if="entitlements?.showTrialHint" type="info" :title="t('trial.paidFeature.title')" class="mt-5">
       {{ t('trial.paidFeature.description') }} <!-- TODO: link to feature comparison? -->
     </ContentBanner>
 
@@ -227,6 +227,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
+import licenseEntitlements from '../common/entitlements';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
 import AuditLogDetailsEmergencyAccessSetup from './AuditLogDetailsEmergencyAccessSetup.vue';
@@ -250,7 +251,6 @@ import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
-import config, { ConfigDto } from '../common/config';
 import ContentBanner from './ContentBanner.vue';
 import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 
@@ -262,7 +262,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
-const cfg = ref<ConfigDto>(config.get());
+const entitlements = licenseEntitlements.current;
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error>();
@@ -351,7 +351,7 @@ async function fetchData(page: number = 0) {
   onFetchError.value = undefined;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
+    const [events] = await Promise.all([auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1), licenseEntitlements.get()]);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;

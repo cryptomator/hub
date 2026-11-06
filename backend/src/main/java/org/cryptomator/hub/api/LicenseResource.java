@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.filters.AvailableDuringSetup;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWS;
@@ -62,6 +63,31 @@ public class LicenseResource {
 			var expiresAt = licenseHolder.getExpiresAt();
 			var gracePeriodEndsAt = licenseHolder.getGracePeriodEndsAt();
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt, gracePeriodEndsAt);
+		}
+
+	}
+
+	@GET
+	@Path("/entitlements")
+	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed("user")
+	@Operation(summary = "Get the license entitlements", description = "Includes the nested client licenses, which contain personal data of the licensee and therefore must not be exposed publicly.")
+	@APIResponse(responseCode = "200")
+	public EntitlementsDto getEntitlements() {
+		return EntitlementsDto.create(licenseHolder.getEntitlements());
+	}
+
+	public record EntitlementsDto(@JsonProperty("seats") long seats,
+								  @JsonProperty("showTrialHint") boolean showTrialHint,
+								  @JsonProperty("auditLogRetentionDays") long auditLogRetentionDays,
+								  @JsonProperty("emergencyAccessEnabled") boolean emergencyAccessEnabled,
+								  @JsonProperty("keycloakAccessEnabled") boolean keycloakAccessEnabled,
+								  @JsonProperty("iosLicense") @Nullable String iosLicense,
+								  @JsonProperty("androidLicense") @Nullable String androidLicense,
+								  @JsonProperty("desktopLicense") @Nullable String desktopLicense) {
+
+		public static EntitlementsDto create(HubLicenseEntitlements entitlements) {
+			return new EntitlementsDto(entitlements.seats(), entitlements.showTrialHint(), entitlements.auditLogRetentionDays(), entitlements.emergencyAccessEnabled(), entitlements.keycloakAccessEnabled(), entitlements.iosLicense(), entitlements.androidLicense(), entitlements.desktopLicense());
 		}
 
 	}
