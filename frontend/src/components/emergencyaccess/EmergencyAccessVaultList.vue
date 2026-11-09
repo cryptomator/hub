@@ -246,7 +246,7 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headless
 import ContentBanner from '../ContentBanner.vue';
 import { CheckIcon, ChevronDownIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
-import { UserDto } from '../../common/backend';
+import { EntitlementsDto, UserDto } from '../../common/backend';
 import licenseEntitlements from '../../common/entitlements';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 import EmergencyBadge from './EmergencyBadge.vue';
@@ -264,7 +264,7 @@ const onFetchError = ref<Error>();
 
 const isAdmin = ref<boolean>(false);
 
-const entitlements = licenseEntitlements.current;
+const entitlements = ref<EntitlementsDto>();
 const settings = ref<SettingsDto>();
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
@@ -294,9 +294,9 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
-    [settings.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
+    [settings.value, entitlements.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
 
-    if (entitlements.value?.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
+    if (entitlements.value.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
       const [fetchedVaults, allProcesses] = await Promise.all([
         backend.vaults.listRecoverable(),
         backend.emergencyAccess.findAllProcesses(),

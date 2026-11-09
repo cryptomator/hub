@@ -249,6 +249,23 @@ class LicenseResourceTest {
 	}
 
 	@Nested
+	@DisplayName("As vault creator without the user role")
+	@TestSecurity(user = "Vault Creator", roles = {"create-vaults"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "creator")
+	})
+	class AsVaultCreator {
+
+		@Test
+		@DisplayName("GET /license/entitlements returns 403 Forbidden")
+		void testGetEntitlements() {
+			when().get("/license/entitlements")
+					.then().statusCode(403);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 

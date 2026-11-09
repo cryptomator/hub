@@ -30,7 +30,6 @@ public class ConfigResource {
 	 *     <li>4: Hub 1.4.0</li>
 	 *     <li>5: Universal Vault Format: {@code /vaults/{vaultId}/uvf/*}, access tokens may contain a UVF member key</li>
 	 * </ul>
-	 * Moving the license entitlements from {@link ConfigDto} to the authenticated {@code GET /license/entitlements} did not bump the level, as only the web frontend consumed them.
 	 */
 	static final int API_LEVEL = 5;
 

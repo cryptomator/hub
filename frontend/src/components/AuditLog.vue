@@ -226,7 +226,7 @@ import { CheckIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/vue/24/solid
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
-import { PaymentRequiredError } from '../common/backend';
+import { EntitlementsDto, PaymentRequiredError } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
@@ -262,7 +262,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
-const entitlements = licenseEntitlements.current;
+const entitlements = ref<EntitlementsDto>();
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error>();
@@ -351,7 +351,10 @@ async function fetchData(page: number = 0) {
   onFetchError.value = undefined;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const [events] = await Promise.all([auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1), licenseEntitlements.get()]);
+    const [events] = await Promise.all([
+      auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1),
+      licenseEntitlements.get().then(loaded => { entitlements.value = loaded; }) // assigned on its own, so the trial hint also shows when the events request fails with 402
+    ]);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;

@@ -13,8 +13,8 @@
       {{ t('common.loading') }}
     </div>
     <FetchError v-else-if="onFetchError" :error="onFetchError" :retry="fetchData" />
-    <UpgradeLicenseBanner v-else-if="entitlements && !entitlements.emergencyAccessEnabled" />
-    <form v-else-if="entitlements" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
+    <UpgradeLicenseBanner v-else-if="!entitlements.emergencyAccessEnabled" />
+    <form v-else class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
       <ContentBanner v-if="entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
         {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
       </ContentBanner>
@@ -210,14 +210,16 @@ import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
 import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
-import licenseEntitlements from '../common/entitlements';
+import backend, { UserDto, ActivatedUser, didCompleteSetup, EntitlementsDto } from '../common/backend';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
-const entitlements = licenseEntitlements.current;
+defineProps<{
+  entitlements: EntitlementsDto
+}>();
+
 const loading = ref(true);
 const onFetchError = ref<Error>();
 const noRedundancy = ref(false);
@@ -273,7 +275,7 @@ const hasUnsavedChanges = computed(() => {
 });
 
 async function fetchEmergencyAccess() {
-  const [allUsers, s] = await Promise.all([backend.users.listAll(), backend.settings.get(), licenseEntitlements.get()]);
+  const [allUsers, s] = await Promise.all([backend.users.listAll(), backend.settings.get()]);
 
   const selected = s.emergencyCouncilMemberIds
     .map((id: string) => allUsers.find(u => u.id === id))

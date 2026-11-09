@@ -30,7 +30,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import auth from '../common/auth';
-import backend, { SettingsDto, UserDto } from '../common/backend';
+import backend, { EntitlementsDto, SettingsDto, UserDto } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import SidebarContent, { NavigationItem, ProfileDropdownItem } from './SidebarContent.vue';
 
@@ -46,7 +46,7 @@ const emit = defineEmits<{
   close: []
 }>();
 
-const entitlements = licenseEntitlements.current;
+const entitlements = ref<EntitlementsDto>();
 const settings = ref<SettingsDto>();
 
 const mainNav = computed(() => {
@@ -85,7 +85,7 @@ watch(() => route.path, async () => {
 
 async function fetchEmergencyAccessAvailability() {
   try {
-    [settings.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
+    [settings.value, entitlements.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
   } catch (error) {
     console.error('Determining emergency access availability failed.', error);
   }

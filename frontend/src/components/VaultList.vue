@@ -140,7 +140,7 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { EntitlementsDto, LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import globalBanners from '../common/globalBanners';
 import userdata from '../common/userdata';
@@ -152,7 +152,7 @@ import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const entitlements = licenseEntitlements.current;
+const entitlements = ref<EntitlementsDto>();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
@@ -201,7 +201,7 @@ async function fetchData() {
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
 
-    [settings.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
+    [settings.value, entitlements.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');

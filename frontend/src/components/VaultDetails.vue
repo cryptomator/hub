@@ -272,7 +272,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
@@ -317,7 +317,7 @@ const onAddUserError = ref<Error>();
 const onReactivateError = ref<Error>();
 const onClaimOwnershipError = ref<Error>();
 
-const entitlements = licenseEntitlements.current;
+const entitlements = ref<EntitlementsDto>();
 const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
@@ -361,8 +361,8 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = undefined;
   try {
-    // only assign the vault once all of these succeeded, as the template shows fetch errors only while it is undefined
-    [vault.value, settings.value] = await Promise.all([backend.vaults.get(props.vaultId), backend.settings.get(), licenseEntitlements.get()]);
+    // only assign the vault once all succeeded, as the template shows fetch errors only while it is undefined
+    [vault.value, settings.value, entitlements.value] = await Promise.all([backend.vaults.get(props.vaultId), backend.settings.get(), licenseEntitlements.get()]);
 
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));

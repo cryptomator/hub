@@ -31,30 +31,14 @@ describe('License entitlements', () => {
     expect(mocked.getEntitlements).toHaveBeenCalledTimes(1);
   });
 
-  it('caches successfully loaded entitlements and exposes them via current', async () => {
+  it('caches successfully loaded entitlements', async () => {
     mocked.getEntitlements.mockResolvedValueOnce(entitlementsWithSeats(1));
-    expect(licenseEntitlements.current.value).to.be.undefined;
 
     await licenseEntitlements.get();
     const cached = await licenseEntitlements.get();
 
     expect(cached.seats).to.eq(1);
-    expect(licenseEntitlements.current.value?.seats).to.eq(1);
     expect(mocked.getEntitlements).toHaveBeenCalledTimes(1);
-  });
-
-  it('updates current reactively, also for consumers that captured it before loading', async () => {
-    mocked.getEntitlements.mockResolvedValueOnce(entitlementsWithSeats(1)).mockResolvedValueOnce(entitlementsWithSeats(2));
-    const { computed } = await import('vue'); // same module instance as the freshly imported store after vi.resetModules()
-    const current = licenseEntitlements.current; // components capture it during setup, before the first load
-    const seats = computed(() => current.value?.seats);
-    expect(seats.value).to.be.undefined;
-
-    await licenseEntitlements.get();
-    expect(seats.value).to.eq(1);
-
-    await licenseEntitlements.reload();
-    expect(seats.value).to.eq(2);
   });
 
   it('retries after a failed request', async () => {
@@ -64,27 +48,17 @@ describe('License entitlements', () => {
     const retried = await licenseEntitlements.get();
 
     expect(retried.seats).to.eq(2);
-    expect(licenseEntitlements.current.value?.seats).to.eq(2);
     expect(mocked.getEntitlements).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps the previously loaded entitlements in current if a reload fails', async () => {
-    mocked.getEntitlements.mockResolvedValueOnce(entitlementsWithSeats(1)).mockRejectedValueOnce(new Error('network error'));
-
-    await licenseEntitlements.get();
-    await expect(licenseEntitlements.reload()).rejects.toThrow('network error');
-
-    expect(licenseEntitlements.current.value?.seats).to.eq(1);
-  });
-
-  it('always fetches on reload() and updates current', async () => {
+  it('always fetches on reload()', async () => {
     mocked.getEntitlements.mockResolvedValueOnce(entitlementsWithSeats(1)).mockResolvedValueOnce(entitlementsWithSeats(2));
 
     await licenseEntitlements.get();
     const reloaded = await licenseEntitlements.reload();
 
     expect(reloaded.seats).to.eq(2);
-    expect(licenseEntitlements.current.value?.seats).to.eq(2);
+    expect((await licenseEntitlements.get()).seats).to.eq(2);
     expect(mocked.getEntitlements).toHaveBeenCalledTimes(2);
   });
 
@@ -100,18 +74,5 @@ describe('License entitlements', () => {
 
     expect(afterwards.seats).to.eq(2);
     expect(mocked.getEntitlements).toHaveBeenCalledTimes(2);
-  });
-
-  it('does not let a superseded request that succeeds overwrite a newer reload', async () => {
-    const stale = new Deferred<EntitlementsDto>();
-    mocked.getEntitlements.mockReturnValueOnce(stale.promise).mockResolvedValueOnce(entitlementsWithSeats(2));
-
-    const staleGet = licenseEntitlements.get();
-    await licenseEntitlements.reload();
-    stale.resolve(entitlementsWithSeats(1));
-    await staleGet;
-
-    expect(licenseEntitlements.current.value?.seats).to.eq(2);
-    expect((await licenseEntitlements.get()).seats).to.eq(2);
   });
 });

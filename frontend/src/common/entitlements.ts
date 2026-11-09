@@ -1,18 +1,8 @@
-import { Ref, ref } from 'vue';
 import backend, { EntitlementsDto } from './backend';
 
 class LicenseEntitlements {
 
   #entitlements?: Promise<EntitlementsDto>;
-  readonly #current = ref<EntitlementsDto>();
-
-  /**
-   * The most recently loaded entitlements, `undefined` until they have been loaded for the first time.
-   * Reactive, so every component using it reflects a {@link reload}.
-   */
-  public get current(): Readonly<Ref<EntitlementsDto | undefined>> {
-    return this.#current;
-  }
 
   /**
    * Gets the entitlements of the license installed on this Hub instance.
@@ -34,11 +24,7 @@ class LicenseEntitlements {
 
   #load(): Promise<EntitlementsDto> {
     const entitlements = backend.license.getEntitlements();
-    entitlements.then(loaded => {
-      if (this.#entitlements === entitlements) {
-        this.#current.value = loaded; // a request superseded by a newer reload must not overwrite its result
-      }
-    }, () => {
+    entitlements.catch(() => {
       if (this.#entitlements === entitlements) {
         this.#entitlements = undefined; // don't cache failures, so the next access retries
       }
