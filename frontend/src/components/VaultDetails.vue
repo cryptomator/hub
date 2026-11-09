@@ -8,7 +8,13 @@
     </div>
   </div>
 
-  <div v-else class="pb-16 space-y-6">
+  <div v-else class="pb-16 space-y-8">
+    <div>
+      <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
+      <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
+      <p class="mt-1 text-sm text-gray-500">{{ t('vaultDetails.information.createdOn', [d(vault.creationTime, 'short')]) }}</p>
+    </div>
+
     <div v-if="vault.archived" class="rounded-md bg-yellow-50 p-4">
       <div class="flex">
         <div class="shrink-0">
@@ -18,27 +24,15 @@
       </div>
     </div>
 
-    <div>
-      <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
-      <div class="mt-2 flex items-center justify-between">
-        <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
-        <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
-      </div>
-    </div>
-
-    <div>
-      <h3 class="font-medium text-gray-900">{{ t('vaultDetails.information.header') }}</h3>
-      <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <div class="py-3 flex justify-between text-sm font-medium">
-          <dt class="text-gray-500">{{ t('vaultDetails.information.created') }}</dt>
-          <dd class="text-gray-900">{{ d(vault.creationTime, 'short') }}</dd>
-        </div>
-      </dl>
-    </div>
-
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-6">
       <div>
-        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
+          <button v-if="canUpdatePermissions" type="button" class="inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" :title="t('common.refresh')" @click="reloadMembersRequiringAccessGrant()">
+            <span class="sr-only">{{ t('common.refresh') }}</span>
+            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
         <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
           <!-- member list -->
           <template v-for="member in members" :key="member.id">
@@ -109,11 +103,21 @@
             </div>
           </li>
         </ul>
+        <div v-if="canUpdatePermissions && membersRequiringAccessGrant.length > 0" class="mt-3 rounded-md bg-yellow-50 p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="flex flex-1 items-center gap-3">
+              <ExclamationTriangleIcon class="h-5 w-5 shrink-0 text-yellow-400" aria-hidden="true" />
+              <p class="text-sm text-yellow-700">{{ t('vaultDetails.sharedWith.accessPending', [membersRequiringAccessGrantNames]) }}</p>
+            </div>
+            <button type="button" class="w-full shrink-0 bg-primary py-2 px-3 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:py-1.5" @click="showGrantPermissionDialog()">
+              {{ t('vaultDetails.actions.grantAccess') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- button bar -->
-    <div>
+    <div v-if="hasActions">
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
@@ -123,24 +127,8 @@
         </button>
       </div>
 
-      <!-- license violated -->
-      <div v-else-if="licenseViolated" class="mt-2 flex flex-col gap-2">
-        <!-- editMetadata button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
-          {{ t('vaultDetails.actions.editVaultMetadata') }}
-        </button>
-        <!-- archiveVault button -->
-        <button v-if="canToggleArchive && !vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
-          {{ t('vaultDetails.actions.archiveVault') }}
-        </button>
-        <!-- reactivateVault button -->
-        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
-          {{ t('vaultDetails.actions.reactivateVault') }}
-        </button>
-      </div>
-
       <!-- special owner reset stuff -->
-      <div v-else-if="vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
+      <div v-else-if="vaultRecoveryRequired && !licenseViolated" class="mt-2 flex flex-col gap-2">
         <div class="flex">
           <div class="shrink-0">
             <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -151,91 +139,55 @@
         <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
           {{ t('vaultDetails.actions.recoverVault') }}
         </button>
-        <!-- archiveVault button -->
-        <button v-if="canToggleArchive && !vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
-          {{ t('vaultDetails.actions.archiveVault') }}
-        </button>
-        <!-- reactivateVault button -->
-        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
-          {{ t('vaultDetails.actions.reactivateVault') }}
-        </button>
       </div>
 
-      <!-- vault is archived -->
-      <div v-else-if="vault.archived" class="mt-2 flex flex-col gap-2">
-        <!-- downloadTemplate button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
-          {{ t('vaultDetails.actions.downloadVaultTemplate') }}
-        </button>
-        <!-- displayRecoveryKey button (Vault Format 8 only) -->
-        <button v-if="vaultRole == 'OWNER' && vaultFormat8" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
-          {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-        <!-- TODO: regenerateRecoveryKey button (UVF only) -->
-        <!-- reactivateVault button -->
-        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
-          {{ t('vaultDetails.actions.reactivateVault') }}
-        </button>
-      </div>
-
-      <!-- regular vault -->
-      <div v-else class="mt-2 flex flex-col gap-2">
-        <!-- grantAccess button -->
-        <div v-if="vaultRole == 'OWNER'" class="flex gap-2">
-          <button :disabled="membersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
-            {{ t('vaultDetails.actions.updatePermissions') }}
+      <ul v-if="hasActionRows" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+        <li v-if="canShowRecoveryKey" class="py-3 flex items-center gap-4">
+          <KeyIcon class="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-gray-900">{{ t('vaultDetails.actions.recoveryKey') }}</p>
+            <p class="text-sm text-gray-500">{{ t('vaultDetails.actions.recoveryKey.description') }}</p>
+          </div>
+          <button type="button" class="shrink-0 bg-white py-1.5 px-3 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+            {{ t('common.show') }}<span class="sr-only"> {{ t('vaultDetails.actions.recoveryKey') }}</span>
           </button>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadMembersRequiringAccessGrant()">
-            <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
-            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+        </li>
+        <li v-if="emergencyAccessAction" class="py-3 flex items-center gap-4">
+          <ExclamationTriangleIcon class="h-5 w-5 shrink-0 text-yellow-500" aria-hidden="true" />
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-gray-900">{{ t('vaultDetails.emergencyAccess') }}</p>
+            <p class="text-sm text-gray-500">{{ emergencyAccessAction == 'setUp' ? t('vaultDetails.emergencyAccess.notSetUp') : t('vaultDetails.emergencyAccess.councilTooSmall') }}</p>
+          </div>
+          <button type="button" class="shrink-0 bg-white py-1.5 px-3 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
+            {{ emergencyAccessAction == 'setUp' ? t('vaultDetails.emergencyAccess.setUp') : t('vaultDetails.emergencyAccess.fix') }}<span class="sr-only"> {{ t('vaultDetails.emergencyAccess') }}</span>
           </button>
-        </div>
-        <!-- editMetadata button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
-          {{ t('vaultDetails.actions.editVaultMetadata') }}
-        </button>
-        <!-- downloadTemplate button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
-          {{ t('vaultDetails.actions.downloadVaultTemplate') }}
-        </button>
-        <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER' && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
-          {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-
-        <!-- emergency access -->
-        <div v-if="vaultRole == 'OWNER' && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess" class="mt-2 flex flex-col gap-2">
-          <!-- setup emergencyAccess button -->
-          <button v-if="!hasEmergencyKeys" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
-            <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-            <span>{{ t('vaultDetails.emergencyAccess.setupCouncil') }}</span>
-          </button>
-          <!-- fix emergency council size -->
-          <button v-else-if="emergencyAccessMembers.length < vault.requiredEmergencyKeyShares" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400" @click="showGrantEmergencyAccessDialog()">
-            <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-            <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
-          </button>
-        </div>
-
-        <!-- archiveVault button -->
-        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
-          {{ t('vaultDetails.actions.archiveVault') }}
-        </button>
-      </div>
-
-      <div v-if="onReactivateError">
-        <p v-if="onReactivateError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
-          {{ t('vaultDetails.error.reactivateFailed') }}
-        </p>
-        <p v-else class="text-sm text-red-900 text-right mt-1">
-          {{ t('common.unexpectedError', [onReactivateError.message]) }}
-        </p>
-      </div>
-
-      <p v-if="onClaimOwnershipError" class="text-sm text-red-900 text-right mt-1">
-        {{ t('common.unexpectedError', [onClaimOwnershipError.message]) }}
-      </p>
+        </li>
+        <li v-if="canToggleArchive" class="py-3 flex flex-col">
+          <div class="flex items-center gap-4">
+            <ArchiveBoxIcon class="h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-gray-900">{{ vault.archived ? t('vaultDetails.actions.reactivate') : t('vaultDetails.actions.archive') }}</p>
+              <p class="text-sm text-gray-500">{{ vault.archived ? t('vaultDetails.actions.reactivate.description') : t('vaultDetails.actions.archive.description') }}</p>
+            </div>
+            <button type="button" class="shrink-0 bg-white py-1.5 px-3 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="vault.archived ? reactivateVault() : showArchiveVaultDialog()">
+              {{ vault.archived ? t('vaultDetails.actions.reactivate') : t('vaultDetails.actions.archive') }}
+            </button>
+          </div>
+          <div v-if="onReactivateError">
+            <p v-if="onReactivateError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
+              {{ t('vaultDetails.error.reactivateFailed') }}
+            </p>
+            <p v-else class="text-sm text-red-900 text-right mt-1">
+              {{ t('common.unexpectedError', [onReactivateError.message]) }}
+            </p>
+          </div>
+        </li>
+      </ul>
     </div>
+
+    <p v-if="onClaimOwnershipError" class="text-sm text-red-900 text-right mt-1">
+      {{ t('common.unexpectedError', [onClaimOwnershipError.message]) }}
+    </p>
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
@@ -266,7 +218,7 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
-import { KeyIcon } from '@heroicons/vue/24/outline';
+import { ArchiveBoxIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
@@ -294,7 +246,7 @@ import TrustDetails from './TrustDetails.vue';
 import UntrustedRecipientsWarning from './UntrustedRecipientsWarning.vue';
 import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 
-const { t, d } = useI18n({ useScope: 'global' });
+const { t, d, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vaultId: string,
@@ -306,8 +258,6 @@ const emit = defineEmits<{
   vaultUpdated: [updatedVault: VaultDto]
   licenseStatusUpdated: [license: LicenseUserInfoDto]
 }>();
-
-const canToggleArchive = computed(() => props.vaultRole === 'OWNER' || props.isAdmin);
 
 const onFetchError = ref<Error>();
 const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
@@ -351,6 +301,21 @@ const vaultRecoveryRequired = ref<boolean>(false);
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey !== undefined);
 const licenseViolated = computed(() => license.value?.isViolated() ?? false);
+const canToggleArchive = computed(() => (props.vaultRole === 'OWNER' || props.isAdmin) && !isLegacyVault.value);
+const ownsVault = computed(() => vault.value !== undefined && props.vaultRole === 'OWNER' && !isLegacyVault.value);
+const canManageVault = computed(() => ownsVault.value && !licenseViolated.value && !vaultRecoveryRequired.value);
+const canEditVaultMetadata = computed(() => ownsVault.value && (licenseViolated.value || (!vaultRecoveryRequired.value && !vault.value?.archived)));
+const canDownloadVaultTemplate = computed(() => canManageVault.value);
+const canUpdatePermissions = computed(() => canManageVault.value && !vault.value?.archived);
+const canShowRecoveryKey = computed(() => canManageVault.value && (vaultFormat8.value !== undefined || (!vault.value?.archived && !!uvfVault.value?.recoveryKey.privateKey)));
+const membersRequiringAccessGrantNames = computed(() => new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(membersRequiringAccessGrant.value.map(m => m.name)));
+
+defineExpose({
+  canEditVaultMetadata,
+  canDownloadVaultTemplate,
+  showEditVaultMetadataDialog,
+  showDownloadVaultTemplateDialog
+});
 
 const emergencyKeyShareAuthorities = ref<Record<string, AuthorityDto>>({});
 
@@ -410,6 +375,19 @@ async function fetchOwnerData() {
 const emergencyAccessMembers = computed(() =>
   Object.keys(vault.value?.emergencyKeyShares ?? {})
 );
+const emergencyAccessAction = computed(() => {
+  if (!canUpdatePermissions.value || !cfg.entitlements.emergencyAccessEnabled || !settings.value?.enableEmergencyAccess) {
+    return undefined;
+  } else if (!hasEmergencyKeys.value) {
+    return 'setUp';
+  } else if (emergencyAccessMembers.value.length < (vault.value?.requiredEmergencyKeyShares ?? 0)) {
+    return 'fix';
+  } else {
+    return undefined;
+  }
+});
+const hasActionRows = computed(() => canShowRecoveryKey.value || emergencyAccessAction.value !== undefined || canToggleArchive.value);
+const hasActions = computed(() => isLegacyVault.value || (vaultRecoveryRequired.value && !licenseViolated.value) || hasActionRows.value);
 
 async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
   onClaimOwnershipError.value = undefined;
