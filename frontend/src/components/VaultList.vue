@@ -129,13 +129,25 @@
   </div>
 
   <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
-    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)" />
+    <template #title-actions>
+      <button v-if="vaultDetails?.canEditVaultMetadata" type="button" class="inline-flex size-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" :title="t('vaultDetails.actions.editVaultMetadata')" @click="vaultDetails.showEditVaultMetadataDialog()">
+        <span class="sr-only">{{ t('vaultDetails.actions.editVaultMetadata') }}</span>
+        <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
+      </button>
+    </template>
+    <template #actions>
+      <button v-if="vaultDetails?.canDownloadVaultTemplate" type="button" class="inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" :title="t('vaultDetails.actions.downloadTemplate')" @click="vaultDetails.showDownloadVaultTemplateDialog()">
+        <span class="sr-only">{{ t('vaultDetails.actions.downloadTemplate') }}</span>
+        <ArrowDownTrayIcon class="h-5 w-5" aria-hidden="true" />
+      </button>
+    </template>
+    <VaultDetails ref="vaultDetails" :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)" />
   </SlideOver>
 </template>
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
+import { ArrowDownTrayIcon, ArrowPathIcon, ChevronDownIcon, PencilSquareIcon, PlusIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -155,6 +167,7 @@ const me = ref<UserDto>();
 const cfg = config.get();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
+const vaultDetails = ref<InstanceType<typeof VaultDetails>>();
 const onFetchError = ref<Error>();
 
 const vaults = ref<VaultDto[]>();
