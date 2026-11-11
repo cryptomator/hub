@@ -118,6 +118,21 @@ class SetupModeIT {
 		}
 
 		@Test
+		@DisplayName("GET /config does not expose license entitlements once a license is configured")
+		void testGetConfigOmitsEntitlements() {
+			Mockito.doReturn(false).when(licenseHolder).isSetupRequired();
+			var entitlements = HubLicenseEntitlements.create().withSeats(5).withIosLicense("ios.jwt").withAndroidLicense("android.jwt").withDesktopLicense("desktop.jwt");
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			when().get("/config")
+					.then().statusCode(200)
+					.body("$", Matchers.not(Matchers.hasKey("entitlements")))
+					.body(Matchers.not(Matchers.containsString("ios.jwt")))
+					.body(Matchers.not(Matchers.containsString("android.jwt")))
+					.body(Matchers.not(Matchers.containsString("desktop.jwt")));
+		}
+
+		@Test
 		@DisplayName("non-allowlisted endpoints still require authentication first (401, not 402)")
 		void testGatedEndpoint() {
 			when().get("/vaults/accessible")

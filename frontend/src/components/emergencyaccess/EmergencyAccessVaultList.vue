@@ -3,7 +3,7 @@
     {{ t('common.loading') }}
   </div>
   <div v-else-if="!onFetchError">
-    <div v-if="!entitlements.emergencyAccessEnabled" class="flex flex-col justify-center items-center text-center">
+    <div v-if="!entitlements?.emergencyAccessEnabled" class="flex flex-col justify-center items-center text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
       </svg>
@@ -246,8 +246,8 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headless
 import ContentBanner from '../ContentBanner.vue';
 import { CheckIcon, ChevronDownIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
-import { UserDto } from '../../common/backend';
-import config from '../../common/config';
+import { EntitlementsDto, UserDto } from '../../common/backend';
+import licenseEntitlements from '../../common/entitlements';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 import EmergencyBadge from './EmergencyBadge.vue';
 import EmergencyProcessButton from './EmergencyProcessButton.vue';
@@ -264,7 +264,7 @@ const onFetchError = ref<Error>();
 
 const isAdmin = ref<boolean>(false);
 
-const entitlements = config.get().entitlements;
+const entitlements = ref<EntitlementsDto>();
 const settings = ref<SettingsDto>();
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
@@ -294,9 +294,9 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
-    settings.value = await backend.settings.get();
+    [settings.value, entitlements.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
 
-    if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
+    if (entitlements.value.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
       const [fetchedVaults, allProcesses] = await Promise.all([
         backend.vaults.listRecoverable(),
         backend.emergencyAccess.findAllProcesses(),

@@ -23,16 +23,6 @@ export type ConfigDto = {
   keycloakTokenEndpoint: string;
   serverTime: string;
   apiLevel: number;
-  entitlements: {
-    seats: number;
-    showTrialHint: boolean;
-    auditLogRetentionDays: number;
-    emergencyAccessEnabled: boolean;
-    keycloakAccessEnabled: boolean;
-    iosLicense: string;
-    androidLicense: string;
-    desktopLicense: string;
-  };
   billingUrl: string;
   licenseApiUrl: string;
   licenseSetupRequired: boolean;

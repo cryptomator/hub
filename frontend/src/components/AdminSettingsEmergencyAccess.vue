@@ -9,7 +9,11 @@
       </a>
     </p>
     <hr class="my-4 border-gray-200" />
-    <UpgradeLicenseBanner v-if="!entitlements.emergencyAccessEnabled" />
+    <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
+      {{ t('common.loading') }}
+    </div>
+    <FetchError v-else-if="onFetchError" :error="onFetchError" :retry="fetchData" />
+    <UpgradeLicenseBanner v-else-if="!entitlements.emergencyAccessEnabled" />
     <form v-else class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
       <ContentBanner v-if="entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
         {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
@@ -203,16 +207,21 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import ContentBanner from './ContentBanner.vue';
+import FetchError from './FetchError.vue';
 import UpgradeLicenseBanner from './UpgradeLicenseBanner.vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
-import config from '../common/config';
+import backend, { UserDto, ActivatedUser, didCompleteSetup, EntitlementsDto } from '../common/backend';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
-const entitlements = config.get().entitlements;
+defineProps<{
+  entitlements: EntitlementsDto
+}>();
+
+const loading = ref(true);
+const onFetchError = ref<Error>();
 const noRedundancy = ref(false);
 const isKeySplittingInvalid = ref(false);
 const isMinMembersKeySplittingInvalid = ref(false);
@@ -266,8 +275,7 @@ const hasUnsavedChanges = computed(() => {
 });
 
 async function fetchEmergencyAccess() {
-  const allUsers = await backend.users.listAll();
-  const s = await backend.settings.get();
+  const [allUsers, s] = await Promise.all([backend.users.listAll(), backend.settings.get()]);
 
   const selected = s.emergencyCouncilMemberIds
     .map((id: string) => allUsers.find(u => u.id === id))
@@ -444,10 +452,21 @@ watch(() => [selectedUsers.value.map(u => u.id).join(','), minMembers.value, req
     defaultRequiredEmergencyKeySharesError.value = undefined;
     defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = undefined;
   });
-onMounted(async () => {
-  await fetchEmergencyAccess();
-  updateNoRedundancy();
-});
+onMounted(fetchData);
+
+async function fetchData() {
+  loading.value = true;
+  onFetchError.value = undefined;
+  try {
+    await fetchEmergencyAccess();
+    updateNoRedundancy();
+  } catch (error) {
+    console.error('Retrieving emergency access settings failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    loading.value = false;
+  }
+}
 
 function updateNoRedundancy() {
   const shares = requiredShares.value;
