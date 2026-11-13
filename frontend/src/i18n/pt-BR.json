@@ -550,6 +550,8 @@
   "vaultDetails.sharedWith.badge.owner": "Proprietário",
   "vaultDetails.sharedWith.grantOwnership": "Conceder propriedade",
   "vaultDetails.sharedWith.revokeOwnership": "Revogar propriedade",
+  "vaultDetails.confirmRoleUpdate.grantOwnershipTitle": "Conceder posse a {0}?",
+  "vaultDetails.confirmRoleUpdate.revokeOwnershipTitle": "Revogar posse de {0}?",
   "vaultDetails.actions.title": "Ações",
   "vaultDetails.actions.updatePermissions": "Atualizar permissões",
   "vaultDetails.actions.updatePermissions.reload": "Recarregar",
