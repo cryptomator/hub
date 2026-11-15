@@ -82,6 +82,7 @@
   "admin.licenseInfo.getLicense": "Obter licença",
   "admin.licenseInfo.enterLicense": "Atualizar a licença manualmente",
   "enterLicenseDialog.title": "Atualizar Licença",
+  "enterLicenseDialog.description": "As chaves de licença geralmente são atualizadas automaticamente.\n\nInsira aqui somente uma chave fornecida pelo suporte da Cryptomator.",
   "enterLicenseDialog.licenseKey": "Chave de Licença",
   "enterLicenseDialog.error.invalidLicenseKey": "Formato inválido de chave de licença.",
   "enterLicenseDialog.error.rejected": "Licença rejeitada: {0}",
