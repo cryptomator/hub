@@ -16,6 +16,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import java.time.Instant;
@@ -172,6 +174,33 @@ class LicenseResourceTest {
 					.body("gracePeriodEndsAt", is("2026-08-05T00:00:00Z"));
 		}
 
+		@ParameterizedTest(name = "showTrialHint={0}, emergencyAccessEnabled={1}, keycloakAccessEnabled={2}")
+		@DisplayName("GET /license/entitlements returns 200 with all entitlements, including nested client licenses")
+		@CsvSource({"true,false,false", "false,true,false", "false,false,true"}) // exactly one flag set per run, so swapping any two flags in the DTO mapping fails
+		void testGetEntitlements(boolean showTrialHint, boolean emergencyAccessEnabled, boolean keycloakAccessEnabled) {
+			var entitlements = HubLicenseEntitlements.create()
+					.withSeats(5)
+					.withShowTrialHint(showTrialHint)
+					.withAuditLogRetentionDays(30)
+					.withEmergencyAccessEnabled(emergencyAccessEnabled)
+					.withKeycloakAccessEnabled(keycloakAccessEnabled)
+					.withIosLicense("ios.jwt")
+					.withAndroidLicense("android.jwt")
+					.withDesktopLicense("desktop.jwt");
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			when().get("/license/entitlements")
+					.then().statusCode(200)
+					.body("seats", is(5))
+					.body("showTrialHint", is(showTrialHint))
+					.body("auditLogRetentionDays", is(30))
+					.body("emergencyAccessEnabled", is(emergencyAccessEnabled))
+					.body("keycloakAccessEnabled", is(keycloakAccessEnabled))
+					.body("iosLicense", is("ios.jwt"))
+					.body("androidLicense", is("android.jwt"))
+					.body("desktopLicense", is("desktop.jwt"));
+		}
+
 	}
 
 	@Nested
@@ -220,6 +249,23 @@ class LicenseResourceTest {
 	}
 
 	@Nested
+	@DisplayName("As vault creator without the user role")
+	@TestSecurity(user = "Vault Creator", roles = {"create-vaults"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "creator")
+	})
+	class AsVaultCreator {
+
+		@Test
+		@DisplayName("GET /license/entitlements returns 403 Forbidden")
+		void testGetEntitlements() {
+			when().get("/license/entitlements")
+					.then().statusCode(403);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 
@@ -227,6 +273,13 @@ class LicenseResourceTest {
 		@DisplayName("GET /license/user-info returns 401 Unauthorized")
 		void testGetUserInfo() {
 			when().get("/license/user-info")
+					.then().statusCode(401);
+		}
+
+		@Test
+		@DisplayName("GET /license/entitlements returns 401 Unauthorized")
+		void testGetEntitlements() {
+			when().get("/license/entitlements")
 					.then().statusCode(401);
 		}
 

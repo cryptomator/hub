@@ -241,8 +241,8 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import config from '../common/config';
-import backend, { AuthorityDto, GroupDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, GroupDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import licenseEntitlements from '../common/entitlements';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
@@ -284,7 +284,7 @@ const onAddUserError = ref<Error>();
 const onReactivateError = ref<Error>();
 const onClaimOwnershipError = ref<Error>();
 
-const cfg = config.get();
+const entitlements = ref<EntitlementsDto>();
 const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
 const grantingPermission = ref(false);
@@ -365,8 +365,8 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = undefined;
   try {
-    vault.value = await backend.vaults.get(props.vaultId);
-    settings.value = await backend.settings.get();
+    // only assign the vault once all succeeded, as the template shows fetch errors only while it is undefined
+    [vault.value, settings.value, entitlements.value] = await Promise.all([backend.vaults.get(props.vaultId), backend.settings.get(), licenseEntitlements.get()]);
 
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));
@@ -416,7 +416,7 @@ const emergencyAccessMembers = computed(() =>
   Object.keys(vault.value?.emergencyKeyShares ?? {})
 );
 const emergencyAccessAction = computed(() => {
-  if (!canUpdatePermissions.value || !cfg.entitlements.emergencyAccessEnabled || !settings.value?.enableEmergencyAccess) {
+  if (!canUpdatePermissions.value || !entitlements.value?.emergencyAccessEnabled || !settings.value?.enableEmergencyAccess) {
     return undefined;
   } else if (!hasEmergencyKeys.value) {
     return 'setUp';

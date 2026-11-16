@@ -10,7 +10,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.filters.AvailableDuringSetup;
-import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -74,7 +73,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), API_LEVEL, license.getEntitlements(), billingUrl, licenseApiUrl, license.isSetupRequired());
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), API_LEVEL, billingUrl, licenseApiUrl, license.isSetupRequired());
 	}
 
 	//visible for testing
@@ -101,7 +100,6 @@ public class ConfigResource {
 							@JsonProperty("keycloakClientIdHub") @NotNull String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") @NotNull String keycloakClientIdCryptomator,
 							@JsonProperty("keycloakAuthEndpoint") @NotNull String authEndpoint, @JsonProperty("keycloakTokenEndpoint") @NotNull String tokenEndpoint,
 							@JsonProperty("serverTime") @NotNull Instant serverTime, @JsonProperty("apiLevel") @NotNull Integer apiLevel,
-							@JsonProperty("entitlements") @NotNull HubLicenseEntitlements entitlements,
 							@JsonProperty("billingUrl") @NotNull String billingUrl,
 							@JsonProperty("licenseApiUrl") @NotNull String licenseApiUrl,
 							@JsonProperty("licenseSetupRequired") boolean licenseSetupRequired) {

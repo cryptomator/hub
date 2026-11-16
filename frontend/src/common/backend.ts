@@ -239,6 +239,17 @@ export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessCh
   }
 };
 
+export type EntitlementsDto = {
+  seats: number;
+  showTrialHint: boolean;
+  auditLogRetentionDays: number;
+  emergencyAccessEnabled: boolean;
+  keycloakAccessEnabled: boolean;
+  iosLicense?: string;
+  androidLicense?: string;
+  desktopLicense?: string;
+};
+
 export class LicenseUserInfoDto {
 
   constructor(
@@ -706,6 +717,10 @@ class LicenseService {
       const gracePeriodEndsAt = response.data.gracePeriodEndsAt ? new Date(response.data.gracePeriodEndsAt) : undefined;
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, expiresAt, gracePeriodEndsAt);
     });
+  }
+
+  public async getEntitlements(): Promise<EntitlementsDto> {
+    return axiosAuth.get<EntitlementsDto>('/license/entitlements').then(response => response.data);
   }
 
   public async installTrial(hubId: string, licenseKey: string): Promise<void> {
