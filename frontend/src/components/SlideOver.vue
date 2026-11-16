@@ -14,10 +14,10 @@
                       <DialogTitle class="min-w-0 wrap-break-word text-lg font-medium text-gray-900">
                         {{ title }}
                       </DialogTitle>
-                      <slot name="title-actions"></slot>
+                      <slot name="title-actions" />
                     </div>
                     <div class="flex shrink-0 items-center gap-3">
-                      <slot name="actions"></slot>
+                      <slot name="actions" />
                       <button type="button" class="relative inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5 sm:hidden" @click="open = false">
                         <span class="sr-only">{{ t('common.close') }}</span>
                         <XMarkIcon class="h-5 w-5" aria-hidden="true" />
