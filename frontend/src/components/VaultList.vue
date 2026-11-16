@@ -130,13 +130,13 @@
 
   <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
     <template #title-actions>
-      <button v-if="vaultDetails?.canEditVaultMetadata" type="button" class="inline-flex size-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" :title="t('vaultDetails.actions.editVaultMetadata')" @click="vaultDetails.showEditVaultMetadataDialog()">
+      <button v-if="vaultDetails?.canEditVaultMetadata" type="button" class="relative inline-flex size-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-2" :title="t('vaultDetails.actions.editVaultMetadata')" @click="vaultDetails.showEditVaultMetadataDialog()">
         <span class="sr-only">{{ t('vaultDetails.actions.editVaultMetadata') }}</span>
         <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
       </button>
     </template>
     <template #actions>
-      <button v-if="vaultDetails?.canDownloadVaultTemplate" type="button" class="inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" :title="t('vaultDetails.actions.downloadTemplate')" @click="vaultDetails.showDownloadVaultTemplateDialog()">
+      <button v-if="vaultDetails?.canDownloadVaultTemplate" type="button" class="relative inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('vaultDetails.actions.downloadTemplate')" @click="vaultDetails.showDownloadVaultTemplateDialog()">
         <span class="sr-only">{{ t('vaultDetails.actions.downloadTemplate') }}</span>
         <ArrowDownTrayIcon class="h-5 w-5" aria-hidden="true" />
       </button>

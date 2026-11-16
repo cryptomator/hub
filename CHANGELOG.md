@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.8.1
+- Redesigned the vault details panel (#514)
 
 ### Fixed
 

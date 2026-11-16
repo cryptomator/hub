@@ -16,11 +16,11 @@
                       </DialogTitle>
                       <slot name="title-actions"></slot>
                     </div>
-                    <div class="flex shrink-0 items-center gap-1">
+                    <div class="flex shrink-0 items-center gap-3">
                       <slot name="actions"></slot>
-                      <button type="button" class="inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary sm:hidden" @click="open = false">
+                      <button type="button" class="relative inline-flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5 sm:hidden" @click="open = false">
                         <span class="sr-only">{{ t('common.close') }}</span>
-                        <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                        <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon } from '@heroicons/vue/20/solid';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
