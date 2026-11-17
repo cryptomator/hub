@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <div v-else class="pb-16 space-y-8">
+  <div v-else class="flex-1 flex flex-col space-y-8">
     <div>
       <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
       <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
@@ -136,7 +136,7 @@
       </div>
     </div>
 
-    <div v-if="hasActions">
+    <div v-if="hasActions" class="mt-auto">
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
