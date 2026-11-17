@@ -602,7 +602,7 @@ function permissionGranted() {
   for (const user of membersRequiringAccessGrant.value) {
     const member = members.value[user.id];
     if (member?.type === 'USER') {
-      members.value[user.id] = { ...member, ecdhPublicKey: user.ecdhPublicKey };
+      members.value[user.id] = { ...member, ecdhPublicKey: user.ecdhPublicKey, ecdsaPublicKey: user.ecdsaPublicKey };
     }
   }
   membersRequiringAccessGrant.value = [];
