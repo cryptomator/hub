@@ -88,10 +88,13 @@
                 <p class="truncate text-sm font-medium" :class="pending.waitingForSetup ? 'text-gray-500' : 'text-gray-900'" :title="pending.member.name">{{ pending.member.name }}</p>
                 <p class="text-xs text-gray-500">{{ pending.waitingForSetup ? t('vaultDetails.addMembers.needsSignIn') : t('vaultDetails.addMembers.notApplied') }}</p>
               </div>
-              <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(pending.member.id)">
-                <span class="sr-only">{{ t('common.remove') }} {{ pending.member.name }}</span>
-                <XMarkIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
+              <TrustDetails v-if="!pending.waitingForSetup && pending.member.type === 'USER'" :trusted-user="pending.member" :trusts="trusts" @trust-changed="refreshTrusts()" />
+              <div class="flex w-24 shrink-0 items-center justify-end">
+                <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(pending.member.id)">
+                  <span class="sr-only">{{ t('common.remove') }} {{ pending.member.name }}</span>
+                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
             </div>
             <p v-if="onUpdateVaultMembershipError[pending.member.id]" class="text-sm text-red-900 text-right mt-1">
               {{ t('common.unexpectedError', [onUpdateVaultMembershipError[pending.member.id].message]) }}
