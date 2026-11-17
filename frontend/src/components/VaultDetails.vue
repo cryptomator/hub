@@ -27,9 +27,10 @@
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-8">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
-        <ul class="mt-2 divide-y divide-gray-100">
+        <!-- rows present when the list appears stay still; rows added later (just granted) play animate-granted (1800 ms incl. delay) -->
+        <TransitionGroup v-if="sharedMembers.length > 0" tag="ul" class="mt-2 divide-y divide-gray-100" enter-active-class="[&>div]:animate-granted motion-reduce:[&>div]:animate-none" :duration="1800">
           <li v-for="member in sharedMembers" :key="member.id" class="py-3 flex flex-col">
-            <div class="-mx-2 px-2 flex items-center gap-4 rounded-md transition-colors duration-300 motion-reduce:transition-none" :class="{ 'bg-primary-l2': recentlyGrantedIds.has(member.id) }" :title="member.name">
+            <div class="-mx-2 px-2 flex items-center gap-4 rounded-md" :title="member.name">
               <img :src="member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium text-gray-900">{{ member.name }}</p>
@@ -74,7 +75,7 @@
               {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
             </p>
           </li>
-        </ul>
+        </TransitionGroup>
       </div>
 
       <div v-if="canAddMembers">
@@ -340,7 +341,6 @@ const sharedMembers = computed(() => {
   const pendingIds = new Set(pendingMembers.value.map(p => p.member.id));
   return Object.values(members.value).filter(m => !pendingIds.has(m.id));
 });
-const recentlyGrantedIds = ref(new Set<string>());
 const addPreview = ref<AuthorityDto>();
 const addMemberInputId = useId();
 
@@ -384,9 +384,11 @@ async function fetchOwnerData() {
     throw new Error('Vault not initialized.');
   }
   try {
-    members.value = R.indexBy(await backend.vaults.getMembers(props.vaultId), m => m.id);
+    const loadedMembers = await backend.vaults.getMembers(props.vaultId);
     await refreshTrusts();
+    // load the requiring list first, otherwise members still waiting for access would briefly show up as having access
     await refreshUsersRequiringAccessGrant();
+    members.value = R.indexBy(loadedMembers, m => m.id);
     refreshGroupUsers(Object.values(members.value).filter(m => m.type === 'GROUP').map(m => m.id));
     vaultRecoveryRequired.value = false;
     const vaultKeys = await unwrapVaultKeys(vault.value);
@@ -600,9 +602,7 @@ function permissionGranted() {
       members.value[user.id] = { ...member, ecdhPublicKey: user.ecdhPublicKey };
     }
   }
-  recentlyGrantedIds.value = new Set(requiringAccessGrantIds.value);
   membersRequiringAccessGrant.value = [];
-  setTimeout(() => recentlyGrantedIds.value = new Set(), 2000);
   // members added while the dialog was open are not covered by the grant
   refreshUsersRequiringAccessGrant().catch(error => console.error('Refreshing members requiring access grant failed.', error));
 }
