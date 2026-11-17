@@ -84,7 +84,7 @@
             <div class="flex items-center gap-4">
               <img :src="pending.member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" :class="{ 'opacity-60': pending.waitingForSetup }" />
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium" :class="pending.waitingForSetup ? 'text-gray-500' : 'text-gray-900'">{{ pending.member.name }}</p>
+                <p class="truncate text-sm font-medium" :class="pending.waitingForSetup ? 'text-gray-500' : 'text-gray-900'" :title="pending.member.name">{{ pending.member.name }}</p>
                 <p class="text-xs text-gray-500">{{ pending.waitingForSetup ? t('vaultDetails.addMembers.needsSignIn') : t('vaultDetails.addMembers.notApplied') }}</p>
               </div>
               <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(pending.member.id)">
@@ -99,7 +99,7 @@
           <li v-for="group in pendingGroups" :key="group.id" class="py-3 flex items-center gap-4">
             <img :src="group.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-gray-900">{{ group.name }}</p>
+              <p class="truncate text-sm font-medium text-gray-900" :title="group.name">{{ group.name }}</p>
               <p class="text-xs text-gray-500">{{ t('vaultDetails.addMembers.groupPending', [pendingCountByGroup[group.id] ?? 0]) }}</p>
             </div>
           </li>
@@ -110,10 +110,10 @@
                 <span v-else class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                   <PlusIcon class="h-4 w-4" aria-hidden="true" />
                 </span>
-                <span class="sr-only">{{ t('vaultDetails.addMembers.search') }}</span>
+                <span class="sr-only">{{ t('vaultDetails.addMembers.searchLabel') }}</span>
               </label>
               <div class="min-w-0 flex-1">
-                <SearchInputGroup :place-holder="t('vaultDetails.addMembers.search')" :auto-focus="false" :show-icon="false" :input-id="addMemberInputId" :on-search="searchAuthority" @action="addAuthority" @highlight="item => addPreview = item" />
+                <SearchInputGroup :place-holder="t('vaultDetails.addMembers.searchLabel')" :auto-focus="false" :show-icon="false" :input-id="addMemberInputId" :on-search="searchAuthority" @action="addAuthority" @highlight="item => addPreview = item" />
               </div>
             </div>
             <div v-if="onAddUserError">
@@ -325,21 +325,16 @@ const canDownloadVaultTemplate = computed(() => canManageVault.value);
 const canUpdatePermissions = computed(() => canManageVault.value && !vault.value?.archived);
 const canShowRecoveryKey = computed(() => canManageVault.value && (vaultFormat8.value !== undefined || (!vault.value?.archived && !!uvfVault.value?.recoveryKey.privateKey)));
 const canAddMembers = computed(() => !vault.value?.archived && !licenseViolated.value);
-const membersWaitingForSetup = computed(() => {
-  // members is loaded once; someone who completed setup since then already shows up in the requiring list
-  const requiringIds = new Set(membersRequiringAccessGrant.value.map(m => m.id));
-  return Object.values(members.value).filter(m => m.type === 'USER' && !m.ecdhPublicKey && m.id !== me.value?.id && !requiringIds.has(m.id));
-});
+const requiringAccessGrantIds = computed(() => new Set(membersRequiringAccessGrant.value.map(m => m.id)));
+// members is loaded once; someone who completed setup since then already shows up in the requiring list
+const membersWaitingForSetup = computed(() => Object.values(members.value).filter(m => m.type === 'USER' && !m.ecdhPublicKey && m.id !== me.value?.id && !requiringAccessGrantIds.value.has(m.id)));
 const showsPendingMembers = computed(() => ownsVault.value && !licenseViolated.value && !vaultRecoveryRequired.value && !vault.value?.archived);
 const pendingMembers = computed(() => showsPendingMembers.value ? [
   ...membersRequiringAccessGrant.value.filter(member => members.value[member.id] !== undefined).map(member => ({ member, waitingForSetup: false })),
   ...membersWaitingForSetup.value.map(member => ({ member, waitingForSetup: true })),
 ] : []);
 const groupUserIds = ref<Record<string, string[]>>({});
-const pendingCountByGroup = computed(() => {
-  const requiringIds = new Set(membersRequiringAccessGrant.value.map(m => m.id));
-  return R.mapValues(groupUserIds.value, ids => ids.filter(id => requiringIds.has(id)).length);
-});
+const pendingCountByGroup = computed(() => R.mapValues(groupUserIds.value, ids => ids.filter(id => requiringAccessGrantIds.value.has(id)).length));
 const pendingGroups = computed(() => showsPendingMembers.value ? Object.values(members.value).filter(m => m.type === 'GROUP' && (pendingCountByGroup.value[m.id] ?? 0) > 0) : []);
 const sharedMembers = computed(() => {
   const pendingIds = new Set(pendingMembers.value.map(p => p.member.id));
@@ -493,8 +488,11 @@ async function refreshGroupUsers(groupIds: string[]) {
   for (const result of results) {
     if (result.status === 'rejected') {
       console.error('Resolving group members failed.', result.reason);
-    } else if (members.value[result.value[0]] !== undefined) {
-      groupUserIds.value = { ...groupUserIds.value, [result.value[0]]: result.value[1] };
+    } else {
+      const [groupId, userIds] = result.value;
+      if (members.value[groupId] !== undefined) {
+        groupUserIds.value = { ...groupUserIds.value, [groupId]: userIds };
+      }
     }
   }
 }
@@ -504,12 +502,13 @@ async function addAuthority(authority: AuthorityDto) {
 
   try {
     await addAuthorityBackend(authority);
+    // load the requiring list first, otherwise a user with keys would briefly show up as having access
+    await refreshUsersRequiringAccessGrant();
     const addedMember: MemberDto = {
       ...authority,
       vaultRole: 'MEMBER'
     };
     members.value[authority.id] = addedMember;
-    await refreshUsersRequiringAccessGrant();
     if (authority.type === 'GROUP') {
       refreshGroupUsers([authority.id]);
     }
@@ -595,10 +594,17 @@ function showRecoverVaultDialog() {
 }
 
 function permissionGranted() {
-  recentlyGrantedIds.value = new Set(membersRequiringAccessGrant.value.map(m => m.id));
-  requiringAccessGrantSeq++;
+  for (const user of membersRequiringAccessGrant.value) {
+    const member = members.value[user.id];
+    if (member?.type === 'USER') {
+      members.value[user.id] = { ...member, ecdhPublicKey: user.ecdhPublicKey };
+    }
+  }
+  recentlyGrantedIds.value = new Set(requiringAccessGrantIds.value);
   membersRequiringAccessGrant.value = [];
   setTimeout(() => recentlyGrantedIds.value = new Set(), 2000);
+  // members added while the dialog was open are not covered by the grant
+  refreshUsersRequiringAccessGrant().catch(error => console.error('Refreshing members requiring access grant failed.', error));
 }
 
 async function refreshTrusts() {

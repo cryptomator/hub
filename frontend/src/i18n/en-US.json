@@ -633,7 +633,7 @@
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
   "vaultDetails.addMembers.title": "Add members",
-  "vaultDetails.addMembers.search": "Add users or groups",
+  "vaultDetails.addMembers.searchLabel": "Add users or groups",
   "vaultDetails.addMembers.notApplied": "Not applied yet",
   "vaultDetails.addMembers.needsSignIn": "Needs to sign in to Hub first",
   "vaultDetails.addMembers.groupPending": "Not applied yet: {0}",

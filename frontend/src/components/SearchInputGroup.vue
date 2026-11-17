@@ -1,6 +1,6 @@
 <template>
   <div class="flex rounded-md shadow-xs">
-    <div class="relative flex items-stretch grow focus-within:z-10" @keydown.capture="onKeydown" @pointerdown.capture="onPointer($event, true)" @pointermove.capture="onPointer($event, false)">
+    <div class="relative flex items-stretch grow focus-within:z-10" @keydown.capture="onKeydown" @mousedown.capture="onMousedown" @pointermove.capture="onPointermove">
       <Combobox v-slot="{ activeOption }" as="div" class="w-full" @update:model-value="value => selectedItem = value">
         <HighlightReporter :option="activeOption" @change="onHighlight" />
         <div class="relative">
@@ -109,21 +109,33 @@ let explicitPick = false;
 function onKeydown(event: KeyboardEvent) {
   if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'].includes(event.key)) {
     userMovedHighlight = true;
-  } else if (event.key === 'Enter') {
-    explicitPick = userMovedHighlight;
-  } else if (event.key === 'Tab') {
-    explicitPick = false;
+  } else if (event.key === 'Enter' && userMovedHighlight) {
+    markExplicitPick();
   }
 }
 
-function onPointer(event: PointerEvent, isPress: boolean) {
-  const onOption = (event.target as Element).closest('[role="option"]') !== null;
-  if (onOption) {
+function onPointermove(event: PointerEvent) {
+  if (isOnOption(event)) {
     userMovedHighlight = true;
   }
-  if (isPress) {
-    explicitPick = onOption;
+}
+
+// Headless UI selects an option on a left-button mousedown, which on touch only follows a tap, not a scroll
+function onMousedown(event: MouseEvent) {
+  if (event.button === 0 && isOnOption(event)) {
+    userMovedHighlight = true;
+    markExplicitPick();
   }
+}
+
+function isOnOption(event: Event) {
+  return (event.target as Element).closest('[role="option"]') !== null;
+}
+
+// only valid for the selection Headless UI makes while handling the current event, which may make none
+function markExplicitPick() {
+  explicitPick = true;
+  setTimeout(() => explicitPick = false);
 }
 
 function onHighlight(option: T | undefined) {
@@ -187,7 +199,7 @@ function reset() {
   emit('highlight', undefined);
 }
 
-// reports the option the user is pointing at (hover or arrow keys), so a parent can preview it
+// forwards Headless UI's active option, which is only exposed as a slot prop
 const HighlightReporter = defineComponent({
   props: { option: { type: Object as PropType<T | null>, default: null } },
   emits: { change: (_option: T | undefined) => true },
