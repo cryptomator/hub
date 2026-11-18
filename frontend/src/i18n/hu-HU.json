@@ -473,6 +473,7 @@
   "nav.mobileMenu": "Főmenü megnyitása",
   "nav.closeMenu": "Menü bezárása",
   "nav.sidebar.title": "Navigáció",
+  "onboarding.done": "Kész",
   "recoveryKeyDialog.title": "Helyreállítási kulcs a következőhöz: \"{0}\"",
   "recoveryKeyDialog.description": "Tartsa biztonságban. Ha a Hub nem érhető el, ez az egyetlen út az adatokhoz való visszatéréshez.",
   "recoveryKeyDialog.recoveryKey": "A titkosított tároló helyreállítási kulcsa",
