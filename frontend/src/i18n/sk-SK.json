@@ -250,6 +250,7 @@
   "nav.groups": "Skupiny",
   "nav.closeMenu": "Zatvoriť ponuku",
   "nav.sidebar.title": "Navigácia",
+  "onboarding.done": "Hotovo",
   "recoveryKeyDialog.title": "Obnovovací kľúč pre „{0}“",
   "recoveryKeyDialog.description": "Uložte to na bezpečné miesto. Ak je služba Hub nedostupná, je to jediný spôsob, ako sa dostať späť k svojim údajom.",
   "recoverVaultDialog.title": "Obnoviť prístup k trezoru",
