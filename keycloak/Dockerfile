@@ -23,5 +23,8 @@ RUN trust extract --format=pem-bundle --filter="pkcs11:object=emSign%20ECC%20Roo
   && update-ca-trust
 USER 1000
 
+# mitigate CVE-2026-114938 by disabling the JIT's java.util.Base64 intrinsics (falls back to the pure Java implementation)
+ENV JAVA_OPTS_APPEND="-XX:-UseBASE64Intrinsics"
+
 WORKDIR /opt/keycloak
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
