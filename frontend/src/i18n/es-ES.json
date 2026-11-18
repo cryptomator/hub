@@ -197,6 +197,7 @@
   "nav.vaults": "Bóvedas",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Registro de auditoría",
+  "onboarding.done": "Hecho",
   "recoveryKeyDialog.recoveryKey": "Clave de recuperación de su bóveda",
   "recoverVaultDialog.recoveryKey": "Clave de recuperación",
   "recoverVaultDialog.submit": "Recuperar bóveda",
