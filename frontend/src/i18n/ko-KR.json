@@ -473,6 +473,7 @@
   "nav.mobileMenu": "메인 메뉴 열기",
   "nav.closeMenu": "메뉴 닫기",
   "nav.sidebar.title": "탐색",
+  "onboarding.done": "완료",
   "recoveryKeyDialog.title": "\"{0}\" 복구 키",
   "recoveryKeyDialog.description": "안전한 곳에 보관하세요. Hub를 사용할 수 없는 경우 데이터에 접근할 수 있는 유일한 방법입니다.",
   "recoveryKeyDialog.recoveryKey": "Vault 복구 키",
