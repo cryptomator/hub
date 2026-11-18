@@ -473,6 +473,7 @@
   "nav.mobileMenu": "Abrir menu principal",
   "nav.closeMenu": "Fechar menu",
   "nav.sidebar.title": "Navegação",
+  "onboarding.done": "Concluído",
   "recoveryKeyDialog.title": "Chave de Recuperação para \"{0}\"",
   "recoveryKeyDialog.description": "Guarde-a em um local seguro. Se o HUB ficar indisponível, esta será a única maneira de recuperar o acesso aos seus dados.",
   "recoveryKeyDialog.recoveryKey": "Chave de Recuperação do seu cofre",
