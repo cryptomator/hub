@@ -473,6 +473,7 @@
   "nav.mobileMenu": "Відкрити головне меню",
   "nav.closeMenu": "Закрити меню",
   "nav.sidebar.title": "Навігація",
+  "onboarding.done": "Завершити",
   "recoveryKeyDialog.title": "Ключ відновлення для «{0}»",
   "recoveryKeyDialog.description": "Зберігайте його в надійному місці. Якщо Hub стане недоступним, це буде єдиний спосіб відновити доступ до ваших даних.",
   "recoveryKeyDialog.recoveryKey": "Ключ відновлення вашого сховища",
