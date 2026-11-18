@@ -145,6 +145,7 @@
   "nav.vaults": "Brankas",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Log Audit",
+  "onboarding.done": "Selesai",
   "recoveryKeyDialog.recoveryKey": "Kunci Pemulihan Brankas Anda",
   "recoverVaultDialog.recoveryKey": "Kunci Pemulihan",
   "recoverVaultDialog.submit": "Pulihkan Brankas",
