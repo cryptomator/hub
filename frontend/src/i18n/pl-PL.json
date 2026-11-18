@@ -278,6 +278,7 @@
   "nav.profile.auditlog": "Logi audytu",
   "nav.profile.signOut": "Wyloguj",
   "nav.mobileMenu": "Otwórz menu główne",
+  "onboarding.done": "Gotowe",
   "recoveryKeyDialog.recoveryKey": "Klucz odzyskiwania Twojego sejfu",
   "recoverVaultDialog.title": "Odzyskaj dostęp do sejfu",
   "recoverVaultDialog.recoveryKey": "Klucz odzyskiwania",
