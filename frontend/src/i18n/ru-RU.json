@@ -473,6 +473,7 @@
   "nav.mobileMenu": "Открыть главное меню",
   "nav.closeMenu": "Закрыть меню",
   "nav.sidebar.title": "Навигация",
+  "onboarding.done": "Готово",
   "recoveryKeyDialog.title": "Ключ восстановления для \"{0}\"",
   "recoveryKeyDialog.description": "Храните его в надёжном месте. Если хаб недоступен, это единственный способ вернуться к вашим данным.",
   "recoveryKeyDialog.recoveryKey": "Ключ восстановления хранилища",
