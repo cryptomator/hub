@@ -176,6 +176,9 @@
       "serviceAccountsEnabled": true,
       "publicClient": false,
       "fullScopeAllowed": false,
+      "defaultClientScopes": [
+        "kc-admin-api"
+      ],
       "name": "Cryptomator Hub System",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",

@@ -26,17 +26,18 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ArrowRightStartOnRectangleIcon, LifebuoyIcon, ListBulletIcon, LockClosedIcon, QuestionMarkCircleIcon, UserGroupIcon, UserIcon, UsersIcon, WrenchIcon } from '@heroicons/vue/24/outline';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import auth from '../common/auth';
-import backend, { UserDto } from '../common/backend';
-import config from '../common/config';
+import backend, { EntitlementsDto, SettingsDto, UserDto } from '../common/backend';
+import licenseEntitlements from '../common/entitlements';
 import { startOnboarding } from '../common/onboarding';
 import { Deferred } from '../common/util';
 import SidebarContent, { NavigationItem, ProfileDropdownItem } from './SidebarContent.vue';
 
 const { t } = useI18n({ useScope: 'global' });
+const route = useRoute();
 const router = useRouter();
 
 const props = defineProps<{
@@ -48,9 +49,16 @@ const emit = defineEmits<{
   close: []
 }>();
 
-const mainNav = ref<NavigationItem[]>([
-  { icon: LockClosedIcon, name: 'nav.vaults', to: '/app/vaults' }
-]);
+const entitlements = ref<EntitlementsDto>();
+const settings = ref<SettingsDto>();
+
+const mainNav = computed(() => {
+  const nav: NavigationItem[] = [{ icon: LockClosedIcon, name: 'nav.vaults', to: '/app/vaults' }];
+  if (entitlements.value?.emergencyAccessEnabled && settings.value?.enableEmergencyAccess) {
+    nav.push({ icon: LifebuoyIcon, name: 'nav.emergencyAccess', to: '/app/emergency-access' });
+  }
+  return nav;
+});
 
 const adminNav: NavigationItem[] = [
   { icon: UsersIcon, name: 'nav.users', to: '/app/users' },
@@ -102,13 +110,21 @@ async function replayTour() {
 
 onMounted(async () => {
   isAdmin.value = (await auth).hasRole('admin');
+  await fetchEmergencyAccessAvailability();
+});
 
-  const entitlements = config.get().entitlements;
-  const emergencyAccessEnabled = (await backend.settings.get()).enableEmergencyAccess;
-  if (entitlements.emergencyAccessEnabled && emergencyAccessEnabled) {
-    if (!mainNav.value.some(i => i.to === '/app/emergency-access')) {
-      mainNav.value.push({ icon: LifebuoyIcon, name: 'nav.emergencyAccess', to: '/app/emergency-access' });
-    }
+// the sidebar stays mounted while navigating, so retry on navigation if fetching failed
+watch(() => route.path, async () => {
+  if (settings.value === undefined) {
+    await fetchEmergencyAccessAvailability();
   }
 });
+
+async function fetchEmergencyAccessAvailability() {
+  try {
+    [settings.value, entitlements.value] = await Promise.all([backend.settings.get(), licenseEntitlements.get()]);
+  } catch (error) {
+    console.error('Determining emergency access availability failed.', error);
+  }
+}
 </script>

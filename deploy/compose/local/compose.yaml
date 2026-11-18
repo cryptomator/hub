@@ -31,7 +31,7 @@ services:
       retries: 12
 
   keycloak:
-    image: ghcr.io/cryptomator/keycloak:26.8.1
+    image: ghcr.io/cryptomator/keycloak:26.8.2
     command: start --optimized --import-realm
     environment:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -270,6 +270,9 @@ configs:
             "serviceAccountsEnabled": true,
             "publicClient": false,
             "fullScopeAllowed": false,
+            "defaultClientScopes": [
+              "kc-admin-api"
+            ],
             "name": "Cryptomator Hub System",
             "enabled": true,
             "clientAuthenticatorType": "client-secret",

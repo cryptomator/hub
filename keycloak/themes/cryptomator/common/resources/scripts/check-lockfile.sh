@@ -25,7 +25,10 @@ fi
 # Check 1: every packages.*.resolution must contain only the "integrity"
 # key. Any other key (tarball, repo, directory, type, commit, url, path)
 # means the resolution points at a non-registry source.
-bad_resolutions=$(yq '
+#
+# `yq ea` (eval-all) merges the results of all YAML documents into one array: newer pnpm versions write a multi-document
+# lockfile (a leading document pinning pnpm itself), for which plain `yq` would print one array per document.
+bad_resolutions=$(yq ea '
   [.packages // {} | to_entries[]
    | select(.value.resolution | keys - ["integrity"] | length > 0)
    | .key]
@@ -35,7 +38,7 @@ bad_resolutions=$(yq '
 # range, not a non-registry protocol.
 BAD_PROTOCOL_REGEX='^(git\+|git://|github:|file:|link:|workspace:|https?://)'
 
-bad_specs=$(REGEX="$BAD_PROTOCOL_REGEX" yq '
+bad_specs=$(REGEX="$BAD_PROTOCOL_REGEX" yq ea '
   [.importers // {} | .. | (.specifier? // "") | select(test(strenv(REGEX)))]
   + [.importers // {} | .. | (.version? // "") | select(test(strenv(REGEX)))]
 ' "$LOCK_FILE")

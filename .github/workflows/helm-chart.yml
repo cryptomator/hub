@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Helm
         uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
@@ -59,6 +61,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Helm
         uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
@@ -96,8 +100,11 @@ jobs:
           mkdir -p dist
           helm package chart \
             --destination dist \
-            --version "${{ steps.version.outputs.publish_version }}" \
-            --app-version "${{ steps.version.outputs.publish_app_version }}"
+            --version "${PUBLISH_VERSION}" \
+            --app-version "${PUBLISH_APP_VERSION}"
+        env:
+          PUBLISH_VERSION: ${{ steps.version.outputs.publish_version }}
+          PUBLISH_APP_VERSION: ${{ steps.version.outputs.publish_app_version }}
 
       - name: Login to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -107,7 +114,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Helm Registry: Login to GHCR"
-        run: echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+        run: echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -115,7 +122,7 @@ jobs:
         id: push
         run: |
           set -euo pipefail
-          push_output=$(helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" "oci://ghcr.io/cryptomator/charts" 2>&1)
+          push_output=$(helm push "dist/cryptomator-hub-${PUBLISH_VERSION}.tgz" "oci://ghcr.io/cryptomator/charts" 2>&1)
           echo "$push_output"
 
           digest=$(printf '%s\n' "$push_output" | grep -Eo 'sha256:[0-9a-fA-F]{64}' | tail -n1 || true)
@@ -127,11 +134,15 @@ jobs:
           fi
 
           echo "chart_digest=$digest" >> "$GITHUB_OUTPUT"
+        env:
+          PUBLISH_VERSION: ${{ steps.version.outputs.publish_version }}
 
       - name: Sign chart with cosign (keyless)
         run: |
           set -euo pipefail
-          cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${{ steps.push.outputs.chart_digest }}"
+          cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${CHART_DIGEST}"
+        env:
+          CHART_DIGEST: ${{ steps.push.outputs.chart_digest }}
 
       - name: Generate artifact attestation
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
