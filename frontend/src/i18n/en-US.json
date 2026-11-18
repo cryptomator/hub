@@ -530,7 +530,7 @@
   "onboarding.useVault.title": "Use an Existing Vault",
   "onboarding.useVault.description": "An owner adds you and grants you access. After that, you open the vault with the Cryptomator app.",
   "onboarding.adminNav.title": "Administration",
-  "onboarding.adminNav.description": "Manage users, groups, and audit logs here. Even as an admin, you can only read what's shared with you.",
+  "onboarding.adminNav.description": "Manage users, groups, and audit logs here. But even as an admin, you can only access vaults that are shared with you.",
   "onboarding.profile.title": "Keep Your Account Safe",
   "onboarding.profile.description": "Connect new devices with your Account Key and keep it secret. Review your devices in your profile and remove any you do not recognize.",
   "onboarding.getApp.title": "Get the Cryptomator App",
