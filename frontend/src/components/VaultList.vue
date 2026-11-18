@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData" />
+      <FetchError :error="onFetchError" :retry="fetchDataAndStartOnboarding" />
     </div>
   </div>
 
@@ -194,16 +194,18 @@ const filteredVaults = computed(() =>
     })
 );
 
-onMounted(async () => {
+onMounted(fetchDataAndStartOnboarding);
+
+// without this a tour would keep its overlay up after navigating away from the vault list
+onBeforeUnmount(stopOnboarding);
+
+async function fetchDataAndStartOnboarding() {
   await fetchData();
   if (me.value && !onFetchError.value) {
     await nextTick();
     await startOnboardingIfNeeded(me.value);
   }
-});
-
-// without this a tour would keep its overlay up after navigating away from the vault list
-onBeforeUnmount(stopOnboarding);
+}
 
 async function fetchData() {
   onFetchError.value = undefined;
