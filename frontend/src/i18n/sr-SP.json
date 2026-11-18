@@ -13,6 +13,7 @@
   "createVault.enterVaultDetails.vaultName": "Naziv sefa",
   "createVault.showRecoveryKey.submit": "Napravi sef",
   "editVaultMetadataDialog.vaultName": "Naziv sefa",
+  "onboarding.done": "Završeno",
   "userEditCreate.password": "Лозинка",
   "userEditCreate.passwordStrong": "Jakа",
   "userEditCreate.passwordWeak": "Слаба"
