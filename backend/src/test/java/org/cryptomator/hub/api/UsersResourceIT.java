@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
@@ -191,76 +192,42 @@ class UsersResourceIT {
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	class AsAuthorzedUser2 {
 
-		@Test
-		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as completed")
-		void testSetMyOnboardingCompleted() throws SQLException {
-			seedOnboardingCompleted("user2", false);
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and stores the onboarding flag")
+		@ParameterizedTest(name = "onboardingCompleted = {0}")
+		@ValueSource(booleans = {true, false})
+		void testSetMyOnboardingCompleted(boolean onboardingCompleted) throws SQLException {
+			seedOnboardingCompleted("user2", !onboardingCompleted);
 
-			given().contentType(ContentType.TEXT).body("true")
+			given().contentType(ContentType.TEXT).body(String.valueOf(onboardingCompleted))
 					.when().put("/users/me/onboarding-completed")
 					.then().statusCode(204);
 
 			when().get("/users/me")
 					.then().statusCode(200)
-					.body("onboardingCompleted", is(true));
+					.body("onboardingCompleted", is(onboardingCompleted));
 		}
 
-		@Test
-		@DisplayName("PUT /users/me/onboarding-completed returns 204 and marks the tour as pending")
-		void testSetMyOnboardingPending() throws SQLException {
-			seedOnboardingCompleted("user2", true);
-
-			given().contentType(ContentType.TEXT).body("false")
-					.when().put("/users/me/onboarding-completed")
-					.then().statusCode(204);
-
-			when().get("/users/me")
-					.then().statusCode(200)
-					.body("onboardingCompleted", is(false));
-		}
-
-		@Test
-		@DisplayName("PUT /users/me returns 201 and does not clear the onboarding flag")
-		void testPutMeKeepsOnboardingCompleted() throws SQLException {
-			seedOnboardingCompleted("user2", true);
+		@DisplayName("PUT /users/me returns 201 and ignores the onboarding flag in the body")
+		@ParameterizedTest(name = "stored onboardingCompleted = {0}")
+		@ValueSource(booleans = {true, false})
+		void testPutMeKeepsOnboardingFlag(boolean onboardingCompleted) throws SQLException {
+			seedOnboardingCompleted("user2", onboardingCompleted);
 
 			var body = """
 					{
 						"id": "user2",
 						"name": "User Name 2",
 						"email": "user2@example.com",
-						"onboardingCompleted": false
+						"onboardingCompleted": %s
 					}
-					""";
+					""".formatted(!onboardingCompleted);
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/me")
 					.then().statusCode(201);
 
 			when().get("/users/me")
 					.then().statusCode(200)
-					.body("onboardingCompleted", is(true));
-		}
-
-		@Test
-		@DisplayName("PUT /users/me returns 201 and does not set the onboarding flag")
-		void testPutMeKeepsOnboardingPending() throws SQLException {
-			seedOnboardingCompleted("user2", false);
-
-			var body = """
-					{
-						"id": "user2",
-						"name": "User Name 2",
-						"email": "user2@example.com",
-						"onboardingCompleted": true
-					}
-					""";
-			given().contentType(ContentType.JSON).body(body)
-					.when().put("/users/me")
-					.then().statusCode(201);
-
-			when().get("/users/me")
-					.then().statusCode(200)
-					.body("onboardingCompleted", is(false));
+					.body("onboardingCompleted", is(onboardingCompleted));
 		}
 
 		@AfterAll
