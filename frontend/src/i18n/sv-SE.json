@@ -473,6 +473,7 @@
   "nav.mobileMenu": "Öppna huvudmenyn",
   "nav.closeMenu": "Stäng menyn",
   "nav.sidebar.title": "Navigering",
+  "onboarding.done": "Klar",
   "recoveryKeyDialog.title": "Återställningsnyckel för \"{0}\"",
   "recoveryKeyDialog.description": "Förvara den på en säker plats. Om Hub inte är tillgängligt är den det enda sättet att återfå åtkomsten till dina data.",
   "recoveryKeyDialog.recoveryKey": "Återställningsnyckel för ditt valv",
