@@ -291,6 +291,7 @@
   "nav.profile.auditlog": "稽核日誌",
   "nav.profile.signOut": "登出",
   "nav.mobileMenu": "開啟主選單",
+  "onboarding.done": "完成",
   "recoveryKeyDialog.recoveryKey": "您的加密檔案庫的復原金鑰",
   "recoverVaultDialog.title": "恢復存取加密檔案庫",
   "recoverVaultDialog.recoveryKey": "復原金鑰",
