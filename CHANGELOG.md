@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.8.2 and disabled the deprecated "Full scope allowed" switch on Hub's Keycloak clients in favor of explicit role scope mappings. Existing realms are not migrated automatically: assign the [`kc-admin-api` client scope](https://www.keycloak.org/docs/latest/upgrading/index.html#admin-rest-api-now-enforces-an-audience-check) as a default client scope to `cryptomatorhub-system` and, if present, `cryptomatorhub-cli`, otherwise Hub's requests to Keycloak fail with `401 Unauthorized`. Also [disable the switch](https://www.keycloak.org/docs/latest/upgrading/index.html#full-scope-allowed-switch-on-clients-is-deprecated) on each client and map its roles, otherwise Keycloak keeps logging a deprecation warning: realm roles `user`, `create-vaults`, `admin` for `cryptomatorhub`, realm role `user` for `cryptomator`, `realm-management` role `realm-admin` for `cryptomatorhub-system`, and, if present, realm roles `user`, `create-vaults` plus `realm-management` role `manage-users` for `cryptomatorhub-cli`.
+- Updated Keycloak to 26.8.2.3 and disabled the deprecated "Full scope allowed" switch on Hub's Keycloak clients in favor of explicit role scope mappings. Existing realms are not migrated automatically: assign the [`kc-admin-api` client scope](https://www.keycloak.org/docs/latest/upgrading/index.html#admin-rest-api-now-enforces-an-audience-check) as a default client scope to `cryptomatorhub-system` and, if present, `cryptomatorhub-cli`, otherwise Hub's requests to Keycloak fail with `401 Unauthorized`. Also [disable the switch](https://www.keycloak.org/docs/latest/upgrading/index.html#full-scope-allowed-switch-on-clients-is-deprecated) on each client and map its roles, otherwise Keycloak keeps logging a deprecation warning: realm roles `user`, `create-vaults`, `admin` for `cryptomatorhub`, realm role `user` for `cryptomator`, `realm-management` role `realm-admin` for `cryptomatorhub-system`, and, if present, realm roles `user`, `create-vaults` plus `realm-management` role `manage-users` for `cryptomatorhub-cli`.
 - License entitlements are no longer part of the public `/api/config` response and are now served to authenticated users via `/api/license/entitlements`
 
 ### Fixed
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Mitigated CVE-2026-114938 in the Keycloak image by disabling the JVM's Base64 intrinsics (`-XX:-UseBASE64Intrinsics` via `JAVA_OPTS_APPEND`). If you override `JAVA_OPTS_APPEND`, include this flag yourself.
+- Mitigated CVE-2026-114938 in the Keycloak image by updating to 26.8.2-3
 
 ## [2.1.4](https://github.com/cryptomator/hub/compare/2.1.3...2.1.4) (2026-10-23)
 
