@@ -507,15 +507,19 @@ async function addAuthority(authority: AuthorityDto) {
 
   try {
     await addAuthorityBackend(authority);
-    // load the requiring list first, otherwise a user with keys would briefly show up as having access
-    await refreshUsersRequiringAccessGrant();
-    const addedMember: MemberDto = {
-      ...authority,
-      vaultRole: 'MEMBER'
-    };
-    members.value[authority.id] = addedMember;
-    if (authority.type === 'GROUP') {
-      refreshGroupUsers([authority.id]);
+    try {
+      // load the requiring list first, otherwise a user with keys would briefly show up as having access
+      await refreshUsersRequiringAccessGrant();
+    } finally {
+      // the member exists on the server now, so list it even if the refresh failed
+      const addedMember: MemberDto = {
+        ...authority,
+        vaultRole: 'MEMBER'
+      };
+      members.value[authority.id] = addedMember;
+      if (authority.type === 'GROUP') {
+        refreshGroupUsers([authority.id]);
+      }
     }
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
