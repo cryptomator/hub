@@ -500,7 +500,7 @@
   "onboarding.getApp.step3": "Insira sua Chave de Conta",
   "onboarding.getApp.download": "Baixe o aplicativo",
   "recoveryKeyDialog.title": "Chave de Recuperação para \"{0}\"",
-  "recoveryKeyDialog.description": "Guarde-a em um local seguro. Se o HUB ficar indisponível, esta será a única maneira de recuperar o acesso aos seus dados.",
+  "recoveryKeyDialog.description": "Guarde-a em um local seguro. Se o Hub ficar indisponível, esta será a única maneira de recuperar o acesso aos seus dados.",
   "recoveryKeyDialog.recoveryKey": "Chave de Recuperação do seu cofre",
   "recoverVaultDialog.title": "Recuperar acesso ao cofre",
   "recoverVaultDialog.description": "Cole a chave de recuperação de \"{0}\" para recuperar o acesso ao cofre.",
