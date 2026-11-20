@@ -54,6 +54,14 @@ public class ValidationIT {
 			when().get("/test/validid/{id}", toTest)
 					.then().statusCode(400);
 		}
+
+		@DisplayName("Empty id is rejected")
+		@Test
+		void testIdEmpty() {
+			var dto = new ValidationTestResource.ValidIdDto("");
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
+		}
 	}
 
 	@Nested
