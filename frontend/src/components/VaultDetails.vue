@@ -27,14 +27,14 @@
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-8">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.confirmedMembers.title') }}</h3>
-        <!-- rows present when the list appears stay still; rows added later (just granted) play animate-granted (1800 ms incl. delay) -->
-        <TransitionGroup v-if="confirmedMembers.length > 0" tag="ul" class="mt-2 divide-y divide-gray-100" enter-active-class="[&>div]:animate-granted motion-reduce:[&>div]:animate-none" :duration="1800">
+        <!-- rows present when the list appears stay still; rows added later (just granted) play animate-granted (1800 ms incl. delay); removed rows leave at once -->
+        <TransitionGroup v-if="confirmedMembers.length > 0" tag="ul" class="mt-2 divide-y divide-gray-100" enter-active-class="[&>div]:animate-granted motion-reduce:[&>div]:animate-none" :duration="{ enter: 1800, leave: 0 }">
           <li v-for="member in confirmedMembers" :key="member.id" class="py-3 flex flex-col">
             <div class="-mx-2 px-2 flex items-center gap-4 rounded-md" :title="member.name">
               <img :src="member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium text-gray-900">{{ member.name }}</p>
-                <p v-if="member.type === 'GROUP'" class="text-xs text-gray-500">{{ t('common.xMembers', [member.memberSize]) }}</p>
+                <p v-if="member.type === 'GROUP' && groupConfirmationText(member)" class="text-xs text-gray-500">{{ groupConfirmationText(member) }}</p>
               </div>
               <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
               <div class="flex w-24 shrink-0 items-center justify-end gap-2">
@@ -79,7 +79,7 @@
       </div>
 
       <div v-if="canAddMembers">
-        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.unconfirmedMembers.title') }}</h3>
+        <h3 v-if="hasUnconfirmed" class="font-medium text-gray-900">{{ t('vaultDetails.unconfirmedMembers.title') }}</h3>
         <ul class="mt-2 divide-y divide-gray-100">
           <li v-for="unconfirmed in unconfirmedMembers" :key="unconfirmed.member.id" class="py-3 flex flex-col">
             <div class="flex items-center gap-4">
@@ -100,12 +100,24 @@
               {{ t('common.unexpectedError', [onUpdateVaultMembershipError[unconfirmed.member.id].message]) }}
             </p>
           </li>
-          <li v-for="group in unconfirmedGroups" :key="group.id" class="py-3 flex items-center gap-4">
-            <img :src="group.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-gray-900" :title="group.name">{{ group.name }}</p>
-              <p class="text-xs text-gray-500">{{ t('vaultDetails.unconfirmedMembers.groupNotConfirmed', [unconfirmedCountByGroup[group.id] ?? 0]) }}</p>
+          <li v-for="group in unconfirmedGroups" :key="group.id" class="py-3 flex flex-col">
+            <div class="flex items-center gap-4">
+              <img :src="group.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-gray-900" :title="group.name">{{ group.name }}</p>
+                <p class="text-xs text-gray-500">{{ t('vaultDetails.unconfirmedMembers.groupNotConfirmed', [unconfirmedCountByGroup[group.id]]) }}</p>
+              </div>
+              <!-- a group also listed as confirmed is removed through the menu of its confirmed row -->
+              <div class="flex w-24 shrink-0 items-center justify-end">
+                <button v-if="onlyUnconfirmedGroupIds.has(group.id)" type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(group.id)">
+                  <span class="sr-only">{{ t('common.remove') }} {{ group.name }}</span>
+                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
             </div>
+            <p v-if="onlyUnconfirmedGroupIds.has(group.id) && onUpdateVaultMembershipError[group.id]" class="text-sm text-red-900 text-right mt-1">
+              {{ t('common.unexpectedError', [onUpdateVaultMembershipError[group.id].message]) }}
+            </p>
           </li>
           <li class="py-3 flex flex-col">
             <div class="flex items-center gap-4">
@@ -244,7 +256,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, GroupDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
@@ -338,12 +350,21 @@ const unconfirmedMembers = computed(() => showsUnconfirmedMembers.value ? [
 ] : []);
 const groupUserIds = ref<Record<string, string[]>>({});
 const unconfirmedCountByGroup = computed(() => R.mapValues(groupUserIds.value, ids => ids.filter(id => requiringAccessGrantIds.value.has(id)).length));
-const unconfirmedGroups = computed(() => showsUnconfirmedMembers.value ? Object.values(members.value).filter(m => m.type === 'GROUP' && (unconfirmedCountByGroup.value[m.id] ?? 0) > 0) : []);
+// users without keys cannot be confirmed yet, so only users with keys that need no grant count as confirmed
+const confirmedCountByGroup = computed(() => R.mapValues(groupUserIds.value, (ids, groupId) => ids.length - (unconfirmedCountByGroup.value[groupId] ?? 0)));
+// a group is listed as unconfirmed as long as some of its members can be confirmed; members who still need to sign in are left out, as the owner cannot act on them
+const unconfirmedGroups = computed(() => showsUnconfirmedMembers.value
+  ? Object.values(members.value).filter((m): m is GroupDto & MemberDto => m.type === 'GROUP').filter(g => (unconfirmedCountByGroup.value[g.id] ?? 0) > 0)
+  : []);
+// ...and as confirmed unless none of its members is confirmed yet; then its unconfirmed row carries the remove button
+const onlyUnconfirmedGroupIds = computed(() => new Set(unconfirmedGroups.value.filter(g => confirmedCountByGroup.value[g.id] === 0).map(g => g.id)));
 const confirmedMembers = computed(() => {
   const unconfirmedIds = new Set(unconfirmedMembers.value.map(u => u.member.id));
-  return Object.values(members.value).filter(m => !unconfirmedIds.has(m.id));
+  return Object.values(members.value).filter(m => !unconfirmedIds.has(m.id) && !onlyUnconfirmedGroupIds.value.has(m.id));
 });
 const canConfirm = computed(() => canUpdatePermissions.value && membersRequiringAccessGrant.value.length > 0);
+// the confirm button may also cover users not listed, e.g. group members who completed setup after the group counts were loaded
+const hasUnconfirmed = computed(() => unconfirmedMembers.value.length > 0 || unconfirmedGroups.value.length > 0 || canConfirm.value);
 const addPreview = ref<AuthorityDto>();
 const addMemberInputId = useId();
 
@@ -463,6 +484,16 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
 
   refreshVault(vault.value);
   await fetchOwnerData();
+}
+
+// only shown while some members can be confirmed; members who still need to sign in count in neither number
+function groupConfirmationText(group: GroupDto & MemberDto) {
+  const usersWithKeys = groupUserIds.value[group.id];
+  const unconfirmedUsers = unconfirmedCountByGroup.value[group.id] ?? 0;
+  if (!showsUnconfirmedMembers.value || usersWithKeys === undefined || unconfirmedUsers === 0) {
+    return '';
+  }
+  return t('vaultDetails.confirmedMembers.groupConfirmed', [usersWithKeys.length - unconfirmedUsers, usersWithKeys.length]);
 }
 
 // concurrent adds and removes may answer out of order; only the latest request may update the list
