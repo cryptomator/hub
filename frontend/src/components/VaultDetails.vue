@@ -25,6 +25,9 @@
     </div>
 
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-8">
+      <!-- the vault itself loaded, but (some of) the owner data did not -->
+      <FetchError v-if="onFetchError" :error="onFetchError" :retry="allowRetryFetch ? fetchData : undefined" />
+
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.confirmedMembers.title') }}</h3>
         <!-- rows present when the list appears stay still; rows added later (just granted) play animate-granted (1800 ms incl. delay); removed rows leave at once -->
@@ -407,6 +410,8 @@ async function fetchOwnerData() {
   if (!vault.value) {
     throw new Error('Vault not initialized.');
   }
+  // also called after claiming ownership or recovering the vault, so a previous failure must not stay visible
+  onFetchError.value = undefined;
   try {
     const loadedMembers = await backend.vaults.getMembers(props.vaultId);
     await refreshTrusts();
