@@ -26,15 +26,15 @@
 
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-8">
       <div>
-        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
+        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.confirmedMembers.title') }}</h3>
         <!-- rows present when the list appears stay still; rows added later (just granted) play animate-granted (1800 ms incl. delay) -->
-        <TransitionGroup v-if="sharedMembers.length > 0" tag="ul" class="mt-2 divide-y divide-gray-100" enter-active-class="[&>div]:animate-granted motion-reduce:[&>div]:animate-none" :duration="1800">
-          <li v-for="member in sharedMembers" :key="member.id" class="py-3 flex flex-col">
+        <TransitionGroup v-if="confirmedMembers.length > 0" tag="ul" class="mt-2 divide-y divide-gray-100" enter-active-class="[&>div]:animate-granted motion-reduce:[&>div]:animate-none" :duration="1800">
+          <li v-for="member in confirmedMembers" :key="member.id" class="py-3 flex flex-col">
             <div class="-mx-2 px-2 flex items-center gap-4 rounded-md" :title="member.name">
               <img :src="member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium text-gray-900">{{ member.name }}</p>
-                <p v-if="member.type === 'GROUP'" class="text-xs text-gray-500">{{ groupAccessText(member) }}</p>
+                <p v-if="member.type === 'GROUP'" class="text-xs text-gray-500">{{ t('common.xMembers', [member.memberSize]) }}</p>
               </div>
               <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
               <div class="flex w-24 shrink-0 items-center justify-end gap-2">
@@ -79,32 +79,32 @@
       </div>
 
       <div v-if="canAddMembers">
-        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.addMembers.title') }}</h3>
+        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.unconfirmedMembers.title') }}</h3>
         <ul class="mt-2 divide-y divide-gray-100">
-          <li v-for="pending in pendingMembers" :key="pending.member.id" class="py-3 flex flex-col">
+          <li v-for="unconfirmed in unconfirmedMembers" :key="unconfirmed.member.id" class="py-3 flex flex-col">
             <div class="flex items-center gap-4">
-              <img :src="pending.member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" :class="{ 'opacity-60': pending.waitingForSetup }" />
+              <img :src="unconfirmed.member.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" :class="{ 'opacity-60': unconfirmed.waitingForSetup }" />
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium" :class="pending.waitingForSetup ? 'text-gray-500' : 'text-gray-900'" :title="pending.member.name">{{ pending.member.name }}</p>
-                <p class="text-xs text-gray-500">{{ pending.waitingForSetup ? t('vaultDetails.addMembers.needsSignIn') : t('vaultDetails.addMembers.notApplied') }}</p>
+                <p class="truncate text-sm font-medium" :class="unconfirmed.waitingForSetup ? 'text-gray-500' : 'text-gray-900'" :title="unconfirmed.member.name">{{ unconfirmed.member.name }}</p>
+                <p class="text-xs text-gray-500">{{ unconfirmed.waitingForSetup ? t('vaultDetails.unconfirmedMembers.needsSignIn') : t('vaultDetails.unconfirmedMembers.notConfirmed') }}</p>
               </div>
-              <TrustDetails v-if="!pending.waitingForSetup && pending.member.type === 'USER'" :trusted-user="pending.member" :trusts="trusts" @trust-changed="refreshTrusts()" />
+              <TrustDetails v-if="!unconfirmed.waitingForSetup && unconfirmed.member.type === 'USER'" :trusted-user="unconfirmed.member" :trusts="trusts" @trust-changed="refreshTrusts()" />
               <div class="flex w-24 shrink-0 items-center justify-end">
-                <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(pending.member.id)">
-                  <span class="sr-only">{{ t('common.remove') }} {{ pending.member.name }}</span>
+                <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(unconfirmed.member.id)">
+                  <span class="sr-only">{{ t('common.remove') }} {{ unconfirmed.member.name }}</span>
                   <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
-            <p v-if="onUpdateVaultMembershipError[pending.member.id]" class="text-sm text-red-900 text-right mt-1">
-              {{ t('common.unexpectedError', [onUpdateVaultMembershipError[pending.member.id].message]) }}
+            <p v-if="onUpdateVaultMembershipError[unconfirmed.member.id]" class="text-sm text-red-900 text-right mt-1">
+              {{ t('common.unexpectedError', [onUpdateVaultMembershipError[unconfirmed.member.id].message]) }}
             </p>
           </li>
-          <li v-for="group in pendingGroups" :key="group.id" class="py-3 flex items-center gap-4">
+          <li v-for="group in unconfirmedGroups" :key="group.id" class="py-3 flex items-center gap-4">
             <img :src="group.pictureUrl" alt="" class="w-8 h-8 shrink-0 rounded-full" />
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium text-gray-900" :title="group.name">{{ group.name }}</p>
-              <p class="text-xs text-gray-500">{{ t('vaultDetails.addMembers.groupPending', [pendingCountByGroup[group.id] ?? 0]) }}</p>
+              <p class="text-xs text-gray-500">{{ t('vaultDetails.unconfirmedMembers.groupNotConfirmed', [unconfirmedCountByGroup[group.id] ?? 0]) }}</p>
             </div>
           </li>
           <li class="py-3 flex flex-col">
@@ -114,10 +114,10 @@
                 <span v-else class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                   <PlusIcon class="h-4 w-4" aria-hidden="true" />
                 </span>
-                <span class="sr-only">{{ t('vaultDetails.addMembers.searchLabel') }}</span>
+                <span class="sr-only">{{ t('vaultDetails.unconfirmedMembers.searchLabel') }}</span>
               </label>
               <div class="min-w-0 flex-1">
-                <SearchInputGroup :place-holder="t('vaultDetails.addMembers.searchLabel')" :auto-focus="false" :show-icon="false" :input-id="addMemberInputId" :on-search="searchAuthority" @action="addAuthority" @highlight="item => addPreview = item" />
+                <SearchInputGroup :place-holder="t('vaultDetails.unconfirmedMembers.searchLabel')" :auto-focus="false" :show-icon="false" :input-id="addMemberInputId" :on-search="searchAuthority" @action="addAuthority" @highlight="item => addPreview = item" />
               </div>
             </div>
             <div v-if="onAddUserError">
@@ -130,10 +130,9 @@
             </div>
           </li>
         </ul>
-        <div v-if="canUpdatePermissions && membersRequiringAccessGrant.length > 0" class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p class="text-sm text-gray-600 tabular-nums">{{ t('vaultDetails.addMembers.applyCount', [membersRequiringAccessGrant.length]) }}</p>
-          <button type="button" class="w-full shrink-0 bg-primary py-2 px-3 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:py-1.5" @click="showGrantPermissionDialog()">
-            {{ t('vaultDetails.actions.applyChanges') }}
+        <div v-if="canConfirm" class="mt-3 flex sm:justify-end">
+          <button type="button" class="w-full shrink-0 bg-primary py-2 px-3 border border-transparent rounded-md shadow-xs text-sm font-medium text-white tabular-nums hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:py-1.5" @click="showGrantPermissionDialog()">
+            {{ t('vaultDetails.unconfirmedMembers.confirm', [membersRequiringAccessGrant.length]) }}
           </button>
         </div>
       </div>
@@ -245,7 +244,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, GroupDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, EntitlementsDto, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import licenseEntitlements from '../common/entitlements';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
@@ -332,18 +331,19 @@ const canAddMembers = computed(() => !vault.value?.archived && !licenseViolated.
 const requiringAccessGrantIds = computed(() => new Set(membersRequiringAccessGrant.value.map(m => m.id)));
 // members is loaded once; someone who completed setup since then already shows up in the requiring list
 const membersWaitingForSetup = computed(() => Object.values(members.value).filter(m => m.type === 'USER' && !m.ecdhPublicKey && m.id !== me.value?.id && !requiringAccessGrantIds.value.has(m.id)));
-const showsPendingMembers = computed(() => ownsVault.value && !licenseViolated.value && !vaultRecoveryRequired.value && !vault.value?.archived);
-const pendingMembers = computed(() => showsPendingMembers.value ? [
+const showsUnconfirmedMembers = computed(() => ownsVault.value && !licenseViolated.value && !vaultRecoveryRequired.value && !vault.value?.archived);
+const unconfirmedMembers = computed(() => showsUnconfirmedMembers.value ? [
   ...membersRequiringAccessGrant.value.filter(member => members.value[member.id] !== undefined).map(member => ({ member, waitingForSetup: false })),
   ...membersWaitingForSetup.value.map(member => ({ member, waitingForSetup: true })),
 ] : []);
 const groupUserIds = ref<Record<string, string[]>>({});
-const pendingCountByGroup = computed(() => R.mapValues(groupUserIds.value, ids => ids.filter(id => requiringAccessGrantIds.value.has(id)).length));
-const pendingGroups = computed(() => showsPendingMembers.value ? Object.values(members.value).filter(m => m.type === 'GROUP' && (pendingCountByGroup.value[m.id] ?? 0) > 0) : []);
-const sharedMembers = computed(() => {
-  const pendingIds = new Set(pendingMembers.value.map(p => p.member.id));
-  return Object.values(members.value).filter(m => !pendingIds.has(m.id));
+const unconfirmedCountByGroup = computed(() => R.mapValues(groupUserIds.value, ids => ids.filter(id => requiringAccessGrantIds.value.has(id)).length));
+const unconfirmedGroups = computed(() => showsUnconfirmedMembers.value ? Object.values(members.value).filter(m => m.type === 'GROUP' && (unconfirmedCountByGroup.value[m.id] ?? 0) > 0) : []);
+const confirmedMembers = computed(() => {
+  const unconfirmedIds = new Set(unconfirmedMembers.value.map(u => u.member.id));
+  return Object.values(members.value).filter(m => !unconfirmedIds.has(m.id));
 });
+const canConfirm = computed(() => canUpdatePermissions.value && membersRequiringAccessGrant.value.length > 0);
 const addPreview = ref<AuthorityDto>();
 const addMemberInputId = useId();
 
@@ -463,14 +463,6 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
 
   refreshVault(vault.value);
   await fetchOwnerData();
-}
-
-function groupAccessText(group: GroupDto & MemberDto) {
-  const pending = pendingCountByGroup.value[group.id] ?? 0;
-  const usersWithKeys = groupUserIds.value[group.id]?.length ?? 0;
-  return showsPendingMembers.value && pending > 0
-    ? t('vaultDetails.sharedWith.groupPartialAccess', [usersWithKeys - pending, usersWithKeys])
-    : t('common.xMembers', [group.memberSize]);
 }
 
 // concurrent adds and removes may answer out of order; only the latest request may update the list
