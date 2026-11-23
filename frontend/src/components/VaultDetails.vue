@@ -418,7 +418,7 @@ async function fetchOwnerData() {
     // load the requiring list first, otherwise members still waiting for access would briefly show up as having access
     await refreshUsersRequiringAccessGrant();
     members.value = R.indexBy(loadedMembers, m => m.id);
-    refreshGroupUsers(Object.values(members.value).filter(m => m.type === 'GROUP').map(m => m.id));
+    void refreshGroupUsers(Object.values(members.value).filter(m => m.type === 'GROUP').map(m => m.id));
     vaultRecoveryRequired.value = false;
     const vaultKeys = await unwrapVaultKeys(vault.value);
     if (vaultKeys instanceof UniversalVaultFormat) {
@@ -511,7 +511,7 @@ async function refreshUsersRequiringAccessGrant() {
   }
 }
 
-// the group counts are a hint only: they load next to the vault keys, and a failed group keeps its plain member count
+// the group counts are a hint only: callers don't await them, so they load next to the vault keys; never rejects, a failed group just shows no counts
 async function refreshGroupUsers(groupIds: string[]) {
   const results = await Promise.allSettled(groupIds.map(async groupId => {
     const group = members.value[groupId];
@@ -546,7 +546,7 @@ async function addAuthority(authority: AuthorityDto) {
       };
       members.value[authority.id] = addedMember;
       if (authority.type === 'GROUP') {
-        refreshGroupUsers([authority.id]);
+        void refreshGroupUsers([authority.id]);
       }
     }
   } catch (error) {
