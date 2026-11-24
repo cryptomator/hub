@@ -40,39 +40,7 @@
                 <p v-if="member.type === 'GROUP' && groupConfirmationText(member)" class="text-xs text-gray-500">{{ groupConfirmationText(member) }}</p>
               </div>
               <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
-              <div class="flex w-24 shrink-0 items-center justify-end gap-2">
-                <div v-if="member.vaultRole == 'OWNER'" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
-                <Menu v-if="member.id != me?.id" as="div" class="relative -mr-2 inline-block shrink-0 text-left">
-                  <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                    <span class="absolute -inset-1.5" />
-                    <span class="sr-only">Open options menu</span>
-                    <span class="flex h-full w-full items-center justify-center rounded-full">
-                      <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
-                    </span>
-                  </MenuButton>
-                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-                    <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
-                      <div class="py-1">
-                        <MenuItem v-if="member.vaultRole == 'MEMBER'" v-slot="{ active }" @click="requestUpdateMemberRole(member, 'OWNER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.grantOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-if="member.vaultRole == 'OWNER'" v-slot="{ active }" @click="requestUpdateMemberRole(member, 'MEMBER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.revokeOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
-                          <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
-                          </div>
-                        </MenuItem>
-                      </div>
-                    </MenuItems>
-                  </transition>
-                </Menu>
-              </div>
+              <VaultMemberActions :member="member" :editable="member.id != me?.id" @update-role="(role: VaultRole) => requestUpdateMemberRole(member, role)" @remove="removeMember(member.id)" />
             </div>
             <p v-if="onUpdateVaultMembershipError[member.id]" class="text-sm text-red-900 text-right mt-1">
               {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
@@ -92,7 +60,9 @@
                 <p class="text-xs text-gray-500">{{ unconfirmed.waitingForSetup ? t('vaultDetails.unconfirmedMembers.needsSignIn') : t('vaultDetails.unconfirmedMembers.notConfirmed') }}</p>
               </div>
               <TrustDetails v-if="!unconfirmed.waitingForSetup && unconfirmed.member.type === 'USER'" :trusted-user="unconfirmed.member" :trusts="trusts" @trust-changed="refreshTrusts()" />
-              <div class="flex w-24 shrink-0 items-center justify-end">
+              <!-- the role must be changeable before confirming, e.g. to demote an owner who reset their account instead of re-sharing the owner keys -->
+              <VaultMemberActions v-if="!unconfirmed.waitingForSetup" :member="unconfirmed.member" :editable="unconfirmed.member.id != me?.id" @update-role="(role: VaultRole) => requestUpdateMemberRole(unconfirmed.member, role)" @remove="removeMember(unconfirmed.member.id)" />
+              <div v-else class="flex w-24 shrink-0 items-center justify-end">
                 <button type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(unconfirmed.member.id)">
                   <span class="sr-only">{{ t('common.remove') }} {{ unconfirmed.member.name }}</span>
                   <XMarkIcon class="h-5 w-5" aria-hidden="true" />
@@ -110,13 +80,9 @@
                 <p class="truncate text-sm font-medium text-gray-900" :title="group.name">{{ group.name }}</p>
                 <p class="text-xs text-gray-500">{{ t('vaultDetails.unconfirmedMembers.groupNotConfirmed', [unconfirmedCountByGroup[group.id]]) }}</p>
               </div>
-              <!-- a group also listed as confirmed is removed through the menu of its confirmed row -->
-              <div class="flex w-24 shrink-0 items-center justify-end">
-                <button v-if="onlyUnconfirmedGroupIds.has(group.id)" type="button" class="relative -mr-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5" :title="t('common.remove')" @click="removeMember(group.id)">
-                  <span class="sr-only">{{ t('common.remove') }} {{ group.name }}</span>
-                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
-                </button>
-              </div>
+              <!-- a group also listed as confirmed is managed through its confirmed row -->
+              <VaultMemberActions v-if="onlyUnconfirmedGroupIds.has(group.id)" :member="group" :editable="true" @update-role="(role: VaultRole) => requestUpdateMemberRole(group, role)" @remove="removeMember(group.id)" />
+              <div v-else class="w-24 shrink-0" />
             </div>
             <p v-if="onlyUnconfirmedGroupIds.has(group.id) && onUpdateVaultMembershipError[group.id]" class="text-sm text-red-900 text-right mt-1">
               {{ t('common.unexpectedError', [onUpdateVaultMembershipError[group.id].message]) }}
@@ -252,8 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { EllipsisVerticalIcon, ExclamationTriangleIcon, PlusIcon, XMarkIcon } from '@heroicons/vue/20/solid';
+import { ExclamationTriangleIcon, PlusIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import { ArchiveBoxIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
@@ -279,6 +244,7 @@ import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
 import UntrustedRecipientsWarning from './UntrustedRecipientsWarning.vue';
+import VaultMemberActions from './VaultMemberActions.vue';
 import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -347,8 +313,9 @@ const requiringAccessGrantIds = computed(() => new Set(membersRequiringAccessGra
 // members is loaded once; someone who completed setup since then already shows up in the requiring list
 const membersWaitingForSetup = computed(() => Object.values(members.value).filter(m => m.type === 'USER' && !m.ecdhPublicKey && m.id !== me.value?.id && !requiringAccessGrantIds.value.has(m.id)));
 const showsUnconfirmedMembers = computed(() => ownsVault.value && !licenseViolated.value && !vaultRecoveryRequired.value && !vault.value?.archived);
+// the grant list carries the effective role (e.g. owner via a group); the role menu shows and changes the direct one, like for confirmed members
 const unconfirmedMembers = computed(() => showsUnconfirmedMembers.value ? [
-  ...membersRequiringAccessGrant.value.filter(member => members.value[member.id] !== undefined).map(member => ({ member, waitingForSetup: false })),
+  ...membersRequiringAccessGrant.value.filter(member => members.value[member.id] !== undefined).map(member => ({ member: { ...member, vaultRole: members.value[member.id].vaultRole }, waitingForSetup: false })),
   ...membersWaitingForSetup.value.map(member => ({ member, waitingForSetup: true })),
 ] : []);
 const groupUserIds = ref<Record<string, string[]>>({});
@@ -662,10 +629,15 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// unconfirmed members get their keys only through the confirm step, which then applies their new role
+function roleUpdateRewrapsKeys(member: MemberDto) {
+  return !!uvfVault.value && member.type == 'USER' && !!member.ecdhPublicKey && !requiringAccessGrantIds.value.has(member.id);
+}
+
 async function requestUpdateMemberRole(member: MemberDto, role: VaultRole) {
-  // changing the role of a UVF vault member re-wraps the vault key (and, for owners, the recovery key) to their
+  // changing the role of a confirmed UVF vault member re-wraps the vault key (and, for owners, the recovery key) to their
   // current public key, so additionally warn if their identity has not been verified:
-  const untrusted = !!uvfVault.value && member.type == 'USER' && !!member.ecdhPublicKey && await wot.computeTrustLevel(member, trusts.value) === -1;
+  const untrusted = roleUpdateRewrapsKeys(member) && member.type == 'USER' && await wot.computeTrustLevel(member, trusts.value) === -1;
   pendingRoleUpdate.value = { member, role, untrusted };
   nextTick(() => roleUpdateConfirmDialog.value?.show());
 }
@@ -687,15 +659,18 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
         await backend.vaults.addGroup(props.vaultId, member.id, role);
         break;
     }
+    const rewrapsKeys = roleUpdateRewrapsKeys(member);
     const updatedMember = members.value[member.id];
     if (updatedMember) {
       updatedMember.vaultRole = role;
     }
-    if (uvfVault.value && member.type == 'USER' && member.ecdhPublicKey) {
+    if (rewrapsKeys && uvfVault.value && member.type == 'USER' && member.ecdhPublicKey) {
       const includeOwnerKeys = role == 'OWNER';
       const updatedAccessToken = await uvfVault.value.encryptForUser(base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>, includeOwnerKeys);
       await backend.vaults.grantAccess(props.vaultId, { userId: member.id, token: updatedAccessToken });
     }
+    // the confirm step wraps the keys according to the (effective) roles in this list, which the update may have changed, also for group members
+    await refreshUsersRequiringAccessGrant();
   } catch (error) {
     console.error('Updating member role failed.', error);
     //404 not expected from user perspective

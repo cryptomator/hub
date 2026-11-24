@@ -639,7 +639,7 @@
   "vaultDetails.unconfirmedMembers.groupNotConfirmed": "Members not confirmed yet: {0}",
   "vaultDetails.unconfirmedMembers.confirm": "Confirm ({0})",
   "vaultDetails.confirmRoleUpdate.grantOwnershipTitle": "Grant Ownership to {0}?",
-  "vaultDetails.confirmRoleUpdate.grantOwnershipDescription": "This shares the vault's owner keys with {0}.",
+  "vaultDetails.confirmRoleUpdate.grantOwnershipDescription": "{0} will be able to manage this vault, including adding and removing members, changing their roles and viewing the recovery key.",
   "vaultDetails.confirmRoleUpdate.revokeOwnershipTitle": "Revoke Ownership from {0}?",
   "vaultDetails.confirmRoleUpdate.revokeOwnershipDescription": "{0} will remain a regular member of this vault.",
   "vaultDetails.actions.title": "Actions",
