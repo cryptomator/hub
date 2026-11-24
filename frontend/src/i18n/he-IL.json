@@ -50,8 +50,7 @@
   "userEditCreate.passwordWeak": "חלשה",
   "userList.edit.user.button": "ערוך",
   "userList.vaults.count": "כספות",
-  "vaultDetails.actions.updatePermissions.reload": "ריענון",
-  "vaultDetails.actions.displayRecoveryKey": "הצגת מפתח השחזור",
+  "vaultDetails.emergencyAccess.fix": "תיקון",
   "vaultList.title": "כספות",
   "vaultList.addVault": "הוספה",
   "vaultList.filter": "סנן"
