@@ -1,85 +1,46 @@
 <template>
-  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
-    <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
-      </TransitionChild>
+  <HubDialog v-model:open="open" :title="t('claimVaultOwnershipDialog.title')" :busy="processing" :error="onAuthenticationError && t('common.unexpectedError', [onAuthenticationError.message])" :initial-focus="passwordInput" @submit="authenticateVaultAdmin()" @closed="$emit('close')">
+    <DialogDescription as="p" class="mt-2 text-sm text-gray-500">
+      {{ t('claimVaultOwnershipDialog.description', [vault.name]) }}
+    </DialogDescription>
+    <div class="mt-5">
+      <label for="password" class="block text-sm font-medium text-gray-700">{{ t('claimVaultOwnershipDialog.password') }}</label>
+      <input id="password" ref="passwordInput" v-model="password" type="password" name="password" :aria-invalid="!!passwordError" :aria-describedby="passwordError ? 'passwordError' : undefined" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': passwordError }" :disabled="processing" />
+      <p v-if="passwordError" id="passwordError" class="mt-2 text-sm text-red-900">
+        {{ passwordError }}
+      </p>
+    </div>
 
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <form ref="form" novalidate @submit.prevent="authenticateVaultAdmin()">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div class="sm:flex sm:items-start">
-                    <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <KeyIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
-                    </div>
-                    <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                      <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('claimVaultOwnershipDialog.title') }}
-                      </DialogTitle>
-                      <div class="mt-2">
-                        <p class="text-sm text-gray-500">
-                          {{ t('claimVaultOwnershipDialog.description') }}
-                        </p>
-                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('claimVaultOwnershipDialog.password')" required />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
-                    {{ t('claimVaultOwnershipDialog.submit') }}
-                  </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
-                    {{ t('common.cancel') }}
-                  </button>
-                  <div v-if="onAuthenticationError">
-                    <p v-if="onAuthenticationError instanceof FormValidationFailedError" class="text-sm text-red-900">
-                      {{ t('claimVaultOwnershipDialog.error.formValidationFailed') }}
-                    </p>
-                    <p v-else-if="onAuthenticationError instanceof UnwrapKeyError" class="text-sm text-red-900">
-                      {{ t('claimVaultOwnershipDialog.error.wrongPassword') }}
-                    </p>
-                    <p v-else class="text-sm text-red-900">
-                      {{ t('common.unexpectedError', [onAuthenticationError.message]) }}
-                    </p>
-                  </div>
-                </div>
-              </form>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </div>
-    </Dialog>
-  </TransitionRoot>
+    <template #footer>
+      <button type="button" :disabled="processing" :class="secondaryButton" @click="open = false">
+        {{ t('common.cancel') }}
+      </button>
+      <button type="submit" :disabled="processing" :class="primaryButton">
+        {{ t('claimVaultOwnershipDialog.submit') }}
+      </button>
+    </template>
+  </HubDialog>
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { KeyIcon } from '@heroicons/vue/24/outline';
+import { DialogDescription } from '@headlessui/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
 import { UnwrapKeyError } from '../common/crypto';
 import { VaultFormat8 } from '../common/vaultFormat8';
-
-class FormValidationFailedError extends Error {
-
-  constructor() {
-    super('The form is invalid.');
-  }
-
-}
+import { primaryButton, secondaryButton } from './dialogButtons';
+import HubDialog from './HubDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
-const form = ref<HTMLFormElement>();
+const open = ref(false);
+const processing = ref(false);
+const passwordInput = ref<HTMLInputElement>();
 
+const passwordError = ref<string>();
 const onAuthenticationError = ref<Error>();
 
-const open = ref(false);
 const password = ref('');
 
 const props = defineProps<{
@@ -96,25 +57,45 @@ defineExpose({
 });
 
 function show() {
+  password.value = '';
+  passwordError.value = undefined;
+  onAuthenticationError.value = undefined;
   open.value = true;
 }
 
 async function authenticateVaultAdmin() {
+  if (processing.value || !open.value) {
+    return;
+  }
+  passwordError.value = undefined;
   onAuthenticationError.value = undefined;
+  if (password.value.length === 0) {
+    passwordError.value = t('claimVaultOwnershipDialog.error.formValidationFailed');
+    passwordInput.value?.focus();
+    return;
+  }
   try {
-    if (!form.value?.checkValidity()) {
-      throw new FormValidationFailedError();
-    }
-    if (props.vault.masterkey && props.vault.authPrivateKey && props.vault.authPublicKey && props.vault.salt && props.vault.iterations) {
-      const [vaultKeys, ownerKeyPair] = await VaultFormat8.decryptWithAdminPassword(password.value, props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
-      emit('action', vaultKeys, ownerKeyPair);
-      open.value = false;
-    } else {
-      throw new Error('Vault is missing legacy "vault admin password" related properties.');
-    }
+    processing.value = true;
+    const [vaultKeys, ownerKeyPair] = await decryptWithAdminPassword();
+    emit('action', vaultKeys, ownerKeyPair);
+    open.value = false;
   } catch (error) {
     console.error('Authentication of vault admin failed.', error);
-    onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');
+    if (error instanceof UnwrapKeyError) {
+      passwordError.value = t('claimVaultOwnershipDialog.error.wrongPassword');
+    } else {
+      onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
+  } finally {
+    processing.value = false;
   }
+}
+
+async function decryptWithAdminPassword() {
+  const { masterkey, authPrivateKey, authPublicKey, salt, iterations } = props.vault;
+  if (!masterkey || !authPrivateKey || !authPublicKey || !salt || !iterations) {
+    throw new Error('Vault is missing legacy "vault admin password" related properties.');
+  }
+  return VaultFormat8.decryptWithAdminPassword(password.value, masterkey, authPrivateKey, authPublicKey, salt, iterations);
 }
 </script>

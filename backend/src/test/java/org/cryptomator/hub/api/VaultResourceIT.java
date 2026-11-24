@@ -64,6 +64,7 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -110,6 +111,14 @@ public class VaultResourceIT {
 	@BeforeEach
 	@Transactional
 	void setupTestData() {
+		var user997 = new User();
+		user997.setId("user997");
+		user997.setName("User 997");
+		user997.setEcdhPublicKey("ecdh_public997");
+		user997.setEcdsaPublicKey("ecdsa_public997");
+		user997.setPrivateKeys("private997");
+		user997.setSetupCode("setup997");
+
 		var user998 = new User();
 		user998.setId("user998");
 		user998.setName("User 998");
@@ -122,17 +131,22 @@ public class VaultResourceIT {
 		user999.setPrivateKeys("private999");
 		user999.setSetupCode("setup999");
 
-		userRepo.persist(user998, user999);
+		userRepo.persist(user997, user998, user999);
+
+		var group1 = groupRepo.findById("group1");
+		group1.getMembers().add(user997);
+		group1.getMembers().add(user998);
+		group1.getMembers().add(user999);
+		groupRepo.persist(group1);
 
 		var group2 = groupRepo.findById("group2");
-		group2.getMembers().add(user998);
 		group2.getMembers().add(user999);
 		groupRepo.persist(group2);
 
-		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
-		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
+		effectiveGroupMembershipRepo.updateUsers(List.of("user997", "user998", "user999"));
+		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group2"));
 
-		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		var entitlements = HubLicenseEntitlements.create().withSeats(6L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
@@ -140,7 +154,7 @@ public class VaultResourceIT {
 	@AfterEach
 	@Transactional
 	void cleanupTestData() {
-		userRepo.deleteByIds(List.of("user998", "user999"));
+		userRepo.deleteByIds(List.of("user997", "user998", "user999"));
 	}
 
 	@Nested
@@ -344,18 +358,45 @@ public class VaultResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending user999 on vault2")
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending member user997 on vault2")
 		void testGetUsersRequiringAccessGrant() {
-			// user999 was added to group2 (owner of vault2) by @BeforeEach, has a valid ecdh key but no access token yet,
-			// so they are a pending member of vault2. The endpoint returns them because user1 holds a token for vault2
-			// (V9999), i.e. can decrypt and therefore re-share. The Web-of-Trust decision is left to the client, so no
-			// trust setup is needed here. user998 has no ecdh key, so it must not appear. We don't assert the total vault
-			// count: other tests may leave vaults around.
+			// user1 holds a token for vault2 (V9999) and has access to it, so it can re-share and sees vault2's pending members.
+			// The Web-of-Trust decision is left to the client, so no trust setup is needed. user997 (group1, member of vault2) has
+			// an ecdh key but no token yet, so it is pending. user998 (also group1) has no ecdh key. user999 is a member via group1
+			// but an owner via group2, and owners are never granted automatically. We don't assert the total vault count: other
+			// tests may leave vaults around.
 			given().queryParam("wait", 0)
 					.when().get("/vaults/users-requiring-access-grant")
 					.then().statusCode(200)
-					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user999"))
-					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")));
+					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user997"))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user999")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 omits vaults user1 holds a token for but has no access to")
+		void testGetUsersRequiringAccessGrantWithoutAccess() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "archived")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000CCCC', 'Vault C', 'This is a testvault.', '2020-02-20 20:20:20', FALSE);
+						INSERT INTO "vault_access" ("vault_id", "authority_id", "role")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000CCCC', 'user999', 'MEMBER');
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+						VALUES ('user1', '7E57C0DE-0000-4000-8000-00010000CCCC', 'jwe.jwe.jwe.vaultC.user1');
+						""");
+			}
+
+			given().queryParam("wait", 0)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(200)
+					.body("'7e57c0de-0000-4000-8000-00010000cccc'", nullValue());
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-00010000CCCC';
+						""");
+			}
 		}
 
 		@Test
@@ -627,22 +668,42 @@ public class VaultResourceIT {
 		}
 
 		@Test
-		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 200 for user999 (member-initiated automatic grant to a pending user)")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 200 for user997 (member-initiated automatic grant to a pending member)")
 		void testAutoGrantByMember() {
-			// Same member (user1, non-owner of vault2) and same target as above, but via the auto endpoint, which any
-			// member may call. user999 is in group2 (owner of vault2), has a public key, and holds no token yet → pending.
-			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+			// Same member (user1, non-owner of vault2) as above, but via the auto endpoint, which any member may call.
+			// user997 is in group1 (member of vault2), has a public key, and holds no token yet → pending.
+			given().contentType(ContentType.JSON).body(Map.of("user997", "jwe.jwe.jwe.vault2.user997"))
 					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200);
 
 			// the grant must be recorded as automatic (true), attributed to the member who performed it
-			Mockito.verify(eventLogger).logVaultAccessGranted("user1", UUID.fromString("7E57C0DE-0000-4000-8000-000100002222"), "user999", true);
+			Mockito.verify(eventLogger).logVaultAccessGranted("user1", UUID.fromString("7E57C0DE-0000-4000-8000-000100002222"), "user997", true);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 400 for user999 (pending owner)")
+		void testAutoGrantToOwner() {
+			// user999 is pending on vault2 but owns it via group2, so the auto endpoint must reject them.
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 402 if license seats are exceeded")
+		void testAutoGrantExceedingSeats() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(1L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			given().contentType(ContentType.JSON).body(Map.of("user997", "jwe.jwe.jwe.vault2.user997"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(402);
 		}
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 400 for user998 (not awaiting a grant: no public key)")
 		void testAutoGrantToNonPending() {
-			// user998 is also in group2 but has no public key, so it is not awaiting a grant and must be rejected.
+			// user998 is in group1 (member of vault2) but has no public key, so it is not awaiting a grant and must be rejected.
 			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault2.user998"))
 					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(400);
@@ -861,6 +922,78 @@ public class VaultResourceIT {
 					.body("id", hasItems("group1", "group2"))
 			;
 		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview resolves prospective members without persisting them")
+		void previewEffectiveUsers() {
+			// user997 (direct OWNER, MEMBER via group1) → OWNER; user999 (via group1 only) → MEMBER; user1 (group1) → MEMBER, even though already holding a token for vault2;
+			// user998 (group1) has no key; user2 (group2) is not part of the prospective members:
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"group1": "MEMBER",
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("user997", "user999", "user1"))
+					.body("id", not(hasItems("user998", "user2")))
+					.body("findAll { it.id == 'user997' }", hasSize(1))
+					.body("find { it.id == 'user997' }.vaultRole", is("OWNER"))
+					.body("find { it.id == 'user999' }.vaultRole", is("MEMBER"))
+					.body("find { it.id == 'user1' }.vaultRole", is("MEMBER"));
+
+			// nothing persisted:
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems("group1", "group2"))
+					.body("id", not(hasItems("user997")));
+			Mockito.verify(eventLogger, Mockito.never()).logVaultMemberAdded(any(), eq(UUID.fromString("7E57C0DE-0000-4000-8000-000100002222")), eq("user997"), any());
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for empty body")
+		void previewEffectiveUsersEmpty() {
+			given().when().contentType(ContentType.JSON).body("{}").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/effective-users/preview returns 400 for null role")
+		void previewEffectiveUsersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members returns 400 for null role")
+		void setMembersNullRole() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": null
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/effective-users/preview returns 403 - not owning a nonexisting vault")
+		void previewEffectiveUsersUnknownVault() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user997": "OWNER"
+							}
+							""").post("/vaults/{vaultId}/effective-users/preview", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
+					.then().statusCode(403);
+		}
 	}
 
 	@Nested
@@ -891,11 +1024,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=3")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=2")
 		void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("find { it.id == 'group2' }.memberSize", equalTo(3));
+					.body("find { it.id == 'group2' }.memberSize", equalTo(2));
 		}
 
 		@Test

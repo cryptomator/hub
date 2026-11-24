@@ -1,6 +1,6 @@
 import { base64 } from '@scure/base';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { asPublicKey, UserKeys } from '../../src/common/crypto';
+import { asPublicKey, KeyPairMismatchError, UserKeys } from '../../src/common/crypto';
 import { TrustDto } from '../../src/common/backend';
 import { JWT } from '../../src/common/jwt';
 import wot, { SignedKeys } from '../../src/common/wot';
@@ -103,7 +103,15 @@ describe('Web of Trust', () => {
       ];
     });
 
-    it('returns 0 for myself, even without a trust entry', async () => {
+    it('returns 0 for myself with my own keys, even without a trust entry', async () => {
+      await expect(wot.computeTrustLevel({ id: 'alice', ...await publishedKeys(alice) }, [])).resolves.toBe(0);
+    });
+
+    it('fails for myself with foreign keys (e.g. substituted by a malicious server in a member list)', async () => {
+      await expect(wot.computeTrustLevel({ id: 'alice', ...bobKeys }, [])).rejects.toThrow(KeyPairMismatchError);
+    });
+
+    it('returns 0 for myself without keys (nothing can be wrapped to absent keys)', async () => {
       await expect(wot.computeTrustLevel({ id: 'alice' }, [])).resolves.toBe(0);
     });
 
@@ -135,7 +143,7 @@ describe('Web of Trust', () => {
 
     it('computes trust levels for multiple users in one batch', async () => {
       const levels = await wot.computeTrustLevels([
-        { id: 'alice' },
+        { id: 'alice', ...await publishedKeys(alice) },
         { id: 'bob', ...bobKeys },
         { id: 'carol', ...carolKeys },
         { id: 'dave' }

@@ -22,9 +22,14 @@ jobs:
       packages: write # Required for pushing the image to GHCR
     steps:
       - name: Pull image defined by digest
-        run: docker pull ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}}
+        run: docker pull "ghcr.io/cryptomator/hub@${DIGEST}"
+        env:
+          DIGEST: ${{ github.event.inputs.digest }}
       - name: Tag image in github registry
-        run: docker tag ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}} ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
+        run: docker tag "ghcr.io/cryptomator/hub@${DIGEST}" "ghcr.io/cryptomator/hub:${TAG}"
+        env:
+          DIGEST: ${{ github.event.inputs.digest }}
+          TAG: ${{ github.event.inputs.tag }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
@@ -32,4 +37,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Push tagged image
-        run: docker push ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
+        run: docker push "ghcr.io/cryptomator/hub:${TAG}"
+        env:
+          TAG: ${{ github.event.inputs.tag }}

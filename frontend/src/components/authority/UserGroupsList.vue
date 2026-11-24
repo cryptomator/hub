@@ -74,8 +74,8 @@
       </table>
     </div>
   </section>
-  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: GroupDto[]) => emit('onSaved', groups)" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = undefined" @removed="onGroupRemoved" />
+  <UserAddGroupDialog ref="addGroupDialog" :user="user" :groups="user.groups" @saved="(groups: GroupDto[]) => emit('onSaved', groups)" />
+  <UserGroupRemoveDialog v-if="deletingGroup" ref="deleteGroupMemberDialog" :group="deletingGroup" :user="user" @close="deletingGroup = undefined" @removed="onGroupRemoved" />
 </template>
 
 <script setup lang="ts">
@@ -91,7 +91,6 @@ const PAGE_SIZE = 10;
 
 const props = defineProps<{
   user: UserDtoWithDetails;
-  userId: string;
   groups: GroupDto[];
 }>();
 

@@ -23,6 +23,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.LegacyDevice;
@@ -35,6 +36,7 @@ import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.filters.AvailableDuringSetup;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -65,11 +67,13 @@ public class UsersResource {
 	private final WotEntry.Repository wotRepo;
 	private final EffectiveWot.Repository effectiveWotRepo;
 	private final AuditEvent.Repository auditEventRepo;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	private final JsonWebToken jwt;
 	private final KeycloakAuthorityPuller keycloakAuthorityPuller;
+	private final LicenseHolder license;
 
 	@Inject
-	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, JsonWebToken jwt, KeycloakAuthorityPuller keycloakAuthorityPuller) {
+	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, JsonWebToken jwt, KeycloakAuthorityPuller keycloakAuthorityPuller, LicenseHolder license) {
 		this.accessTokenRepo = accessTokenRepo;
 		this.eventLogger = eventLogger;
 		this.userRepo = userRepo;
@@ -79,8 +83,10 @@ public class UsersResource {
 		this.wotRepo = wotRepo;
 		this.effectiveWotRepo = effectiveWotRepo;
 		this.auditEventRepo = auditEventRepo;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
 		this.jwt = jwt;
 		this.keycloakAuthorityPuller = keycloakAuthorityPuller;
+		this.license = license;
 	}
 
 	@PUT
@@ -147,12 +153,18 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).")
-	@APIResponse(responseCode = "200", description = "all keys stored")
+	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}). Vaults the user has no access to are skipped.")
+	@APIResponse(responseCode = "200", description = "keys stored for all accessible vaults")
+	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	public Response updateMyAccessTokens(@NotNull Map<UUID, @ValidJWE String> tokens) {
+		if (effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+		}
+
 		var user = userRepo.findById(jwt.getSubject());
+		var accessibleVaults = vaultRepo.findAccessibleByUser(jwt.getSubject()).collect(Collectors.toMap(Vault::getId, Function.identity()));
 		for (var entry : tokens.entrySet()) {
-			var vault = vaultRepo.findById(entry.getKey());
+			var vault = accessibleVaults.get(entry.getKey());
 			if (vault == null) {
 				continue; // skip
 			}
@@ -167,6 +179,20 @@ public class UsersResource {
 			eventLogger.logVaultAccessGranted(user.getId(), vault.getId(), user.getId(), false);
 		}
 		return Response.ok().build();
+	}
+
+	@PUT
+	@Path("/me/onboarding-completed")
+	@RolesAllowed("user")
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Transactional
+	@Operation(summary = "marks the onboarding tour as completed or pending for the logged-in user")
+	@APIResponse(responseCode = "204", description = "user updated")
+	public Response setMyOnboardingCompleted(boolean onboardingCompleted) {
+		User user = userRepo.findById(jwt.getSubject());
+		user.setOnboardingCompleted(onboardingCompleted);
+		userRepo.persist(user);
+		return Response.noContent().build();
 	}
 
 	@GET
@@ -187,7 +213,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -206,7 +232,7 @@ public class UsersResource {
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
 		var deviceDtos = legacyDevicesWithLastAccess(user);
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return UserDto.fromEntity(user, deviceDtos);
 	}
 
 	/**
@@ -380,7 +406,7 @@ public class UsersResource {
 		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
 		var realmRoles = keycloakAuthorityPuller.realmRolesOf(userId);
 
-		return UserDto.justPublicInfo(user).withDetails(
+		return UserDto.detailedInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,

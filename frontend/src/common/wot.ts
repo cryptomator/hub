@@ -1,6 +1,6 @@
 import { base64 } from '@scure/base';
 import backend, { TrustDto, UserDto } from './backend';
-import { UserKeys, asPublicKey, getJwkThumbprint } from './crypto';
+import { KeyPairMismatchError, UserKeys, asPublicKey, getJwkThumbprint } from './crypto';
 import { JWT, JWTHeader } from './jwt';
 import userdata from './userdata';
 
@@ -109,7 +109,10 @@ export type TrustCheckableUser = Pick<UserDto, 'id' | 'ecdhPublicKey' | 'ecdsaPu
 async function computeTrustLevel(user: TrustCheckableUser, trusts: TrustDto[]): Promise<number> {
   const me = await userdata.me;
   if (me.id === user.id) {
-    return 0; // Self
+    // Self: the given keys may stem from any server response (e.g. a member list), so they must be the ones belonging to
+    // my private keys; otherwise the server could make me wrap secrets "to myself" using a foreign key without any warning.
+    await assertMyKeys(user);
+    return 0;
   }
   const trust = trusts.find(t => t.trustedUserId === user.id);
   if (trust && user.ecdhPublicKey && user.ecdsaPublicKey) {
@@ -122,6 +125,22 @@ async function computeTrustLevel(user: TrustCheckableUser, trusts: TrustDto[]): 
     }
   }
   return -1; // Unverified
+}
+
+/**
+ * Asserts that the given (server-supplied) public keys of myself are the ones belonging to my decrypted private keys.
+ * @param user My public keys as reported by the server; absent keys are not checked (nothing can be wrapped to them anyway)
+ * @throws {KeyPairMismatchError} if a given key differs from my verified key
+ */
+async function assertMyKeys(user: Pick<UserDto, 'ecdhPublicKey' | 'ecdsaPublicKey'>): Promise<void> {
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
+  const encode = async (key: CryptoKey) => base64.encode(new Uint8Array(await crypto.subtle.exportKey('spki', key)));
+  if (user.ecdhPublicKey && user.ecdhPublicKey !== await encode(userKeys.ecdhKeyPair.publicKey)) {
+    throw new KeyPairMismatchError('ECDH');
+  }
+  if (user.ecdsaPublicKey && user.ecdsaPublicKey !== await encode(userKeys.ecdsaKeyPair.publicKey)) {
+    throw new KeyPairMismatchError('ECDSA');
+  }
 }
 
 /**

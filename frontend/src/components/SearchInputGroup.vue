@@ -1,15 +1,16 @@
 <template>
   <div class="flex rounded-md shadow-xs">
-    <div class="relative flex items-stretch grow focus-within:z-10">
-      <Combobox as="div" class="w-full" @update:model-value="item => selectedItem = item">
+    <div class="relative flex items-stretch grow focus-within:z-10" @keydown.capture="onKeydown" @mousedown.capture="onMousedown" @pointermove.capture="onPointermove">
+      <Combobox v-slot="{ activeOption }" as="div" class="w-full" @update:model-value="value => selectedItem = value">
+        <HighlightReporter :option="activeOption" @change="onHighlight" />
         <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div v-if="showIcon" class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem === undefined" class="h-5 w-5 text-gray-400" aria-hidden="true" />
             <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" />
           </div>
 
-          <ComboboxInput v-if="selectedItem === undefined" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value" />
-          <div v-else class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 flex items-center justify-between shadow-xs sm:text-sm">
+          <ComboboxInput v-if="selectedItem === undefined" :id="inputId" ref="comboboxInput" v-focus="autoFocus" :disabled="disabled" :class="fieldShapeClass" class="w-full h-10 border border-gray-300 bg-white py-2 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value" />
+          <div v-else :class="fieldShapeClass" class="w-full h-10 border border-gray-300 bg-primary-l2 py-2 flex items-center justify-between shadow-xs sm:text-sm">
             <span class="truncate">{{ selectedItem.name }}</span>
             <span v-if="selectedItem.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [selectedItem.memberSize]) }}</span>
           </div>
@@ -29,12 +30,12 @@
         </ComboboxOptions>
       </Combobox>
 
-      <button v-if="selectedItem !== undefined" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="reset()">
+      <button v-if="selectedItem !== undefined" :disabled="disabled" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center disabled:cursor-not-allowed disabled:opacity-50" @click="reset()">
         <XCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
       </button>
     </div>
 
-    <button ref="actionButton" :disabled="selectedItem === undefined" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
+    <button v-if="hasActionButton" ref="actionButton" :disabled="selectedItem === undefined || disabled" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
       {{ actionTitle }}
     </button>
   </div>
@@ -43,7 +44,8 @@
 <script setup lang="ts" generic="T extends Item">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, UserGroupIcon, XCircleIcon } from '@heroicons/vue/24/solid';
-import { computed, nextTick, ref, shallowRef, watch } from 'vue';
+import { computed, defineComponent, nextTick, ref, shallowRef, watch } from 'vue';
+import type { PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { debounce } from '../common/util';
 
@@ -55,29 +57,104 @@ export type Item = {
   memberSize?: number;
 };
 
+export type SearchInputGroupExpose = {
+  focusTarget?: HTMLElement;
+};
+
 const { t } = useI18n({ useScope: 'global' });
 
-const props = defineProps<{
-  actionTitle: string
+const props = withDefaults(defineProps<{
+  actionTitle?: string
   placeHolder: string
   onSearch: (query: string) => Promise<T[]>
-}>();
+  disabled?: boolean
+  autoFocus?: boolean
+  showIcon?: boolean
+  inputId?: string
+}>(), {
+  actionTitle: undefined,
+  disabled: false,
+  autoFocus: true,
+  showIcon: true,
+  inputId: undefined,
+});
 
 const emit = defineEmits<{
   action: [item: T]
+  highlight: [item: T | undefined]
 }>();
 
 const vFocus = {
-  mounted: (el: HTMLElement) => {
-    el.focus();
+  mounted: (el: HTMLElement, binding: { value?: boolean }) => {
+    if (binding.value !== false) {
+      el.focus();
+    }
   }
 };
 
+const comboboxInput = ref<InstanceType<typeof ComboboxInput>>();
 const actionButton = ref<HTMLButtonElement>();
+defineExpose({
+  focusTarget: computed<HTMLElement | undefined>(() => comboboxInput.value?.$el ?? actionButton.value)
+});
+
+const hasActionButton = computed(() => !!props.actionTitle);
+const fieldShapeClass = computed(() => [hasActionButton.value ? 'rounded-l-md' : 'rounded-md', props.showIcon ? 'px-10' : 'pl-3 pr-10']);
+
+// Without an action button, a selection acts immediately. Headless UI also selects the active option on Tab and blur,
+// and activates the first result on its own, so only a click on a result or Enter after moving the highlight counts.
+let userMovedHighlight = false;
+let explicitPick = false;
+
+function onKeydown(event: KeyboardEvent) {
+  if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'].includes(event.key)) {
+    userMovedHighlight = true;
+  } else if (event.key === 'Enter' && userMovedHighlight) {
+    markExplicitPick();
+  }
+}
+
+function onPointermove(event: PointerEvent) {
+  if (isOnOption(event)) {
+    userMovedHighlight = true;
+  }
+}
+
+// Headless UI selects an option on a left-button mousedown, which on touch only follows a tap, not a scroll
+function onMousedown(event: MouseEvent) {
+  if (event.button === 0 && isOnOption(event)) {
+    userMovedHighlight = true;
+    markExplicitPick();
+  }
+}
+
+function isOnOption(event: Event) {
+  return (event.target as Element).closest('[role="option"]') !== null;
+}
+
+// only valid for the selection Headless UI makes while handling the current event, which may make none
+function markExplicitPick() {
+  explicitPick = true;
+  setTimeout(() => explicitPick = false);
+}
+
+function onHighlight(option: T | undefined) {
+  emit('highlight', userMovedHighlight ? option : undefined);
+}
+
 const selectedItem = shallowRef<T>();
 watch(selectedItem, (value) => {
-  if (value !== undefined) {
+  const wasExplicit = explicitPick;
+  explicitPick = false;
+  if (value === undefined) {
+    return;
+  }
+  if (hasActionButton.value) {
     nextTick(() => actionButton.value?.focus());
+  } else if (wasExplicit) {
+    onAction();
+  } else {
+    reset();
   }
 });
 
@@ -92,6 +169,7 @@ const debouncedSearch = debounce(async () => {
   }
 });
 watch(query, async (newQuery) => {
+  userMovedHighlight = false;
   if (newQuery == '') {
     searchResult.value = [];
     debouncedSearch.cancel();
@@ -118,5 +196,16 @@ function onAction() {
 function reset() {
   selectedItem.value = undefined;
   query.value = '';
+  emit('highlight', undefined);
 }
+
+// forwards Headless UI's active option, which is only exposed as a slot prop
+const HighlightReporter = defineComponent({
+  props: { option: { type: Object as PropType<T | null>, default: null } },
+  emits: { change: (_option: T | undefined) => true },
+  setup(props, { emit: emitChange }) {
+    watch(() => props.option, option => emitChange('change', option ?? undefined));
+    return () => null;
+  }
+});
 </script>

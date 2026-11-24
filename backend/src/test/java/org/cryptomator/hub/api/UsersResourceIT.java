@@ -16,6 +16,7 @@ import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
@@ -64,6 +66,14 @@ class UsersResourceIT {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
+	private void seedOnboardingCompleted(String userId, boolean completed) throws SQLException {
+		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+			s.execute("""
+					UPDATE "user_details" SET "onboarding_completed" = %s WHERE "id" = '%s';
+					""".formatted(completed, userId));
+		}
+	}
+
 	@Nested
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
@@ -71,6 +81,12 @@ class UsersResourceIT {
 			@Claim(key = "sub", value = "user1")
 	})
 	class AsAuthorzedUser1 {
+
+		@BeforeEach
+		void setup() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		}
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
@@ -85,6 +101,7 @@ class UsersResourceIT {
 			when().get("/users/me")
 					.then().statusCode(200)
 					.body("id", is("user1"))
+					.body("onboardingCompleted", is(false))
 					.body("devices.flatten()", empty());
 		}
 
@@ -143,6 +160,53 @@ class UsersResourceIT {
 		}
 
 		@Test
+		@DisplayName("POST /users/me/access-tokens skips vaults the user has no access to")
+		void testPostAccessTokensForInaccessibleVault() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "archived")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000BBBB', 'Vault B', 'This is a testvault.', '2020-02-20 20:20:20', FALSE);
+						""");
+			}
+
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-00010000BBBB": "jwe.jwe.jwe.vaultB.user1"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(200);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "access_token" WHERE "vault_id" = '7E57C0DE-0000-4000-8000-00010000BBBB';
+						""");
+				Assertions.assertFalse(rs.next());
+
+				s.execute("""
+						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-00010000BBBB';
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 402 if license seats are exceeded")
+		void testPostAccessTokensExceedingSeats() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(1L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(402);
+		}
+
+		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
 		void testPostAccessTokens2() {
 			given().contentType(ContentType.JSON).body("{}")
@@ -174,6 +238,60 @@ class UsersResourceIT {
 	}
 
 	@Nested
+	@DisplayName("As user2")
+	@TestSecurity(user = "User Name 2", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user2")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	class AsAuthorzedUser2 {
+
+		@DisplayName("PUT /users/me/onboarding-completed returns 204 and stores the onboarding flag")
+		@ParameterizedTest(name = "onboardingCompleted = {0}")
+		@ValueSource(booleans = {true, false})
+		void testSetMyOnboardingCompleted(boolean onboardingCompleted) throws SQLException {
+			seedOnboardingCompleted("user2", !onboardingCompleted);
+
+			given().contentType(ContentType.TEXT).body(String.valueOf(onboardingCompleted))
+					.when().put("/users/me/onboarding-completed")
+					.then().statusCode(204);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(onboardingCompleted));
+		}
+
+		@DisplayName("PUT /users/me returns 201 and ignores the onboarding flag in the body")
+		@ParameterizedTest(name = "stored onboardingCompleted = {0}")
+		@ValueSource(booleans = {true, false})
+		void testPutMeKeepsOnboardingFlag(boolean onboardingCompleted) throws SQLException {
+			seedOnboardingCompleted("user2", onboardingCompleted);
+
+			var body = """
+					{
+						"id": "user2",
+						"name": "User Name 2",
+						"email": "user2@example.com",
+						"onboardingCompleted": %s
+					}
+					""".formatted(!onboardingCompleted);
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/me")
+					.then().statusCode(201);
+
+			when().get("/users/me")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(onboardingCompleted));
+		}
+
+		@AfterAll
+		void tearDown() throws SQLException {
+			seedOnboardingCompleted("user2", false);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 
@@ -182,6 +300,7 @@ class UsersResourceIT {
 		@CsvSource(value = {
 				"GET, /users/me",
 				"PUT, /users/me",
+				"PUT, /users/me/onboarding-completed",
 				"GET, /users"
 		})
 		void testGet(String method, String path) {
@@ -403,7 +522,8 @@ class UsersResourceIT {
 		void testGetAll() {
 			when().get("/users")
 					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
+					.body("id", hasItems("user1", "user2"))
+					.body("find { it.id == 'user1' }.onboardingCompleted", nullValue());
 		}
 
 		@Test
@@ -545,9 +665,20 @@ class UsersResourceIT {
 			when().get("/users/user1")
 					.then().statusCode(200)
 					.body("id", is("user1"))
+					.body("onboardingCompleted", is(false))
 					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
 					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue());
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns the onboarding flag for a completed user")
+		void testGetUserOnboardingCompleted() throws SQLException {
+			seedOnboardingCompleted("newUserId123", true);
+
+			when().get("/users/newUserId123")
+					.then().statusCode(200)
+					.body("onboardingCompleted", is(true));
 		}
 
 		@Test
