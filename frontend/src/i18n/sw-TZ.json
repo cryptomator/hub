@@ -50,8 +50,7 @@
   "userEditCreate.passwordWeak": "Dhaifu",
   "userList.edit.user.button": "Hariri",
   "userList.vaults.count": "Kuba",
-  "vaultDetails.actions.updatePermissions.reload": "Upya",
-  "vaultDetails.actions.displayRecoveryKey": "Onyesha Ufunguo wa Kufufua",
+  "vaultDetails.emergencyAccess.fix": "Kurekebisha",
   "vaultList.title": "Kuba",
   "vaultList.addVault": "Ongeza",
   "vaultList.filter": "Chuja"
