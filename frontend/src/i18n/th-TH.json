@@ -51,8 +51,7 @@
   "userList.edit.user.button": "แก้ไข",
   "userList.vaults.count": "Vaults",
   "unlockSuccess.deviceSetup.title": "อุปกรณ์ใหม่",
-  "vaultDetails.actions.updatePermissions.reload": "รีโหลด",
-  "vaultDetails.actions.displayRecoveryKey": "แสดงรหัสกู้คืน",
+  "vaultDetails.emergencyAccess.fix": "แก้ไข",
   "vaultList.title": "Vaults",
   "vaultList.addVault": "เพิ่ม",
   "vaultList.filter": "กรอง"
