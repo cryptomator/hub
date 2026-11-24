@@ -51,8 +51,7 @@
   "userList.edit.user.button": "Upravit",
   "userList.vaults.count": "Trezory",
   "unlockSuccess.deviceSetup.title": "Nové zařízení",
-  "vaultDetails.actions.updatePermissions.reload": "Obnovit",
-  "vaultDetails.actions.displayRecoveryKey": "Zobrazit obnovovací klíč",
+  "vaultDetails.emergencyAccess.fix": "Opravit",
   "vaultList.title": "Trezory",
   "vaultList.addVault": "Přidat",
   "vaultList.filter": "Filtr"
