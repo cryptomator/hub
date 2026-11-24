@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -89,7 +90,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultKeyRetrieved(Instant timestamp, String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
+	public void logVaultKeyRetrieved(Instant timestamp, String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, @Nullable String deviceId) {
 		var event = new VaultKeyRetrievedEvent();
 		event.setTimestamp(timestamp);
 		event.setRetrievedBy(retrievedBy);

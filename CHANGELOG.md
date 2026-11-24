@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed automatic access grants leaving vault owners without the vault's recovery key: owners now always need to be granted access manually (#505)
 - Automatic access grants now respect the license's seat limit, like manual grants do
 - Fixed access tokens being accepted for vaults the user has no access to
+- Failed unlock attempts with a legacy device no longer show up as that device's last access
 
 ### Security
 
