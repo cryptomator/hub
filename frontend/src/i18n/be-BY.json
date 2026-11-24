@@ -39,8 +39,7 @@
   "userEditCreate.passwordWeak": "Слабы",
   "userList.edit.user.button": "Рэдагаваць",
   "unlockSuccess.deviceSetup.title": "Новая прылада",
-  "vaultDetails.actions.updatePermissions.reload": "Перазагрузіць",
-  "vaultDetails.actions.displayRecoveryKey": "Паказаць пароль аднаўлення",
+  "vaultDetails.emergencyAccess.fix": "Выправіць",
   "vaultList.addVault": "Дадаць",
   "vaultList.filter": "Фільтр"
 }
