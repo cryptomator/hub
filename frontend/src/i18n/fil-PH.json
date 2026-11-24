@@ -51,8 +51,7 @@
   "userList.edit.user.button": "I-edit",
   "userList.vaults.count": "Mga Vault",
   "unlockSuccess.deviceSetup.title": "Bagong Device",
-  "vaultDetails.actions.updatePermissions.reload": "Reload",
-  "vaultDetails.actions.displayRecoveryKey": "Ipakita ang Recovery Key",
+  "vaultDetails.emergencyAccess.fix": "Ayusin",
   "vaultList.title": "Mga Vault",
   "vaultList.addVault": "Idagdag",
   "vaultList.filter": "Filter"
