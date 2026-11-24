@@ -123,8 +123,7 @@
   "userList.userName": "名稱",
   "userList.vaults.count": "加密庫",
   "unlockSuccess.deviceSetup.title": "新裝置",
-  "vaultDetails.actions.updatePermissions.reload": "重新載入",
-  "vaultDetails.actions.displayRecoveryKey": "顯示恢復金鑰",
+  "vaultDetails.emergencyAccess.fix": "修復",
   "vaultList.title": "加密庫",
   "vaultList.addVault": "增加",
   "vaultList.filter": "過濾"
