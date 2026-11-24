@@ -66,8 +66,7 @@
   "userList.edit.user.button": "Chỉnh sửa",
   "userList.vaults.count": "Danh sách Vault",
   "unlockSuccess.deviceSetup.title": "Thiết bị mới",
-  "vaultDetails.actions.updatePermissions.reload": "Tải lại",
-  "vaultDetails.actions.displayRecoveryKey": "Hiển thị Khóa Khôi Phục",
+  "vaultDetails.emergencyAccess.fix": "Sửa",
   "vaultList.title": "Danh sách Vault",
   "vaultList.addVault": "Thêm",
   "vaultList.filter": "Lọc"
