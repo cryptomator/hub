@@ -64,6 +64,7 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -359,10 +360,10 @@ public class VaultResourceIT {
 		@Test
 		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending member user997 on vault2")
 		void testGetUsersRequiringAccessGrant() {
-			// user1 holds a token for vault2 (V9999), so it can re-share and sees vault2's pending members. The Web-of-Trust
-			// decision is left to the client, so no trust setup is needed. user997 (group1, member of vault2) has an ecdh key
-			// but no token yet, so it is pending. user998 (also group1) has no ecdh key. user999 is a member via group1 but an
-			// owner via group2, and owners are never granted automatically. We don't assert the total vault count: other
+			// user1 holds a token for vault2 (V9999) and has access to it, so it can re-share and sees vault2's pending members.
+			// The Web-of-Trust decision is left to the client, so no trust setup is needed. user997 (group1, member of vault2) has
+			// an ecdh key but no token yet, so it is pending. user998 (also group1) has no ecdh key. user999 is a member via group1
+			// but an owner via group2, and owners are never granted automatically. We don't assert the total vault count: other
 			// tests may leave vaults around.
 			given().queryParam("wait", 0)
 					.when().get("/vaults/users-requiring-access-grant")
@@ -370,6 +371,32 @@ public class VaultResourceIT {
 					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user997"))
 					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")))
 					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user999")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 omits vaults user1 holds a token for but has no access to")
+		void testGetUsersRequiringAccessGrantWithoutAccess() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "archived")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000CCCC', 'Vault C', 'This is a testvault.', '2020-02-20 20:20:20', FALSE);
+						INSERT INTO "vault_access" ("vault_id", "authority_id", "role")
+						VALUES ('7E57C0DE-0000-4000-8000-00010000CCCC', 'user999', 'MEMBER');
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+						VALUES ('user1', '7E57C0DE-0000-4000-8000-00010000CCCC', 'jwe.jwe.jwe.vaultC.user1');
+						""");
+			}
+
+			given().queryParam("wait", 0)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(200)
+					.body("'7e57c0de-0000-4000-8000-00010000cccc'", nullValue());
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-00010000CCCC';
+						""");
+			}
 		}
 
 		@Test
@@ -651,6 +678,17 @@ public class VaultResourceIT {
 			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
 					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 402 if license seats are exceeded")
+		void testAutoGrantExceedingSeats() {
+			var entitlements = HubLicenseEntitlements.create().withSeats(1L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+
+			given().contentType(ContentType.JSON).body(Map.of("user997", "jwe.jwe.jwe.vault2.user997"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(402);
 		}
 
 		@Test
