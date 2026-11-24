@@ -51,8 +51,7 @@
   "userList.edit.user.button": "Төҙәт",
   "userList.vaults.count": "Һаҡлағыстар",
   "unlockSuccess.deviceSetup.title": "Яңы йыһаз",
-  "vaultDetails.actions.updatePermissions.reload": "Яңынан тейә",
-  "vaultDetails.actions.displayRecoveryKey": "Ҡайтарыу асҡысын ҡарау",
+  "vaultDetails.emergencyAccess.fix": "Төҙәт",
   "vaultList.title": "Һаҡлағыстар",
   "vaultList.addVault": "Өҫтәү",
   "vaultList.filter": "Фильтр"
