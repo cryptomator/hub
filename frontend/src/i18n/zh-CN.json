@@ -118,8 +118,7 @@
   "userList.userName": "名称",
   "userList.vaults.count": "保险库",
   "unlockSuccess.deviceSetup.title": "新设备",
-  "vaultDetails.actions.updatePermissions.reload": "重新加载",
-  "vaultDetails.actions.displayRecoveryKey": "显示恢复密钥",
+  "vaultDetails.emergencyAccess.fix": "修复",
   "vaultList.title": "保险库",
   "vaultList.addVault": "添加",
   "vaultList.filter": "筛选"
