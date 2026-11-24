@@ -289,7 +289,7 @@ const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Record<string, MemberDto>>({});
 const membersRequiringAccessGrant = ref<(MemberDto & UserDto)[]>([]);
 const trusts = ref<TrustDto[]>([]);
-const pendingRoleUpdate = ref<{ member: MemberDto, role: VaultRole, untrusted: boolean }>();
+const pendingRoleUpdate = ref<{ member: MemberDto, role: VaultRole, rewrapsKeys: boolean, untrusted: boolean }>();
 const roleUpdateConfirmDialog = ref<typeof ConfirmDialog>();
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
@@ -636,19 +636,21 @@ function roleUpdateRewrapsKeys(member: MemberDto) {
 
 async function requestUpdateMemberRole(member: MemberDto, role: VaultRole) {
   // changing the role of a confirmed UVF vault member re-wraps the vault key (and, for owners, the recovery key) to their
-  // current public key, so additionally warn if their identity has not been verified:
-  const untrusted = roleUpdateRewrapsKeys(member) && member.type == 'USER' && await wot.computeTrustLevel(member, trusts.value) === -1;
-  pendingRoleUpdate.value = { member, role, untrusted };
+  // current public key, so additionally warn if their identity has not been verified. The update applies this very
+  // decision, as a list refresh while the dialog is open may change whether the member counts as confirmed:
+  const rewrapsKeys = roleUpdateRewrapsKeys(member);
+  const untrusted = rewrapsKeys && member.type == 'USER' && await wot.computeTrustLevel(member, trusts.value) === -1;
+  pendingRoleUpdate.value = { member, role, rewrapsKeys, untrusted };
   nextTick(() => roleUpdateConfirmDialog.value?.show());
 }
 
 async function confirmPendingRoleUpdate() {
   if (pendingRoleUpdate.value) {
-    await updateMemberRole(pendingRoleUpdate.value.member, pendingRoleUpdate.value.role);
+    await updateMemberRole(pendingRoleUpdate.value.member, pendingRoleUpdate.value.role, pendingRoleUpdate.value.rewrapsKeys);
   }
 }
 
-async function updateMemberRole(member: MemberDto, role: VaultRole) {
+async function updateMemberRole(member: MemberDto, role: VaultRole, rewrapsKeys: boolean) {
   delete onUpdateVaultMembershipError.value[member.id];
   try {
     switch (member.type) {
@@ -659,7 +661,6 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
         await backend.vaults.addGroup(props.vaultId, member.id, role);
         break;
     }
-    const rewrapsKeys = roleUpdateRewrapsKeys(member);
     const updatedMember = members.value[member.id];
     if (updatedMember) {
       updatedMember.vaultRole = role;
