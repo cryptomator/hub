@@ -42,8 +42,7 @@
   "userEditCreate.passwordWeak": "Heikko",
   "userList.edit.user.button": "Muokkaa",
   "unlockSuccess.deviceSetup.title": "Uusi laite",
-  "vaultDetails.actions.updatePermissions.reload": "Päivitä",
-  "vaultDetails.actions.displayRecoveryKey": "Näytä palautusavain",
+  "vaultDetails.emergencyAccess.fix": "Korjaa",
   "vaultList.addVault": "Lisää",
   "vaultList.filter": "Suodata"
 }
