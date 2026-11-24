@@ -337,6 +337,7 @@
   "vaultDetails.actions.claimOwnership": "Sahiplik Talep Et",
   "vaultDetails.actions.recoverVault": "Kasa Erişimini Kurtar",
   "vaultDetails.emergencyAccess": "Acil Durum Erişimi",
+  "vaultDetails.emergencyAccess.setUp": "Ayarla",
   "vaultDetails.emergencyAccess.fix": "Onar",
   "vaultDetails.recoverVault.title": "Hesabınızı Sıfırladınız!",
   "vaultDetails.recoverVault.description": "Kasaya yeniden erişim kazanmak için kurtarma anahtarını kullanarak erişiminizi geri yüklemeniz veya başka bir sahibin erişim izinlerini güncellemesi gerekir.",
