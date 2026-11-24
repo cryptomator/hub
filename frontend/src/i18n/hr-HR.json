@@ -46,7 +46,7 @@
   "userEditCreate.passwordWeak": "Slaba",
   "userList.edit.user.button": "Izmjeni",
   "userList.vaults.count": "Trezori",
-  "vaultDetails.actions.updatePermissions.reload": "Ponovno učitaj",
+  "vaultDetails.emergencyAccess.fix": "Popravi",
   "vaultList.title": "Trezori",
   "vaultList.addVault": "Dodaj"
 }
