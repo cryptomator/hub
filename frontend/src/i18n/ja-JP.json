@@ -146,8 +146,7 @@
   "userProfile.actions.changeLanguage.entry.browser": "ブラウザ言語",
   "userProfile.keycloakVersion.notAvailable": "利用できないバージョン",
   "unlockSuccess.deviceSetup.title": "新しいデバイス",
-  "vaultDetails.actions.updatePermissions.reload": "再読み込み",
-  "vaultDetails.actions.displayRecoveryKey": "回復キーを表示",
+  "vaultDetails.emergencyAccess.fix": "修正",
   "vaultList.title": "金庫",
   "vaultList.addVault": "追加",
   "vaultList.filter": "フィルター"
