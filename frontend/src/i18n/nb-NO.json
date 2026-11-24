@@ -55,8 +55,7 @@
   "userList.userName": "Navn",
   "userList.vaults.count": "Hvelv",
   "unlockSuccess.deviceSetup.title": "Ny Enhet",
-  "vaultDetails.actions.updatePermissions.reload": "Last på nytt",
-  "vaultDetails.actions.displayRecoveryKey": "Vis gjenopprettingsnøkkel",
+  "vaultDetails.emergencyAccess.fix": "Reparer",
   "vaultList.title": "Hvelv",
   "vaultList.addVault": "Legg til",
   "vaultList.filter": "Filter"
