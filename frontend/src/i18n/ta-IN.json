@@ -32,5 +32,6 @@
   "userEditCreate.username": "பயனர்பெயர்",
   "userEditCreate.passwordStrong": "வலுவான",
   "userEditCreate.passwordWeak": "பலவீனமானது",
-  "userList.edit.user.button": "திருத்து"
+  "userList.edit.user.button": "திருத்து",
+  "vaultDetails.emergencyAccess.fix": "சரிசெய்"
 }
