@@ -226,6 +226,8 @@ describe('UVF', () => {
   });
 
   describe('UniversalVaultFormat', () => {
+    const vaultUvfFileContents = '{"protected":"eyJjdHkiOiJqc29uIiwiY3JpdCI6WyJ1dmYuc3BlYy52ZXJzaW9uIl0sInV2Zi5zcGVjLnZlcnNpb24iOjEsImNsb3VkLmthdHRhLm9yaWdpbiI6Imh0dHBzOi8vZXhhbXBsZS5jb20vYXBpL3ZhdWx0cy8xMjMvdXZmL3ZhdWx0LnV2ZiIsImprdSI6Imp3a3MuanNvbiIsImVuYyI6IkEyNTZHQ00ifQ","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"SZtfgIF3BHSSxOmBwpYgQ3Fx0m8HUNlh8i-DXJ1SrPV8N4HbpfV71w"},{"header":{"kid":"org.cryptomator.hub.recoverykey.DGbyooUW5QlVWzTaF102-f59uRTX1kdqkQb_CMDq9gM","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"GAu7yAb-bpioelnf2rq-gVWLBPvLsp2NBZ7Y7-PncF6nwJ6u7jjWpA36p-4kJM_L","y":"PwENMBSgYKMYkPsfmpERRKLXOFk3kc_4J5FrQRTl8yxOX88S9YsTJ-v4PfeFIPAE","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"jCHJArsVh6cigLlp-85H-19d8a4ChLZ5dpqZPUgVhNYeg7eG8O04Vw"}],"iv":"fWTR97bqlobFHGHe","ciphertext":"5J9HTmPyot0vE_l7XTBCfaLl30UnTLVh-ja7mTez6OO0ylhYsMl2_1CRmACsuzbFrgwfnVzAd3j_73M5rqW6YJprsft1MFcqoJWyQTteLNaI3s7JueQXkpAsAWjvf9JIuYF8ifXfo0zLc2GHsEXwaXb_d3Uwwn128c_gcNrOyh3m-luGJ1osWZtOf3KwPhSoeyKUYsfDb_eezO_bU_19nh9qd4Ds2eID4KlksQTydqz3q5OYVcv7yhX1fqhWBLYVn5V0UVY0glXLZziVA-qYBcOc4Prg6euQ9HZcLrHItjFozWajmJwfQMCM1ZS7zb4dYg3gwmnGsFjKn6J8hS3IgP7kXAtWpPtLXfVJ9EkiHtqr7URZipPuByziYlczQkvj3xT_Bdx2PYhsnj3Mmai0h1x9oIvIviPi05mzmdj_ef87lFyDDUDjx_ZyzC5DoNXX-Qn7YpeNpYuNyg","tag":"7zLMPl3ppUrHufOb6Om-5VrOn8l3UUSxi0mgamyPEjQ"}';
+
     it('create()', async () => {
       const uvf = await UniversalVaultFormat.create({ enabled: true, trustThreshold: 1 });
       expect(uvf).to.not.be.undefined;
@@ -261,7 +263,6 @@ describe('UVF', () => {
     });
 
     it('recover()', async () => {
-      const vaultUvfFileContents = '{"protected":"eyJjdHkiOiJqc29uIiwiY3JpdCI6WyJ1dmYuc3BlYy52ZXJzaW9uIl0sInV2Zi5zcGVjLnZlcnNpb24iOjEsImNsb3VkLmthdHRhLm9yaWdpbiI6Imh0dHBzOi8vZXhhbXBsZS5jb20vYXBpL3ZhdWx0cy8xMjMvdXZmL3ZhdWx0LnV2ZiIsImprdSI6Imp3a3MuanNvbiIsImVuYyI6IkEyNTZHQ00ifQ","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"SZtfgIF3BHSSxOmBwpYgQ3Fx0m8HUNlh8i-DXJ1SrPV8N4HbpfV71w"},{"header":{"kid":"org.cryptomator.hub.recoverykey.DGbyooUW5QlVWzTaF102-f59uRTX1kdqkQb_CMDq9gM","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"GAu7yAb-bpioelnf2rq-gVWLBPvLsp2NBZ7Y7-PncF6nwJ6u7jjWpA36p-4kJM_L","y":"PwENMBSgYKMYkPsfmpERRKLXOFk3kc_4J5FrQRTl8yxOX88S9YsTJ-v4PfeFIPAE","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"jCHJArsVh6cigLlp-85H-19d8a4ChLZ5dpqZPUgVhNYeg7eG8O04Vw"}],"iv":"fWTR97bqlobFHGHe","ciphertext":"5J9HTmPyot0vE_l7XTBCfaLl30UnTLVh-ja7mTez6OO0ylhYsMl2_1CRmACsuzbFrgwfnVzAd3j_73M5rqW6YJprsft1MFcqoJWyQTteLNaI3s7JueQXkpAsAWjvf9JIuYF8ifXfo0zLc2GHsEXwaXb_d3Uwwn128c_gcNrOyh3m-luGJ1osWZtOf3KwPhSoeyKUYsfDb_eezO_bU_19nh9qd4Ds2eID4KlksQTydqz3q5OYVcv7yhX1fqhWBLYVn5V0UVY0glXLZziVA-qYBcOc4Prg6euQ9HZcLrHItjFozWajmJwfQMCM1ZS7zb4dYg3gwmnGsFjKn6J8hS3IgP7kXAtWpPtLXfVJ9EkiHtqr7URZipPuByziYlczQkvj3xT_Bdx2PYhsnj3Mmai0h1x9oIvIviPi05mzmdj_ef87lFyDDUDjx_ZyzC5DoNXX-Qn7YpeNpYuNyg","tag":"7zLMPl3ppUrHufOb6Om-5VrOn8l3UUSxi0mgamyPEjQ"}';
       const recoveryKey = 'cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig dip departure subsidy boring inner pioneer excellent chip do outer frighten carriage know sculpture copper downtown pretty universe twelve condition indirect fantasy extend excuse affair canvas anybody arrest kilometre notorious period online franchise accept sexy ad mouse away fatal tool leave whereas behind stake disease balance cook knock foreign design there sister kill fortune associate spelling lorry snake dive penalty martial affection inclusion heal clothes attribute drain devise civic debut buy nurse cost visual insertion site surprise relevant cost per apologize dinner terms see protect lottery worthy rational infect dog latest physician goods severe enjoyable acute concert problem primarily prey pen material melt';
 
       const uvf = await UniversalVaultFormat.recover(vaultUvfFileContents, recoveryKey);
@@ -277,6 +278,12 @@ describe('UVF', () => {
       expect(uvf.recoveryKey).to.not.be.undefined;
       expect(uvf.recoveryKey.privateKey).to.not.be.undefined;
       expect(uvf.recoveryKey.publicKey).to.not.be.undefined;
+    });
+
+    it('recover() fails for a well-formed recovery key of another vault', async () => {
+      const otherRecoveryKey = await (await RecoveryKey.create()).createRecoveryKey();
+
+      await expect(UniversalVaultFormat.recover(vaultUvfFileContents, otherRecoveryKey)).rejects.toThrow(/does not contain recipient/);
     });
 
     describe('instance methods', () => {

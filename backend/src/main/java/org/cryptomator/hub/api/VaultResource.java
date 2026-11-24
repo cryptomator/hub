@@ -72,12 +72,16 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -187,9 +191,10 @@ public class VaultResource {
 	@Operation(summary = "list pending access grants the caller could perform, grouped by vault",
 			description = """
 					Long-polling endpoint for the automatic access grant flow. Returns members without an access token on
-					vaults the caller holds a token for (i.e. can decrypt and therefore re-share) and has access to. The
-					Web-of-Trust decision and the vault's encrypted trust threshold / enabled flag are evaluated client-side —
-					the server cannot see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
+					vaults the caller holds a token for (i.e. can decrypt and therefore re-share) and has access to. Vault owners
+					are excluded, because automatic grants don't carry the recovery key owners need. The Web-of-Trust decision and
+					the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
+					see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
 					pending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty
 					map on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when
 					only such candidates remain). Best effort — events on other backend instances will not wake this call.""")
@@ -238,7 +243,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "400", description = "invalid members in request body")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
 		var vault = vaultRepo.findById(vaultId);
 		if (vault == null) {
 			throw new NotFoundException("Vault not found.");
@@ -397,6 +402,36 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
 		return effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
+				.toList();
+	}
+
+	@POST
+	@Path("/{vaultId}/effective-users/preview")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "preview effective users", description = "lists all enabled users with a key pair that would have permissions (directly or via groups) if the direct vault members were replaced with the given ones (same request body as PUT /{vaultId}/members), regardless of whether they already hold an access token; nothing is persisted")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "400", description = "invalid members in request body")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public List<MemberDto> previewEffectiveUsers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, @NotNull Role> memberRoles) {
+		if (vaultRepo.findById(vaultId) == null) {
+			throw new NotFoundException("Vault not found.");
+		}
+
+		// resolve direct and group members to their highest prospective role (mirrors EffectiveVaultAccess.findUsersWithoutAccessTokens):
+		var prospectiveRoles = new HashMap<User, VaultAccess.Role>();
+		BiConsumer<User, VaultAccess.Role> addRole = (user, role) -> prospectiveRoles.merge(user, role, BinaryOperator.maxBy(Comparator.naturalOrder()));
+		userRepo.streamByIds(memberRoles.keySet()).forEach(user -> addRole.accept(user, memberRoles.get(user.getId())));
+		userRepo.getEffectiveGroupUsersByGroup(memberRoles.keySet()).forEach((groupId, users) -> users.forEach(user -> addRole.accept(user, memberRoles.get(groupId))));
+
+		return prospectiveRoles.entrySet().stream()
+				.filter(entry -> entry.getKey().isEnabled() && entry.getKey().getEcdhPublicKey() != null)
+				.sorted(Comparator.comparing(entry -> entry.getKey().getName()))
 				.map(entry -> MemberDto.fromEntity(entry.getKey(), entry.getValue()))
 				.toList();
 	}
@@ -564,23 +599,25 @@ public class VaultResource {
 	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
+	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}). Vault owners can't be granted access this way.")
 	@APIResponse(responseCode = "200", description = "all keys stored")
-	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an access grant for this vault")
+	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an automatic access grant for this vault")
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<@ValidId String, @ValidJWE String> tokens) {
 		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
 		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
-		var pendingUserIds = effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).keySet().stream()
-				.map(User::getId)
+		// Owners are excluded, because automatic grants don't carry the recovery key owners need.
+		var pendingMemberIds = effectiveVaultAccessRepo.findUsersWithoutAccessTokensForVault(vaultId).entrySet().stream()
+				.filter(entry -> entry.getValue() != VaultAccess.Role.OWNER)
+				.map(entry -> entry.getKey().getId())
 				.collect(Collectors.toSet());
-		if (!pendingUserIds.containsAll(tokens.keySet())) {
+		if (!pendingMemberIds.containsAll(tokens.keySet())) {
 			var notWaiting = tokens.keySet().stream()
-					.filter(Predicate.not(pendingUserIds::contains))
+					.filter(Predicate.not(pendingMemberIds::contains))
 					.collect(Collectors.joining(", "));
-			throw new BadRequestException("User(s) not awaiting an access grant for this vault: " + notWaiting);
+			throw new BadRequestException("User(s) not awaiting an automatic access grant for this vault: " + notWaiting);
 		}
 
 		grantAccessTokens(vaultId, tokens, true);

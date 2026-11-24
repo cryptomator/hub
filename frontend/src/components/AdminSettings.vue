@@ -1,5 +1,5 @@
 <template>
-  <div v-if="billing === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
+  <div v-if="billing === undefined || entitlements === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
@@ -65,7 +65,7 @@
             <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <input id="keycloakVersion" :value="version.keycloakVersion ?? t('admin.serverInfo.keycloakVersion.notAvailable')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              <p v-if="cfg.entitlements.keycloakAccessEnabled" id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
+              <p v-if="entitlements.keycloakAccessEnabled" id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
                 <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
               </p>
@@ -93,6 +93,7 @@
           {{ t('admin.licenseInfo.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200" />
+        <FetchError v-if="onLicenseInfoError" :error="onLicenseInfoError" :retry="reloadLicenseInfo" />
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
@@ -228,10 +229,10 @@
         </form>
       </section>
 
-      <AdminSettingsEmergencyAccess />
+      <AdminSettingsEmergencyAccess :entitlements="entitlements" />
     </div>
 
-    <EnterLicenseDialog v-if="enteringLicense" ref="enterLicenseDialog" @close="enteringLicense = false" @saved="onLicenseEntered()" />
+    <EnterLicenseDialog v-if="enteringLicense" ref="enterLicenseDialog" @close="enteringLicense = false" @saved="reloadLicenseInfo()" />
   </div>
 </template>
 
@@ -240,8 +241,9 @@ import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, Ex
 import semver from 'semver';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { absFrontendBaseURL, ConfigDto } from '../common/config';
+import backend, { BillingDto, EntitlementsDto, SettingsDto, VersionDto } from '../common/backend';
+import licenseEntitlements from '../common/entitlements';
+import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
@@ -254,7 +256,8 @@ const props = defineProps<{
   session?: string
 }>();
 
-const cfg = ref<ConfigDto>(config.get());
+const cfg = config.get();
+const entitlements = ref<EntitlementsDto>();
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const form = ref<HTMLFormElement>();
@@ -263,7 +266,7 @@ const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 
 onMounted(async () => {
-  keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console/`;
+  keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console/`;
   try {
     if (props.session) {
       await backend.license.refresh(props.session);
@@ -278,12 +281,9 @@ onMounted(async () => {
 
 async function fetchData() {
   try {
-    const versionDto = backend.version.get();
-    const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
-    billing.value = await backend.billing.get();
-    version.value = await versionDto;
-
-    const settings = await backend.settings.get();
+    let settings: SettingsDto;
+    // reload, not get: onMounted may have just changed the license, and other components may have cached the previous entitlements via get()
+    [billing.value, entitlements.value, version.value, settings] = await Promise.all([backend.billing.get(), licenseEntitlements.reload(), backend.version.get(), backend.settings.get()]);
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
     initialWebOfTrustSettings.value = {
@@ -291,7 +291,7 @@ async function fetchData() {
       wotIdVerifyLen: wotIdVerifyLen.value
     };
     // awaited last: a failed update check must not prevent the settings above from being initialized
-    latestVersion.value = await versionAvailable;
+    latestVersion.value = await updateChecker.get(version.value.hubVersion);
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -332,23 +332,35 @@ const betaUpdateExists = computed(() => {
 
 const billing = ref<BillingDto>();
 
-const isRegistered = computed(() => !cfg.value.entitlements.showTrialHint );
+const isRegistered = computed(() => entitlements.value !== undefined && !entitlements.value.showTrialHint);
 
 const manageSubscriptionUrl = computed(() => {
   if (!billing.value) {
     return '';
   }
   const returnUrl = `${absFrontendBaseURL}admin/settings`;
-  return `${cfg.value.billingUrl}?hub_id=${encodeURIComponent(billing.value.hubId)}&return_url=${encodeURIComponent(returnUrl)}&token_transfer=session`;
+  return `${cfg.billingUrl}?hub_id=${encodeURIComponent(billing.value.hubId)}&return_url=${encodeURIComponent(returnUrl)}&token_transfer=session`;
 });
 
 async function refreshLicense() {
   try {
     await backend.license.refresh();
-    billing.value = await backend.billing.get();
-    cfg.value = await config.reload();
+  } catch (error) {
+    console.error('Refreshing license failed.', error);
+    return;
+  }
+  await reloadLicenseInfo();
+}
+
+const onLicenseInfoError = ref<Error>();
+
+async function reloadLicenseInfo() {
+  onLicenseInfoError.value = undefined;
+  try {
+    [billing.value, entitlements.value] = await Promise.all([backend.billing.get(), licenseEntitlements.reload()]);
   } catch (error) {
     console.error('Refreshing license info failed.', error);
+    onLicenseInfoError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
@@ -358,15 +370,6 @@ const enterLicenseDialog = ref<typeof EnterLicenseDialog>();
 function showEnterLicenseDialog() {
   enteringLicense.value = true;
   nextTick(() => enterLicenseDialog.value?.show());
-}
-
-async function onLicenseEntered() {
-  try {
-    billing.value = await backend.billing.get();
-    cfg.value = await config.reload();
-  } catch (error) {
-    console.error('Refreshing license info failed.', error);
-  }
 }
 
 const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);

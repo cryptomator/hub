@@ -130,7 +130,7 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "creates or updates a device", description = "the device will be owned by the currently logged-in user")
 	@APIResponse(responseCode = "201", description = "Device created or updated")
-	@APIResponse(responseCode = "409", description = "Device with this key already exists")
+	@APIResponse(responseCode = "409", description = "Device ID belongs to another user, or device key already exists")
 	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
 		Device device;
 		try {
@@ -142,8 +142,12 @@ public class DeviceResource {
 			device.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 			device.setType(dto.type != null ? dto.type : Device.Type.DESKTOP); // default to desktop for backwards compatibilit);
 
-			if (legacyDeviceRepo.deleteById(device.getId())) {
-				assert legacyDeviceRepo.findById(device.getId()) == null;
+			var legacyDevice = legacyDeviceRepo.findById(deviceId);
+			if (legacyDevice != null) {
+				if (!legacyDevice.getOwner().getId().equals(jwt.getSubject())) {
+					throw new ClientErrorException("Device ID is already in use by another user", Response.Status.CONFLICT);
+				}
+				legacyDeviceRepo.delete(legacyDevice);
 				LOG.info("Deleted Legacy Device during re-registration of Device " + deviceId);
 			}
 		}
