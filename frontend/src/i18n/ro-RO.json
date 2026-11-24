@@ -55,8 +55,7 @@
   "userList.userName": "Nume",
   "userList.vaults.count": "Seifuri",
   "unlockSuccess.deviceSetup.title": "Dispozitiv nou",
-  "vaultDetails.actions.updatePermissions.reload": "Reîncărcare",
-  "vaultDetails.actions.displayRecoveryKey": "Arată cheia de recuperare",
+  "vaultDetails.emergencyAccess.fix": "Repară",
   "vaultList.title": "Seifuri",
   "vaultList.addVault": "Adaugă",
   "vaultList.filter": "Filtru"
