@@ -632,6 +632,7 @@
   "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
+  "vaultDetails.memberActions.options": "Options for {0}",
   "vaultDetails.unconfirmedMembers.title": "Unconfirmed members",
   "vaultDetails.unconfirmedMembers.searchLabel": "Add users or groups",
   "vaultDetails.unconfirmedMembers.notConfirmed": "Not confirmed yet",

@@ -4,7 +4,7 @@
     <Menu v-if="editable" as="div" class="relative -mr-2 inline-block shrink-0 text-left">
       <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
         <span class="absolute -inset-1.5" />
-        <span class="sr-only">Open options menu</span>
+        <span class="sr-only">{{ t('vaultDetails.memberActions.options', [member.name]) }}</span>
         <span class="flex h-full w-full items-center justify-center rounded-full">
           <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
         </span>
