@@ -12,7 +12,7 @@
           {{ props.title }}
         </h3>
         <div :class="[props.title ? 'mt-2' : '', 'text-sm', typeStyles.textColor]">
-          <slot></slot>
+          <slot />
           <a
             v-if="props.linkText && props.linkUrl"
             :href="props.linkUrl"

@@ -26,7 +26,7 @@
                   </div>
                 </div>
                 <div class="mt-1 relative flex-1 flex flex-col px-4 sm:px-6">
-                  <slot></slot>
+                  <slot />
                 </div>
               </div>
             </div>
