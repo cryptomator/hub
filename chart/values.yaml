@@ -89,7 +89,7 @@ hub:
     managedApi:
       username: ""
       password: ""
-    apiUrl: ""
+    apiUrl: "https://api.cryptomator.org/licenses"
 
 keycloak:
   enabled: true
