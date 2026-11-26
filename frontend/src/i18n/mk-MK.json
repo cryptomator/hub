@@ -1,5 +1,6 @@
 {
   "common.apply": "Примени",
+  "common.back": "Назад",
   "common.cancel": "Откажи",
   "common.close": "Затвори",
   "common.copied": "Копирано!",
@@ -10,5 +11,6 @@
   "admin.emergencyAccess.learnMore": "Дознајте повеќе.",
   "createVault.enterVaultDetails.vaultName": "Име на сеф",
   "editVaultMetadataDialog.vaultName": "Име на сеф",
-  "legacyDeviceList.description.information": "Дознајте повеќе."
+  "legacyDeviceList.description.information": "Дознајте повеќе.",
+  "onboarding.done": "Прифати"
 }

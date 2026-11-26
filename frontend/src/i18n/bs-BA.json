@@ -1,5 +1,6 @@
 {
   "common.apply": "Primjeni",
+  "common.back": "Nazad",
   "common.cancel": "Odustani",
   "common.close": "Zatvori",
   "common.copied": "Kopirano!",
@@ -21,6 +22,7 @@
   "groupList.vaults.count": "Sef",
   "legacyDeviceList.description.information": "Saznaj više.",
   "nav.vaults": "Sef",
+  "onboarding.done": "Gotovo",
   "user.detail.edit": "Izmjeni",
   "user.detail.username": "Korisničko ime",
   "userEditCreate.username": "Korisničko ime",

@@ -1,5 +1,6 @@
 {
   "common.apply": "Bruk",
+  "common.back": "Tilbake",
   "common.cancel": "Avbryt",
   "common.close": "Lukk",
   "common.copied": "Kopiert!",
@@ -11,6 +12,7 @@
   "createVault.enterVaultDetails.vaultName": "Namn på kvelven",
   "createVault.showRecoveryKey.submit": "Opprett kvelven",
   "editVaultMetadataDialog.vaultName": "Namn på kvelven",
+  "onboarding.done": "Ferdig",
   "userEditCreate.password": "Passord",
   "userEditCreate.passwordStrong": "Sterkt",
   "userEditCreate.passwordWeak": "Svakt"

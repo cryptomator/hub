@@ -1,5 +1,6 @@
 {
   "common.apply": "قوللىنىش",
+  "common.back": "قايت",
   "common.cancel": "بىكار قىل",
   "common.close": "ياپ",
   "common.copied": "كۆچۈرۈلدى!",
@@ -9,18 +10,17 @@
   "common.show": "كۆرسەت",
   "auditLog.filter": "سۈزگۈچ",
   "auditLog.details.vault.create": "ئامبار قۇر",
-  "claimVaultOwnershipDialog.error.wrongPassword": "پارول خاتا",
   "createVault.enterVaultDetails.title": "ئامبار قۇر",
   "createVault.enterVaultDetails.vaultName": "ئامبار ئىسمى",
   "createVault.showRecoveryKey.submit": "ئامبار قۇر",
   "deviceList.deviceName": "ئۈسكۈنە ئىسمى",
   "editVaultMetadataDialog.vaultName": "ئامبار ئىسمى",
   "legacyDeviceList.deviceName": "ئۈسكۈنە ئىسمى",
+  "onboarding.done": "تامام",
   "userEditCreate.password": "پارول",
   "userEditCreate.passwordStrong": "بىخەتەر",
   "userEditCreate.passwordWeak": "ئاجىز",
   "unlockSuccess.deviceSetup.title": "يېڭى ئۈسكۈنە",
-  "vaultDetails.actions.updatePermissions.reload": "قايتا يۈكلەش",
-  "vaultDetails.actions.displayRecoveryKey": "ئەسلىگە كەلتۈرۈش ئاچقۇچىنى كۆرۈش",
+  "vaultDetails.emergencyAccess.fix": "تۈزەت",
   "vaultList.filter": "سۈزگۈچ"
 }
